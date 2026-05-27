@@ -4,6 +4,9 @@ import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { WhatsAppButton } from "@/components/shared/whatsapp-button";
+import { Cookiebot } from "@/components/analytics/cookiebot";
+import { GA4 } from "@/components/analytics/ga4";
+import { CTATracker } from "@/components/analytics/cta-tracker";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -35,7 +38,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="nl" className={dmSans.variable}>
+      <head suppressHydrationWarning>
+        <Cookiebot />
+      </head>
       <body className="bg-[#EFE8E4] text-[#141414] antialiased">
+        <GA4 />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[#75876D] focus:text-white focus:rounded-lg"
@@ -46,6 +53,7 @@ export default function RootLayout({
         <main id="main-content">{children}</main>
         <Footer />
         <WhatsAppButton />
+        <CTATracker />
       </body>
     </html>
   );
