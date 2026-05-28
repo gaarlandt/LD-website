@@ -55,7 +55,8 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 │   └── analytics.ts        # trackEvent helper + window.gtag types
 ├── public/                 # Static assets (images, fonts, _headers, _redirects)
 ├── docs/                   # Documentation
-│   └── CUTOVER.md          # DNS cutover runbook
+│   ├── CUTOVER.md          # DNS cutover runbook
+│   └── solutions/          # /ce-compound learnings, organized by category (developer-experience, integration-issues, etc.) with YAML frontmatter for searchability
 ├── .env.example            # Documents env vars (NEXT_PUBLIC_GA_MEASUREMENT_ID, NEXT_PUBLIC_COOKIEBOT_CBID)
 └── .github/workflows/      # CI/CD (no deploy workflows — Cloudflare Pages handles deploys)
 ```
@@ -92,6 +93,27 @@ Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/lay
 
 ## Feature Development Workflow
 Use the `/new-feature` skill for all new features. This handles branch creation, implementation, and PR workflow. The branch will get a preview build at `<branch-slug>.website-letsdog.pages.dev` — verify there before merging.
+
+## Workflow harness — Compound Engineering
+
+This project uses the **compound-engineering** harness (`harness: compound-engineering` in `~/.claude/skills/new-feature/project-ci-rules.md`). The `ce-*` skills supplement `/new-feature` — they don't replace it. `/new-feature` still owns branch creation, PR workflow, and merge. CE skills add a richer thinking flow before/around implementation and a knowledge-compounding loop after.
+
+**Decision matrix — pick the entry point based on where you are:**
+
+| Where you are | Use |
+|---|---|
+| Vague idea, want to explore the problem space | `/ce-brainstorm` (produces a right-sized requirements doc) |
+| Shape is clear, need a structured plan | `/ce-plan` |
+| Plan is ready, time to implement | `/ce-work` (or `/new-feature` if it's a tight scoped feature) |
+| Standard branch → PR → merge feature (no upfront planning needed) | `/new-feature` directly |
+| Debugging a stack trace, failing test, or stuck after failed fixes | `/ce-debug` |
+| About to open a PR, want a second look | `/ce-code-review` (recommended on diffs ≥50 lines OR touching `components/analytics/**`, auth, or payments paths) |
+| Just solved a non-trivial problem worth saving | `/ce-compound` (writes to `docs/solutions/`) |
+| Want to find documented past solutions before starting | grep `docs/solutions/` by `tags:` or `module:` in YAML frontmatter |
+
+**Knowledge store**: `docs/solutions/` contains learnings from past sessions, organized by category. Check it before debugging something that smells familiar, or before deciding architecture in a documented area. Each file has YAML frontmatter (`title`, `tags`, `module`, `problem_type`) that makes it searchable.
+
+**Bootstrap**: if `.compound-engineering/config.local.yaml` doesn't exist in this repo yet, run `/ce-setup` once. It checks CE tool availability and creates the local config (gitignored).
 
 ## Important Notes
 - Static export: no server-side features (no API routes, no SSR)

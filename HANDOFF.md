@@ -12,6 +12,12 @@ Marketing site built with Next.js 16 static export, deployed on Cloudflare Pages
 
 Next priority: **markdown content refactor** + ongoing website tweaks. Jur will drive each tweak; you implement.
 
+## ⚡ First action for the new session
+
+**Run `/ce-setup` before anything else.** The Compound Engineering harness was enabled for this project on 2026-05-28 (`harness: compound-engineering` in `~/.claude/skills/new-feature/project-ci-rules.md`, decision matrix documented in CLAUDE.md's "Workflow harness" section). The repo doesn't yet have `.compound-engineering/config.local.yaml` — `/ce-setup` bootstraps it interactively and adds the `.gitignore` entry. Takes <1 minute.
+
+After that, you can use `/ce-brainstorm` / `/ce-plan` / `/ce-work` / `/ce-debug` / `/ce-code-review` / `/ce-compound` alongside `/new-feature`. See CLAUDE.md for which to pick when.
+
 ---
 
 ## Current state of the project
@@ -92,7 +98,8 @@ public/
   fonts/                     # local OTFs
 docs/
   CUTOVER.md                 # DNS cutover playbook — read at cutover time
-CLAUDE.md                    # project conventions, stack, deploy flow — read for orientation
+  solutions/                 # /ce-compound learnings (CE harness). Grep by tags/module before debugging or designing in a documented area.
+CLAUDE.md                    # project conventions, stack, deploy flow, harness decision matrix — read for orientation
 HANDOFF.md                   # this file
 .env.example                 # env vars documented
 .claude/launch.json          # dev server config (autoPort, Node v20 pinned)
