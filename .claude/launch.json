@@ -7,11 +7,9 @@
       "runtimeArgs": [
         "node_modules/next/dist/bin/next",
         "dev",
-        "--turbopack",
-        "--port",
-        "3000"
+        "--turbopack"
       ],
-      "port": 3000,
+      "autoPort": true,
       "env": {
         "PATH": "/Users/jurriaan/.nvm/versions/node/v20.19.5/bin:/usr/local/bin:/usr/bin:/bin"
       }

@@ -97,6 +97,12 @@ export function Footer() {
             >
               Cookieverklaring
             </Link>
+            <Link
+              href="/retour"
+              className="text-xs text-white/40 hover:text-white/70 transition-colors duration-200"
+            >
+              Retour
+            </Link>
           </div>
         </div>
       </div>

@@ -1,0 +1,12 @@
+# Cloudflare Pages _headers — rules are MERGED when multiple match a URL,
+# so patterns must NOT overlap or Cache-Control gets duplicated. Keep one
+# rule per asset directory; let Pages defaults handle HTML.
+
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/images/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
