@@ -99,7 +99,8 @@ Once you're confident the cutover is stable:
 - [ ] If you added the staging hostname to Cookiebot Domain Group, remove it (avoid Cookiebot license-cost surprises)
 - [ ] Consider revisiting the Cookiebot bypass decision: do you want real consent gating? See `components/analytics/ga4.tsx` for the one-line change to restore it
 - [ ] Audit GA4 Realtime + standard reports for any unexpected traffic patterns from the migration window
-- [ ] If you used GA4 Internal Traffic filters during preview, leave them in place — they continue to filter your QA traffic out of production reports
+- [ ] The "Internal Traffic" Data Filter in GA4 should be set to **Active** (not Testing). It works together with the `traffic_type='internal'` parameter our code sends on non-prod hostnames (see `components/analytics/ga4.tsx`). Together they keep QA / preview / localhost traffic out of standard reports. DebugView still shows the events for verification.
+- [ ] Delete the orphaned `Website` GA4 data stream (ID `14274309491`) — it was auto-created by Firebase Hosting and is dormant since the migration. Wait ~24h after Firebase site deletion, then GA4 → Admin → Data Streams → click `Website` → ⋮ → Delete.
 
 ---
 

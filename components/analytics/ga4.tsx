@@ -1,7 +1,11 @@
 const GA_ID_PATTERN = /^G-[A-Z0-9]{6,12}$/;
 
 // Real production hostnames. Anywhere else (pages.dev preview URLs,
-// localhost, etc.) sends events with debug_mode=true.
+// localhost, etc.) sends events with debug_mode=true AND
+// traffic_type='internal', so they get filtered out of standard GA4
+// reports by the property's "Internal Traffic" Data Filter (Admin →
+// Data Filters). DebugView ignores Data Filters, so debug events still
+// show up there for verification.
 const PROD_HOSTS = ["www.letsdog.nl", "letsdog.nl"];
 
 // NOTE: GA4 scripts here intentionally render WITHOUT Cookiebot's
@@ -30,7 +34,8 @@ export function GA4() {
     `window.dataLayer=window.dataLayer||[];` +
     `function gtag(){dataLayer.push(arguments);}` +
     `gtag('js',new Date());` +
-    `gtag('config','${id}',{debug_mode:${prodHostsLiteral}.indexOf(location.hostname)===-1});`;
+    `var __np=${prodHostsLiteral}.indexOf(location.hostname)===-1;` +
+    `gtag('config','${id}',__np?{debug_mode:true,traffic_type:'internal'}:{});`;
 
   return (
     <>
