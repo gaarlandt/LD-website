@@ -4,11 +4,11 @@ import { asset } from "@/lib/utils";
 export function Hero() {
   return (
     <section
-      className="relative bg-[#75876D] flex flex-col lg:flex-row lg:items-center lg:min-h-[100dvh] overflow-hidden"
+      className="relative bg-[#75876D] overflow-hidden"
       aria-label="Hero"
     >
-      {/* Mobile: visible image at top */}
-      <div className="relative w-full aspect-[16/10] lg:hidden">
+      {/* Mobile image */}
+      <div className="relative w-full aspect-[16/11] lg:hidden">
         <Image
           src={asset("/images/hero.jpeg")}
           alt="Twee vrouwen lachen met hun honden"
@@ -17,87 +17,78 @@ export function Hero() {
           sizes="100vw"
           className="object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#75876D]/60 via-transparent to-[#75876D]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#75876D]" />
       </div>
 
-      {/* Desktop: absolute right-half background */}
-      <div className="absolute inset-0 left-1/2 hidden lg:block">
+      {/* Desktop: image bleeds right */}
+      <div className="absolute inset-y-0 right-0 hidden lg:block lg:w-[48%]">
         <Image
           src={asset("/images/hero.jpeg")}
           alt="Twee vrouwen lachen met hun honden"
           fill
           priority
           sizes="50vw"
-          className="object-cover object-center opacity-70"
+          className="object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#75876D] via-[#75876D]/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#75876D] via-[#75876D]/15 to-transparent" />
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 w-full pt-6 pb-12 lg:pt-32 lg:pb-24">
-        <div className="max-w-xl">
-          {/* Eyebrow */}
-          <p className="inline-flex items-center gap-2 text-sm font-medium text-white/80 mb-6 bg-white/10 rounded-full px-4 py-1.5 backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#DFF0C3] inline-block" />
-            Gecertificeerde hondengedragstherapeuten
-          </p>
+      <div className="relative z-10 max-w-[1180px] mx-auto px-6 lg:px-8 pt-10 pb-20 lg:pt-40 lg:pb-28 lg:min-h-[78dvh] lg:flex lg:items-center">
+        <div className="max-w-[640px]">
+          <span className="inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.18em] text-[#DFF0C3]">
+            <span className="w-3 h-px bg-[#DFF0C3]" />
+            Welzijnsgerichte puppytraining
+          </span>
 
-          {/* H1 */}
-          <h1 className="font-heading font-bold text-4xl md:text-5xl lg:text-[3.5rem] text-white leading-[1.1] tracking-tight mb-6">
-            Jouw pup begrijpen.
-            <br />
-            Samen groeien.
+          <h1 className="font-heading font-bold text-[44px] sm:text-[56px] lg:text-[76px] leading-[0.98] tracking-[-0.025em] text-white mt-6 mb-7">
+            Jouw pup begrijpen.<br />
+            <span className="text-[#DFF0C3]">Samen groeien.</span>
           </h1>
 
-          {/* Subtext — empathie eerst */}
-          <p className="text-lg text-white/85 leading-relaxed mb-8 max-w-md">
-            Nieuwe pup thuis. Blij. En totaal de kluts kwijt. Let&apos;s Dog geeft je een dagelijks plan, zodat jij weet wat je doet en je pup weet wat hij kan verwachten.
+          <p className="text-white/85 text-[18px] lg:text-[20px] leading-[1.55] max-w-[40ch] mb-9">
+            Nieuwe pup thuis. Blij, en totaal de kluts kwijt. Wij geven je een dagelijks plan, zodat jij weet wat je doet en je pup weet wat hij kan verwachten.
           </p>
 
-          {/* CTA */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-x-6 gap-y-4 mb-12">
             <a
               href="https://app.letsdog.nl"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center px-7 py-3.5 rounded-full bg-[#FFA580] text-[#141414] text-[16px] font-semibold hover:bg-[#ff9060] transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 cursor-pointer"
+              className="inline-flex items-center px-7 py-3.5 rounded-full bg-[#FFA580] text-[#141414] text-[15px] font-semibold hover:bg-[#ff9060] transition-colors duration-200 cursor-pointer"
             >
               Maak een gratis account
             </a>
-            <p className="text-sm text-white/60">
-              Gratis starten · Geen creditcard nodig
+            <p className="text-[13px] text-white/60">
+              Gratis starten. Geen creditcard.
             </p>
           </div>
 
-          {/* Trust nudge */}
-          <div className="mt-10 flex items-center gap-4">
+          <div className="flex items-center gap-4 pt-8 border-t border-white/15">
             <div className="flex -space-x-2">
               {[asset("/images/community.jpeg"), asset("/images/training.jpeg"), asset("/images/about.jpeg")].map(
                 (src, i) => (
                   <div
                     key={i}
-                    className="w-8 h-8 rounded-full border-2 border-[#75876D] overflow-hidden bg-[#DFF0C3]"
+                    className="w-9 h-9 rounded-full border-2 border-[#75876D] overflow-hidden bg-[#DFF0C3]"
                   >
                     <Image
                       src={src}
                       alt=""
-                      width={32}
-                      height={32}
+                      width={36}
+                      height={36}
                       className="object-cover w-full h-full"
                     />
                   </div>
                 )
               )}
             </div>
-            <p className="text-sm text-white/70">
-              Al meer dan <strong className="text-white">500 puppy&apos;s</strong> op weg geholpen
+            <p className="text-[14px] text-white/75 leading-snug">
+              <strong className="text-white font-semibold">500+ puppy&apos;s</strong>
+              {" "}gingen je voor.
             </p>
           </div>
         </div>
       </div>
-
-      {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#EFE8E4] to-transparent" />
     </section>
   );
 }
