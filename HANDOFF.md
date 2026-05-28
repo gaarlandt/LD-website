@@ -2,7 +2,7 @@
 
 **Purpose**: this file lets a fresh Claude session (or a human picking up the project) get fully oriented in <5 minutes without re-asking what's been done. Read me first whenever you start work here.
 
-**Last session ended**: 2026-05-28, after the Firebase → Cloudflare Pages migration was deployed to production (still on the `*.pages.dev` URL — DNS cutover to `www.letsdog.nl` deferred to a later date at Jur's discretion).
+**Last session ended**: 2026-05-28. Two things landed this session: (1) CE harness fully wired (`.compound-engineering/config.local.example.yaml` + gitignore — see [PR #10](https://github.com/gaarlandt/LD-website/pull/10), still open at time of writing), and (2) the markdown content refactor for the 5 legal pages (see the PR opened in this session — chore/markdown-content-refactor). The Cloudflare Pages migration shipped in the prior session; DNS cutover to `www.letsdog.nl` still deferred.
 
 ---
 
@@ -10,7 +10,9 @@
 
 Marketing site built with Next.js 16 static export, deployed on Cloudflare Pages at `website-letsdog.pages.dev`. GA4 + Cookiebot wired in, analytics fires on every page load regardless of consent (explicit decision). DNS for `letsdog.nl` still points at the old WordPress site at SiteGround — that's the deferred cutover step, runbook at [`docs/CUTOVER.md`](docs/CUTOVER.md).
 
-Next priority: **markdown content refactor** + ongoing website tweaks. Jur will drive each tweak; you implement.
+The 5 legal pages now read their copy from `content/<slug>.md` (gray-matter + react-markdown + remark-gfm) — Jur can edit prose without touching TSX. Marketing/homepage stays TSX; re-evaluate after a month.
+
+Next priority: ongoing website tweaks. Jur drives each tweak; you implement.
 
 ## ⚡ First action for the new session
 
@@ -66,8 +68,8 @@ Two PRs landed:
 
 | Priority | Item | Notes |
 |---|---|---|
-| 1 — next session | **Markdown content refactor** | Extract per-page visible text into `content/<slug>.md` files with YAML frontmatter so Jur can edit copy directly without touching TSX. Stack: `gray-matter` + `remark` (or `marked`). Cover homepage sections + all individual pages. Start with one page (probably `privacybeleid` since it's already structured) as a template, then propagate. |
-| 2 — ongoing | **Website tweaks driven by Jur** | Visual / content changes. Each one through `/new-feature` → branch → preview verify → merge. |
+| 1 — done | **Markdown content refactor (legal pages only)** | ✅ Shipped this session. 5 legal pages now read from `content/*.md`. Marketing/homepage stays TSX; re-evaluate in ~1 month (target: ~2026-06-28) based on whether Jur actually edits the markdown. See [`docs/brainstorms/markdown-content-refactor-requirements.md`](docs/brainstorms/markdown-content-refactor-requirements.md) + [`docs/plans/2026-05-28-001-refactor-legal-pages-to-markdown-plan.md`](docs/plans/2026-05-28-001-refactor-legal-pages-to-markdown-plan.md). |
+| 2 — ongoing | **Website tweaks driven by Jur** | Visual / content changes. Legal-page copy edits = edit `content/*.md` (no Claude needed). Other pages = `/new-feature` → branch → preview verify → merge. |
 | 3 — when Jur decides | **DNS cutover** | Follow [`docs/CUTOVER.md`](docs/CUTOVER.md) verbatim. Self-contained playbook, do NOT regenerate. |
 | 4 — separate PR, post-cutover | **UTM-source params on CTA buttons** | Extend `components/analytics/cta-tracker.tsx` to include `utm_source` / `utm_medium` / `utm_campaign` per button. For both GA4 (extend the `cta_clicked` event params) AND PostHog (separate event capture). |
 | 5 — post-cutover, on request | **GSC verification** | Only if Jur asks. Pull organic-traffic URLs, scan for 404 spikes. |
