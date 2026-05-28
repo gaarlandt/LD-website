@@ -1,7 +1,7 @@
 # Let's Dog — Marketing Website
 
 ## Project Overview
-Marketing website for Let's Dog, a puppy training platform. Built as a static Next.js site deployed on Firebase Hosting.
+Marketing website for Let's Dog, a puppy training platform. Built as a static Next.js site deployed on Cloudflare Pages.
 
 ## Tech Stack
 - **Framework**: Next.js 16 (static export via `output: "export"`)
@@ -10,17 +10,18 @@ Marketing website for Let's Dog, a puppy training platform. Built as a static Ne
 - **Animations**: Framer Motion
 - **Icons**: Lucide React + inline SVGs (WhatsApp, TikTok)
 - **Fonts**: National2 (headings, local OTF), DM Sans (body, Google Fonts)
-- **Deployment**: Firebase Hosting (project: `project-60f05f55-1ef9-48e3-b20`, target: `website-content`, site: `website-letsdog`)
+- **Analytics**: GA4 (`G-0FCGXJHMMY`, fires immediately) + Cookiebot banner (display-only, does not gate tracking)
+- **Deployment**: Cloudflare Pages (project: `website-letsdog`, production URL: `website-letsdog.pages.dev`, custom domains flip in at cutover)
 
 ## Key Commands
 ```bash
-npm run dev       # Start dev server (Turbopack, port 3000)
+npm run dev       # Start dev server (Turbopack)
 npm run build     # Static export to ./out
 npm run lint      # ESLint
 ```
 
 ## Dev Server / Preview
-Use `preview_start("letsdog-website")` to start the dev server via the preview tool. The launch.json config is at `.claude/launch.json`.
+Use `preview_start("letsdog-website")` to start the dev server via the preview tool. The launch.json config is at `.claude/launch.json` and uses `autoPort: true` so it won't collide with other dev servers.
 
 The preview sandbox requires Node v20 (not v24) — the launch.json uses the absolute path `/Users/jurriaan/.nvm/versions/node/v20.19.5/bin/node`. If Node versions change, update this path.
 
@@ -30,8 +31,9 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 ```
 .
 ├── app/                    # Next.js App Router pages
-│   ├── layout.tsx          # Root layout (navbar, footer, WhatsApp button)
+│   ├── layout.tsx          # Root layout (navbar, footer, WhatsApp, analytics)
 │   ├── page.tsx            # Homepage
+│   ├── icon.svg            # Favicon (Next auto-wires to <link rel="icon">)
 │   ├── contact/            # Contact page
 │   ├── hondenkeuze/        # Breed selector quiz (iframe to keuzehulp.letsdog.nl)
 │   ├── over-ons/           # About page
@@ -40,19 +42,22 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 │   ├── veelgestelde-vragen/ # FAQ page
 │   ├── privacybeleid/      # Privacy policy
 │   ├── ai-gebruiksvoorwaarden/ # AI terms of use
-│   └── cookieverklaring/   # Cookie declaration
+│   ├── cookieverklaring/   # Cookie declaration
+│   ├── retour/             # Return & cancellation policy
+│   └── ip-overdrachtsverklaring/ # IP transfer declaration
 ├── components/
 │   ├── layout/             # Navbar, Footer
 │   ├── sections/           # Homepage sections (hero, problem, hope, etc.)
-│   └── shared/             # Reusable (WhatsApp button, reveal, section-wrapper)
-├── lib/utils.ts            # Asset path helper
-├── public/                 # Static assets (images, fonts)
-├── docs/                   # Documentation & brand images
-├── firebase.json           # Firebase Hosting config
-├── .firebaserc             # Firebase project alias
-└── .github/workflows/      # CI/CD
-    ├── deploy-production.yml  # Push to main → Firebase live
-    └── deploy-staging.yml     # Push to branch → Firebase preview channel
+│   ├── shared/             # Reusable (WhatsApp button, reveal, section-wrapper)
+│   └── analytics/          # Cookiebot, GA4, CTATracker
+├── lib/
+│   ├── utils.ts            # Asset path helper
+│   └── analytics.ts        # trackEvent helper + window.gtag types
+├── public/                 # Static assets (images, fonts, _headers, _redirects)
+├── docs/                   # Documentation
+│   └── CUTOVER.md          # DNS cutover runbook
+├── .env.example            # Documents env vars (NEXT_PUBLIC_GA_MEASUREMENT_ID, NEXT_PUBLIC_COOKIEBOT_CBID)
+└── .github/workflows/      # CI/CD (no deploy workflows — Cloudflare Pages handles deploys)
 ```
 
 ## Styling Conventions
@@ -68,16 +73,29 @@ Hondenkeuze | Puppyagenda | Prijzen | Over ons | FAQ | Contact
 Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/layout/footer.tsx`.
 
 ## Deployment
-- **Production**: Push to `main` → auto-deploys to Firebase live
-- **Staging**: Push to any other branch → creates temporary Firebase preview URL (expires in 7 days)
-- **Secret required**: `FIREBASE_SERVICE_ACCOUNT` in GitHub repo settings (from project `project-60f05f55-1ef9-48e3-b20`)
-- **Hosting target**: `website-content` → site `website-letsdog` (uses Firebase hosting targets to support multiple sites in the same project)
+
+**Cloudflare Pages, Git-integrated. No GitHub Actions deploy workflows — Cloudflare handles deploys directly from GitHub pushes.**
+
+- **Production**: Merge to `main` → Cloudflare auto-builds + deploys → live on `website-letsdog.pages.dev`, custom domains `www.letsdog.nl` + `letsdog.nl` (after Phase 5 cutover, see `docs/CUTOVER.md`)
+- **Preview**: Push to any non-main branch → Cloudflare auto-builds → preview URL at `<branch-slug>.website-letsdog.pages.dev`
+- **Preview-first discipline**: always verify on the preview URL before merging to main. Auto-builds for non-prod branches must be enabled in Cloudflare Pages → Settings → Build → Branch control.
+- **Env vars** (set in Cloudflare Pages → Settings → Variables and Secrets, scoped to Production AND Preview):
+  - `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-0FCGXJHMMY`
+  - `NEXT_PUBLIC_COOKIEBOT_CBID=<Domain Group ID from Cookiebot dashboard>`
+  - `NODE_VERSION=20`
+
+## Analytics & Consent
+- **GA4**: measurement ID `G-0FCGXJHMMY` (shared across all Let's Dog domains — `www`, `keuzehulp`, `agenda`, `app`). See the GA4 doc in Google Drive (`Tech/GA4 LD/`) for cross-domain config, custom dimensions, key events, Google Ads conversion mapping.
+- **Hostname behavior**: GA4 sends `debug_mode: true` automatically when hostname is anything other than `www.letsdog.nl` or `letsdog.nl` (preview URLs, localhost). Production hostnames send normally.
+- **CTA tracking**: `components/analytics/cta-tracker.tsx` mounts a delegated document click listener that fires `cta_clicked` events for any link to `app.letsdog.nl`, `keuzehulp.letsdog.nl`, or `agenda.letsdog.nl` with params `link_url`, `link_text`, `link_location` (navbar/body), `link_destination`.
+- **Cookiebot banner is display-only.** GA4 fires regardless of consent state — see comment in `components/analytics/ga4.tsx` for how to restore real gating if that decision is reversed.
 
 ## Feature Development Workflow
-Use the `/new-feature` skill for all new features. This handles branch creation, implementation, and PR workflow.
+Use the `/new-feature` skill for all new features. This handles branch creation, implementation, and PR workflow. The branch will get a preview build at `<branch-slug>.website-letsdog.pages.dev` — verify there before merging.
 
 ## Important Notes
 - Static export: no server-side features (no API routes, no SSR)
 - Images are unoptimized (required for static export)
 - The `asset()` helper in `lib/utils.ts` prepends the base path to image URLs
 - Hondenkeuze page embeds an iframe from `keuzehulp.letsdog.nl`
+- `public/_headers` and `public/_redirects` are Cloudflare-Pages-specific config files (copied to `out/` during build) — DO NOT use overlapping path patterns in `_headers`, Cloudflare MERGES headers when rules overlap and you'll get duplicated `Cache-Control` directives
