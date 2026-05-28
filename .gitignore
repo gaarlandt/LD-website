@@ -35,3 +35,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# compound-engineering local config
+.compound-engineering/*.local.yaml
