@@ -10,6 +10,7 @@ Marketing website for Let's Dog, a puppy training platform. Built as a static Ne
 - **Animations**: Framer Motion
 - **Icons**: Lucide React + inline SVGs (WhatsApp, TikTok)
 - **Fonts**: National2 (headings, local OTF), DM Sans (body, Google Fonts)
+- **Content (legal pages)**: Markdown via `gray-matter` ^4 + `react-markdown` ^10 + `remark-gfm` ^4 — see "Markdown-driven legal pages" below
 - **Analytics**: GA4 (`G-0FCGXJHMMY`, fires immediately) + Cookiebot banner (display-only, does not gate tracking)
 - **Deployment**: Cloudflare Pages (project: `website-letsdog`, production URL: `website-letsdog.pages.dev`, custom domains flip in at cutover)
 
@@ -50,8 +51,10 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 │   ├── sections/           # Homepage sections (hero, problem, hope, etc.)
 │   ├── shared/             # Reusable (WhatsApp button, reveal, section-wrapper)
 │   └── analytics/          # Cookiebot, GA4, CTATracker
+├── content/                # Markdown source for the 5 legal pages (privacybeleid, ai-gebruiksvoorwaarden, cookieverklaring, retour, ip-overdrachtsverklaring). Edit these to change copy without touching TSX.
 ├── lib/
 │   ├── utils.ts            # Asset path helper
+│   ├── content.ts          # loadLegalContent(slug) — reads content/<slug>.md at build time via gray-matter
 │   └── analytics.ts        # trackEvent helper + window.gtag types
 ├── public/                 # Static assets (images, fonts, _headers, _redirects)
 ├── docs/                   # Documentation
@@ -90,6 +93,16 @@ Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/lay
 - **Hostname behavior**: GA4 sends `debug_mode: true` automatically when hostname is anything other than `www.letsdog.nl` or `letsdog.nl` (preview URLs, localhost). Production hostnames send normally.
 - **CTA tracking**: `components/analytics/cta-tracker.tsx` mounts a delegated document click listener that fires `cta_clicked` events for any link to `app.letsdog.nl`, `keuzehulp.letsdog.nl`, or `agenda.letsdog.nl` with params `link_url`, `link_text`, `link_location` (navbar/body), `link_destination`.
 - **Cookiebot banner is display-only.** GA4 fires regardless of consent state — see comment in `components/analytics/ga4.tsx` for how to restore real gating if that decision is reversed.
+
+## Markdown-driven legal pages
+
+The 5 legal pages (`privacybeleid`, `ai-gebruiksvoorwaarden`, `cookieverklaring`, `retour`, `ip-overdrachtsverklaring`) read their body content from `content/<slug>.md` at build time. Each `page.tsx` is ~15 lines that loads the markdown and renders via `<LegalPageLayout>`. Edit `content/*.md` to change copy — no TSX touched.
+
+- **Frontmatter** (all optional except `title`/`description`): `title`, `description`, `eyebrow` (default `"Juridisch"`), `lead` (white subhead under the green hero H1), `signature_form: true` (only ip-overdracht — appends the printable Naam/Datum/Handtekening form after the markdown body).
+- **Supported markdown**: standard CommonMark + GFM tables (via `remark-gfm`). H2 = section, H3 = subsection, `-` = brand-green bullet, `[text](url)` = brand-green underlined link, `| col | col |` table = renders inside a beige `#EFE8E4` rounded card.
+- **Shared layout**: `components/shared/legal-page-layout.tsx` owns the green hero band + react-markdown component overrides that map each markdown node to the existing Tailwind brand classes. Add a new legal page by writing `content/<slug>.md` + creating a 15-line `app/<slug>/page.tsx` using the same shape.
+- **Build-time read only**: `lib/content.ts` does `fs.readFileSync` at module scope (Next.js static export resolves at build time). No client bundle impact; `react-markdown` is server-only.
+- **Not in scope (yet)**: homepage and marketing pages (over-ons, prijzen, contact, faq, puppyagenda) stay in TSX. Re-evaluate after a month of real editing — see `docs/brainstorms/markdown-content-refactor-requirements.md`.
 
 ## Feature Development Workflow
 Use the `/new-feature` skill for all new features. This handles branch creation, implementation, and PR workflow. The branch will get a preview build at `<branch-slug>.website-letsdog.pages.dev` — verify there before merging.
