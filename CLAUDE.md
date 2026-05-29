@@ -107,6 +107,8 @@ The 5 legal pages (`privacybeleid`, `ai-gebruiksvoorwaarden`, `cookieverklaring`
 ## Feature Development Workflow
 Use the `/new-feature` skill for all new features. This handles branch creation, implementation, and PR workflow. The branch will get a preview build at `<branch-slug>.website-letsdog.pages.dev` — verify there before merging.
 
+**Pure-docs commits skip the branch + PR flow.** New files under `docs/solutions/`, updates to `CLAUDE.md` / `HANDOFF.md`, and similar documentation-only changes go directly to `main`. They don't touch the production build, Cloudflare auto-redeploys without any user-visible change, and the branch-and-PR overhead isn't worth it for a one-file doc edit. The "never commit to main" rule still applies to code changes — heuristic: if the diff touches any file outside `docs/`, `CLAUDE.md`, or `HANDOFF.md`, branch + PR. Codified 2026-05-29 after `/ce-compound` workflow precedent (commits `3f0e907`, `8ca381b` predecessors).
+
 ## Workflow harness — Compound Engineering
 
 This project uses the **compound-engineering** harness (`harness: compound-engineering` in `~/.claude/skills/new-feature/project-ci-rules.md`). The `ce-*` skills supplement `/new-feature` — they don't replace it. `/new-feature` still owns branch creation, PR workflow, and merge. CE skills add a richer thinking flow before/around implementation and a knowledge-compounding loop after.
