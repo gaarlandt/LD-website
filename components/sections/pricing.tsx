@@ -10,6 +10,7 @@ type Tier = {
   priceSub: string;
   features: string[];
   ctaLabel: string;
+  ctaHref: string;
   ctaStyle: "neutral" | "peach" | "dark";
   footerNote: string;
   highlighted?: boolean;
@@ -31,6 +32,7 @@ const tiers: Tier[] = [
       "Let's Dog Community",
     ],
     ctaLabel: "Start Maandelijks",
+    ctaHref: "https://app.letsdog.nl",
     ctaStyle: "neutral",
     footerNote: "Maandelijks opzegbaar",
   },
@@ -49,6 +51,7 @@ const tiers: Tier[] = [
       "Early Member status",
     ],
     ctaLabel: "Claim Early Member Prijs",
+    ctaHref: "https://maartend8.sg-host.com/checkout/?add-to-cart=592&quantity=1",
     ctaStyle: "peach",
     footerNote: "Eerste jaar €59 · daarna €99",
     highlighted: true,
@@ -70,6 +73,7 @@ const tiers: Tier[] = [
       "Direct 1-op-1 advies van een trainer",
     ],
     ctaLabel: "Kies Jaar + Consult",
+    ctaHref: "https://app.letsdog.nl",
     ctaStyle: "dark",
     footerNote: "Totale waarde €138",
   },
@@ -153,7 +157,7 @@ function PricingCard({ tier }: { tier: Tier }) {
 
       {/* CTA */}
       <a
-        href="https://app.letsdog.nl"
+        href={tier.ctaHref}
         target="_blank"
         rel="noopener noreferrer"
         className={`block w-full text-center py-3.5 rounded-full font-semibold text-[15px] transition-all duration-200 cursor-pointer ${ctaClasses}`}
