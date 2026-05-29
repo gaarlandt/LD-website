@@ -68,7 +68,7 @@ export default function Puppyagenda() {
               De volledige agenda staat klaar in de web app.
             </h2>
             <p className="text-[#141414]/60 text-lg mb-8 leading-relaxed">
-              Start gratis en bekijk de preview. Upgrade naar volledig voor toegang tot alle weken, videolessen en audio-lessen.
+              Maak een account en bekijk de preview. Upgrade naar volledig voor toegang tot alle weken, videolessen en audio-lessen.
             </p>
             <a
               href="https://app.letsdog.nl"

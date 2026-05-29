@@ -12,7 +12,6 @@ export const metadata: Metadata = {
 
 const heroPills = [
   "Welzijnsgericht",
-  "7 dagen proberen",
   "Maandelijks opzegbaar",
 ];
 
@@ -27,7 +26,11 @@ const faqs = [
   },
   {
     q: "Wat als het toch niet bij jullie past?",
-    a: "Geen probleem. In je accountinstellingen in de app kun je je abonnement op elk moment heel makkelijk opzeggen — geen omweg, geen ingewikkelde procedure.",
+    a: "Je kunt je abonnement op elk moment opzeggen via de accountinstellingen in de app — geen omweg, geen ingewikkelde procedure. Bij een jaarabonnement geldt bovendien 7 dagen geld-terug-garantie: zeg je binnen 7 dagen op, dan krijg je het volledige bedrag automatisch terug. Het maandabonnement is niet restitueerbaar, maar je kunt elke maand opzeggen.",
+  },
+  {
+    q: "Krijg ik mijn geld terug als ik snel opzeg?",
+    a: "Bij een jaarabonnement (Early Member of Jaar + Consult): ja, binnen 7 dagen. Je zegt op via de accountinstellingen en wij storten het volledige bedrag automatisch binnen 14 dagen terug. Bij het maandabonnement (Flexibel) is geen restitutie mogelijk — je kunt wel elke maand opzeggen zodat de volgende maand niet wordt afgeschreven.",
   },
 ];
 

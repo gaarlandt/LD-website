@@ -18,7 +18,7 @@ const categories = [
       },
       {
         q: "Wanneer is de app beschikbaar?",
-        a: "De web app is nu live op app.letsdog.nl. Maak een gratis account en begin direct.",
+        a: "De web app is nu live op app.letsdog.nl. Meld je aan en begin direct.",
       },
     ],
   },
@@ -44,11 +44,11 @@ const categories = [
     faqs: [
       {
         q: "Wat kost het abonnement?",
-        a: "Drie smaken: Flexibel €12,99/maand (maandelijks opzegbaar), Early Member €59/eerste jaar (daarna €99 — onze launch-prijs), of Jaar + Consult €79/eerste jaar inclusief een 1-op-1 online consult. Betaling verloopt via Mollie.",
+        a: "Drie smaken: Flexibel €12,99/maand (maandelijks opzegbaar, niet restitueerbaar), Early Member €59/eerste jaar (daarna €99 — onze launch-prijs, 7 dagen geld-terug-garantie), of Jaar + Consult €79/eerste jaar inclusief een 1-op-1 online consult (ook met 7 dagen geld-terug-garantie). Betaling verloopt via Mollie.",
       },
       {
         q: "Kan ik opzeggen wanneer ik wil?",
-        a: "Ja. Er is geen minimale looptijd. Je kunt opzeggen wanneer het jou uitkomt.",
+        a: "Ja, opzeggen kan altijd via de accountinstellingen in de app. Bij het maandabonnement stopt het abonnement aan het einde van de lopende maand — terugbetaling van die maand is niet mogelijk. Bij een jaarabonnement geldt 7 dagen geld-terug-garantie: opzeggen binnen 7 dagen na start = volledige terugbetaling.",
       },
       {
         q: "Via welke betaalmethoden kan ik betalen?",
@@ -56,7 +56,7 @@ const categories = [
       },
       {
         q: "Wat als ik niet tevreden ben?",
-        a: "Neem contact op via het contactformulier. We zoeken altijd een oplossing.",
+        a: "Bij een jaarabonnement: zeg binnen 7 dagen op via je accountinstellingen, dan krijg je je geld automatisch terug. Bij het maandabonnement: zeg op via je accountinstellingen, dan stopt het aan het einde van de lopende maand. Heb je een andere vraag of klacht? Neem contact op via het contactformulier — we zoeken altijd een oplossing.",
       },
     ],
   },
