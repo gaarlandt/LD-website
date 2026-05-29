@@ -2,7 +2,7 @@
 
 **Purpose**: this file lets a fresh Claude session (or a human picking up the project) get fully oriented in <5 minutes without re-asking what's been done. Read me first whenever you start work here.
 
-**Last session ended**: 2026-05-28. Two things landed this session: (1) CE harness fully wired (`.compound-engineering/config.local.example.yaml` + gitignore — see [PR #10](https://github.com/gaarlandt/LD-website/pull/10), still open at time of writing), and (2) the markdown content refactor for the 5 legal pages (see the PR opened in this session — chore/markdown-content-refactor). The Cloudflare Pages migration shipped in the prior session; DNS cutover to `www.letsdog.nl` still deferred.
+**Last session ended**: 2026-05-29. Pricing refresh + UX sweep shipped: 3-tier pricing model (Flexibel €12,99/mo, Early Member €59/€99, Jaar + Consult €79/€119) replaced the old free-vs-paid split; all "Geen creditcard" copy swept to "7 dagen proberen · opzegbaar in de app"; Navbar got an Inloggen button next to Start gratis; Play Store badge now links to the real app; hero scaled up; Hondenkeuze renamed to "Rassenkeuze hulp" (path `/rassenkeuze/`, 10 questions); soft blue `#6E8FB8` added to the brand palette for sparing use. Previous session (2026-05-28) landed: CE harness fully wired + markdown content refactor for the 5 legal pages. DNS cutover to `www.letsdog.nl` still deferred.
 
 ---
 
@@ -35,6 +35,36 @@ After that, you can use `/ce-brainstorm` / `/ce-plan` / `/ce-work` / `/ce-debug`
 | Node | v20 (pinned in `.claude/launch.json` AND `NODE_VERSION` env var in CF) |
 | Analytics | GA4 `G-0FCGXJHMMY` — shared with `keuzehulp.letsdog.nl`, `agenda.letsdog.nl`, `app.letsdog.nl`. Fires immediately on every page (no consent gating). Non-prod hostnames get `debug_mode: true` + `traffic_type: 'internal'` so they're auto-filtered out of standard GA4 reports by the "Internal Traffic" Data Filter. |
 | Consent banner | Cookiebot loads on production but is **display-only** — does not gate tracking. CBID stored in CF env var `NEXT_PUBLIC_COOKIEBOT_CBID`. |
+
+---
+
+## What was accomplished in this session (2026-05-29)
+
+**Pricing refresh + UX sweep — single PR `feature/pricing-refresh-ux-sweep`**
+
+Business / copy changes
+- New 3-tier pricing model: **Flexibel** €12,99/maand (maandelijks opzegbaar), **Early Member** €59/eerste jaar (daarna €99 — the launch deal, peach-highlighted as "Meest gekozen"), **Jaar + Consult** €79/eerste jaar (daarna €119, includes 1× online consult t.w.v. €39). The legacy free €0 tier is gone.
+- The marketing site reflects a 7-day post-payment trial (refund window in the app). All "Geen creditcard" / "geen betaalgegevens" lines swept to **"7 dagen proberen · opzegbaar in de app"** — deliberately soft framing per Jur. The refund mechanic is intentionally NOT advertised explicitly.
+- /prijzen FAQ updated: dropped the "upgrade van gratis" Q, added a "Hoe lang geldt de Early Member-prijs?" Q, kept payment-methods + Mollie Q, softened "niet tevreden" Q to imply the 7-day window without naming it.
+
+UI / structural changes
+- `components/sections/pricing.tsx`: completely rewritten — 3-card layout on `bg-[#75876D]` with white cards, peach-highlighted middle tier, trust bar + 4,8★ rating below. Now used on both homepage and `/prijzen`.
+- `app/prijzen/page.tsx`: new beige upper hero ("Eén juiste aanpak. Drie manieren om te starten." with peach accent, three pills, "Vanaf €4,92 per maand" peach badge) above the shared `<Pricing>` section.
+- `components/sections/hero.tsx`: scaled H1 to `lg:text-[5rem]`, widened content to `max-w-2xl`, image now starts at `left-[45%]` desktop, eyebrow uses em-dash style ("— Welzijnsgerichte puppytraining" uppercase), fine print swept to "7 dagen proberen · opzegbaar in de app".
+- `components/layout/navbar.tsx`: added outlined **Inloggen** button next to **Start gratis** on desktop, plus stacked in the mobile drawer. Both point to `https://app.letsdog.nl` (app handles auth redirect).
+- `components/sections/how-it-works.tsx`: Google Play badge is now a real `<a href="https://play.google.com/store/apps/details?id=nl.letsdog.app" target="_blank">`. App Store badge keeps its existing "Binnenkort beschikbaar" toast (iOS not out yet).
+- `components/sections/final-cta.tsx`: fine print swept too.
+
+Renames + routing
+- `app/hondenkeuze/` → `app/rassenkeuze/` (via `git mv` — history preserved).
+- "Hondenkeuze" → "Rassenkeuze hulp" everywhere (navbar, footer, breed-selector eyebrow, metadata, page H1 eyebrow, button label, iframe title).
+- "8 korte vragen" → "10 korte vragen" everywhere.
+- Added 2 lines to `public/_redirects`: `/hondenkeuze/ → /rassenkeuze/ 301` and `/hondenkeuze → /rassenkeuze/ 301`. Verify post-deploy that Cloudflare honors both (it should — that's the standard `_redirects` format).
+- CLAUDE.md updated: project structure list, Navigation Order, palette (`#6E8FB8` soft blue added), iframe origin note for rassenkeuze.
+
+**Security model**: Business logic lives client-only — this is a static-exported Next.js marketing site with no API routes or server actions. No auth-adjacent data touched; price strings + CTAs are presentational, the actual payment flow lives downstream in `app.letsdog.nl`/Mollie. Defense in depth: N/A at this layer (billing security is owned by the app, not the marketing site). Test plan: build passes + visual verification on Cloudflare preview URL before merge.
+
+**Session log:** 2026-05-29 — pricing refresh + UX sweep — security model: client-only static export, no auth-adjacent data, billing security owned by `app.letsdog.nl` downstream.
 
 ---
 
@@ -72,6 +102,7 @@ Two PRs landed:
 | 2 — ongoing | **Website tweaks driven by Jur** | Visual / content changes. Legal-page copy edits = edit `content/*.md` (no Claude needed). Other pages = `/new-feature` → branch → preview verify → merge. |
 | 3 — when Jur decides | **DNS cutover** | Follow [`docs/CUTOVER.md`](docs/CUTOVER.md) verbatim. Self-contained playbook, do NOT regenerate. |
 | 4 — separate PR, post-cutover | **UTM-source params on CTA buttons** | Extend `components/analytics/cta-tracker.tsx` to include `utm_source` / `utm_medium` / `utm_campaign` per button. For both GA4 (extend the `cta_clicked` event params) AND PostHog (separate event capture). |
+| ⚠ before merging PR #13 | **Pricing CTAs — staging → prod URL swap + remaining tier wiring** | Early Member ("Claim Early Member Prijs") now points at SiteGround staging WP: `https://maartend8.sg-host.com/checkout/?add-to-cart=592&quantity=1`. Before merging to main, decide whether to swap to a prod-equivalent (likely `https://app.letsdog.nl/checkout/?add-to-cart=592&quantity=1`) or leave it on staging for now. Flexibel ("Start Maandelijks") and Jaar + Consult ("Kies Jaar + Consult") still fall back to the generic `https://app.letsdog.nl` — wire each to its own WooCommerce product when Jur supplies the SKU. Defined in [`components/sections/pricing.tsx`](components/sections/pricing.tsx) under the `tiers` array (`ctaHref` field per tier). |
 | 5 — post-cutover, on request | **GSC verification** | Only if Jur asks. Pull organic-traffic URLs, scan for 404 spikes. |
 | 6 — when reconsidered | **Real consent gating** | Currently bypassed. To restore: add `type="text/plain"` + `data-cookieconsent="statistics"` to both `<script>` tags in `components/analytics/ga4.tsx`. Single-file change. |
 
@@ -136,6 +167,9 @@ HANDOFF.md                   # this file
 4. **WordPress sunset is NOT our job** — handed off to the dev agency. Don't propose deletion plans for the SiteGround instance.
 5. **No favicon redesign yet.** Currently using `logo-black.svg` as favicon. Looks fine at typical browser-tab size. Standalone designed favicon is a future open item, not in scope.
 6. **Use `*.pages.dev` for staging, not a custom subdomain.** Avoided adding `new.letsdog.nl` to Cookiebot Domain Group (would incur paid-plan cost). Preview verification done on the `*.pages.dev` URL where Cloudflare auto-adds `x-robots-tag: noindex`.
+7. **7-day trial is post-payment, marketed as "7 dagen proberen".** The actual mechanic = user pays upfront via Mollie, then has 7 days to cancel in the app for a refund. The website deliberately does NOT say "geld terug" / "refund" — it says "7 dagen proberen · opzegbaar in de app" to feel like a free trial without misrepresenting the policy. Don't reintroduce "Geen creditcard nodig" copy.
+8. **3-tier pricing replaces the old free tier.** No more €0 tier. If reintroduced, it'd be a deliberate funnel change, not "fixing" anything — check with Jur first.
+9. **Soft blue `#6E8FB8` is a sparing accent only.** Added to the palette 2026-05-29 but not currently used on any page. Reserved for small dots, divider accents, badge dots. Never as a primary surface or large fill — the brand-green-and-peach hierarchy should still dominate.
 
 ---
 

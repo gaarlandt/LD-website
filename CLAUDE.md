@@ -36,7 +36,7 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 │   ├── page.tsx            # Homepage
 │   ├── icon.svg            # Favicon (Next auto-wires to <link rel="icon">)
 │   ├── contact/            # Contact page
-│   ├── hondenkeuze/        # Breed selector quiz (iframe to keuzehulp.letsdog.nl)
+│   ├── rassenkeuze/        # Rassenkeuze hulp — breed selector quiz (iframe to keuzehulp.letsdog.nl)
 │   ├── over-ons/           # About page
 │   ├── prijzen/            # Pricing page
 │   ├── puppyagenda/        # Puppy agenda page
@@ -65,16 +65,16 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 ```
 
 ## Styling Conventions
-- **Colors**: Brand green `#75876D`, Beige `#EFE8E4`, Black `#141414`, Peach `#FFA580`, Dark green `#162A0E`
+- **Colors**: Brand green `#75876D`, Beige `#EFE8E4`, Black `#141414`, Peach `#FFA580`, Dark green `#162A0E`, Soft blue `#6E8FB8` (use sparingly — small accents only, never as a primary surface or large fill)
 - **Approach**: Inline Tailwind classes, no CSS modules or external stylesheets
 - **Responsive**: Mobile-first, `md:` and `lg:` breakpoints
 - **Nav hover**: Brand green underline animates on hover via `after:` pseudo-element
 
 ## Navigation Order
 ```
-Hondenkeuze | Puppyagenda | Prijzen | Over ons | FAQ | Contact
+Rassenkeuze hulp | Puppyagenda | Prijzen | Over ons | FAQ | Contact
 ```
-Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/layout/footer.tsx`.
+Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/layout/footer.tsx`. Desktop navbar also includes outlined **Inloggen** + solid green **Start gratis** CTA buttons (both link to `app.letsdog.nl`).
 
 ## Deployment
 
@@ -132,5 +132,5 @@ This project uses the **compound-engineering** harness (`harness: compound-engin
 - Static export: no server-side features (no API routes, no SSR)
 - Images are unoptimized (required for static export)
 - The `asset()` helper in `lib/utils.ts` prepends the base path to image URLs
-- Hondenkeuze page embeds an iframe from `keuzehulp.letsdog.nl`
+- Rassenkeuze hulp page embeds an iframe from `keuzehulp.letsdog.nl` (renamed from "Hondenkeuze" 2026-05-29; old `/hondenkeuze/` URL 301-redirects via `public/_redirects`)
 - `public/_headers` and `public/_redirects` are Cloudflare-Pages-specific config files (copied to `out/` during build) — DO NOT use overlapping path patterns in `_headers`, Cloudflare MERGES headers when rules overlap and you'll get duplicated `Cache-Control` directives

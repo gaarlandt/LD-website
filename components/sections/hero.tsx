@@ -21,37 +21,37 @@ export function Hero() {
       </div>
 
       {/* Desktop: absolute right-half background */}
-      <div className="absolute inset-0 left-1/2 hidden lg:block">
+      <div className="absolute inset-0 left-[45%] hidden lg:block">
         <Image
           src={asset("/images/hero.jpeg")}
           alt="Twee vrouwen lachen met hun honden"
           fill
           priority
-          sizes="50vw"
+          sizes="55vw"
           className="object-cover object-center opacity-70"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#75876D] via-[#75876D]/30 to-transparent" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 w-full pt-6 pb-12 lg:pt-32 lg:pb-24">
-        <div className="max-w-xl">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 w-full pt-6 pb-12 lg:pt-40 lg:pb-32">
+        <div className="max-w-3xl">
           {/* Eyebrow */}
-          <p className="inline-flex items-center gap-2 text-sm font-medium text-white/80 mb-6 bg-white/10 rounded-full px-4 py-1.5 backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#DFF0C3] inline-block" />
-            Gecertificeerde hondengedragstherapeuten
+          <p className="flex items-center gap-3 text-sm md:text-base font-medium text-white/80 mb-10 uppercase tracking-widest">
+            <span className="h-px w-8 bg-white/60 inline-block" />
+            Welzijnsgerichte puppytraining
           </p>
 
           {/* H1 */}
-          <h1 className="font-heading font-bold text-4xl md:text-5xl lg:text-[3.5rem] text-white leading-[1.1] tracking-tight mb-6">
+          <h1 className="font-heading font-bold text-5xl md:text-7xl lg:text-[6rem] text-white leading-[1.02] tracking-tight mb-10">
             Jouw pup begrijpen.
             <br />
-            Samen groeien.
+            <span className="text-[#DFF0C3]">Samen groeien.</span>
           </h1>
 
           {/* Subtext — empathie eerst */}
-          <p className="text-lg text-white/85 leading-relaxed mb-8 max-w-md">
-            Nieuwe pup thuis. Blij. En totaal de kluts kwijt. Let&apos;s Dog geeft je een dagelijks plan, zodat jij weet wat je doet en je pup weet wat hij kan verwachten.
+          <p className="text-lg lg:text-2xl text-white/85 leading-relaxed mb-12 max-w-xl">
+            Nieuwe pup thuis. Blij, en totaal de kluts kwijt. Wij geven je een dagelijks plan, zodat jij weet wat je doet en je pup weet wat hij kan verwachten.
           </p>
 
           {/* CTA */}
@@ -60,12 +60,12 @@ export function Hero() {
               href="https://app.letsdog.nl"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center px-7 py-3.5 rounded-full bg-[#FFA580] text-[#141414] text-[16px] font-semibold hover:bg-[#ff9060] transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 cursor-pointer"
+              className="inline-flex items-center px-8 py-4 rounded-full bg-[#FFA580] text-[#141414] text-[17px] font-semibold hover:bg-[#ff9060] transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 cursor-pointer"
             >
               Maak een gratis account
             </a>
             <p className="text-sm text-white/60">
-              Gratis starten · Geen creditcard nodig
+              7 dagen proberen · opzegbaar in de app
             </p>
           </div>
 

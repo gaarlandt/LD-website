@@ -116,10 +116,12 @@ export function HowItWorks() {
             className="h-[42px] w-auto"
           />
         </button>
-        <button
-          onClick={() => setShowToast(true)}
-          className="opacity-70 hover:opacity-100 transition-opacity duration-200 cursor-pointer"
-          aria-label="Download in Google Play (binnenkort beschikbaar)"
+        <a
+          href="https://play.google.com/store/apps/details?id=nl.letsdog.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:opacity-80 transition-opacity duration-200 cursor-pointer"
+          aria-label="Download de Let's Dog app in Google Play"
         >
           <Image
             src={asset("/images/google-play-badge.png")}
@@ -128,7 +130,7 @@ export function HowItWorks() {
             height={46}
             className="h-[42px] w-auto"
           />
-        </button>
+        </a>
 
         {/* Toast */}
         <div
