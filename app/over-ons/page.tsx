@@ -111,7 +111,7 @@ export default function OverOns() {
           Klaar om te beginnen?
         </h2>
         <p className="text-white/60 text-lg mb-8 max-w-md mx-auto">
-          Maak een gratis account en start vandaag nog met de puppyagenda en videolessen.
+          Meld je aan en start vandaag nog met de puppyagenda en videolessen.
         </p>
         <a
           href="https://app.letsdog.nl"
@@ -119,7 +119,7 @@ export default function OverOns() {
           rel="noopener noreferrer"
           className="inline-flex items-center px-8 py-4 rounded-full bg-[#FFA580] text-[#141414] text-[16px] font-bold hover:bg-[#ff9060] transition-all duration-200 cursor-pointer"
         >
-          Maak een gratis account
+          Start vandaag
         </a>
       </SectionWrapper>
     </>

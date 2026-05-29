@@ -32,7 +32,7 @@ export function FinalCta() {
           Jij hoeft ook niet.
         </h2>
         <p className="text-white/65 text-lg leading-relaxed mb-10 max-w-md mx-auto">
-          Maak een gratis account en start direct. De puppyagenda, je eerste videoles en de community staan voor je klaar.
+          Meld je aan en start direct. De puppyagenda, je eerste videoles en de community staan voor je klaar.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -42,10 +42,10 @@ export function FinalCta() {
             rel="noopener noreferrer"
             className="inline-flex items-center px-8 py-4 rounded-full bg-[#FFA580] text-[#141414] text-[16px] font-bold hover:bg-[#ff9060] transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 cursor-pointer"
           >
-            Maak een gratis account
+            Start vandaag
           </a>
           <p className="text-white/40 text-sm">
-            7 dagen proberen · opzegbaar in de app
+            Opzegbaar in de app
           </p>
         </div>
 

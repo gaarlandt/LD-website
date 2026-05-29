@@ -1,15 +1,23 @@
 ---
 title: Retour- en annuleringsbeleid
-description: Hoe je een product retourneert of een aankoop annuleert bij Let's Dog. Termijnen, voorwaarden en het retourproces.
+description: Hoe je een product retourneert of een abonnement opzegt bij Let's Dog. Termijnen, voorwaarden en het retourproces.
 ---
 
 ## 1. Herroepingsrecht voor fysieke producten
 
 Klanten hebben 14 dagen bedenktijd na ontvangst van fysieke producten, mits deze ongebruikt en in originele staat blijven.
 
-## 2. Digitale producten
+## 2. Abonnementen (digitale toegang)
 
-Bij de aankoop van digitale cursussen vervalt het herroepingsrecht zodra de klant toegang krijgt tot de content.
+Let's Dog kent twee soorten abonnementen, met elk hun eigen voorwaarden:
+
+### Maandabonnement (Flexibel)
+
+Het maandabonnement is **niet restitueerbaar**. Er is geen proefperiode en geen bedenktijd: zodra de betaling is voltooid en je toegang krijgt tot de content, is het bedrag voor die maand definitief. Je kunt het abonnement op elk moment opzeggen via je accountinstellingen — de opzegging gaat in aan het einde van de lopende betaalperiode. Volgende maanden worden niet meer in rekening gebracht.
+
+### Jaarabonnement (Early Member en Jaar + Consult)
+
+Het jaarabonnement heeft een **proefperiode van 7 dagen**. Als je binnen 7 dagen na de start van je abonnement opzegt via je accountinstellingen, krijg je het volledige bedrag terug. Na deze 7 dagen vervalt het recht op restitutie en geldt het jaarabonnement voor de volledige looptijd. Aan het einde van de looptijd kun je opzeggen of laten doorlopen.
 
 ## 3. Retourprocedure
 
@@ -17,11 +25,15 @@ Neem contact op via support@letsdog.nl en start de retour binnen 14 dagen. De ko
 
 ## 4. Uitzonderingen
 
-Producten op maat, geopend diervoer en al bekeken digitale modules kunnen niet worden geretourneerd.
+Producten op maat en geopend diervoer kunnen niet worden geretourneerd. Voor digitale abonnementen gelden de regels uit sectie 2.
 
 ## 5. Terugbetaling
 
-Na goedkeuring wordt het volledige aankoopbedrag binnen 14 dagen teruggestort op de oorspronkelijke betaalmethode.
+**Jaarabonnement binnen 7 dagen**: opzeggen via accountinstellingen → het volledige aankoopbedrag wordt automatisch binnen 14 dagen teruggestort op de oorspronkelijke betaalmethode. Geen aparte aanvraag nodig.
+
+**Fysieke producten**: na goedkeuring van de retour wordt het volledige aankoopbedrag binnen 14 dagen teruggestort op de oorspronkelijke betaalmethode.
+
+**Maandabonnement**: niet restitueerbaar — zie sectie 2.
 
 ## 6. Klachtenprocedure
 

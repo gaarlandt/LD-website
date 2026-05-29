@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { asset } from "@/lib/utils";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { CheckCircle2, Video, BookOpen, Headphones, Users } from "lucide-react";
@@ -34,9 +35,13 @@ export function Hope() {
   return (
     <SectionWrapper className="bg-white" id="wat-je-krijgt">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-        {/* Left: image */}
-        <div className="relative order-2 lg:order-1">
-          <div className="relative rounded-2xl overflow-hidden aspect-[4/5]">
+        {/* Left: image — clickable link to puppyagenda page */}
+        <Link
+          href="/puppyagenda"
+          aria-label="Bekijk de puppyagenda"
+          className="relative order-2 lg:order-1 block group cursor-pointer"
+        >
+          <div className="relative rounded-2xl overflow-hidden aspect-[4/5] transition-transform duration-300 group-hover:scale-[1.01]">
             <Image
               src={asset("/images/hope.jpeg")}
               alt="Hondeneigenaar geniet thuis met zijn hond"
@@ -46,13 +51,13 @@ export function Hope() {
             />
           </div>
           {/* Floating badge */}
-          <div className="absolute -bottom-5 right-4 lg:-right-5 bg-[#DFF0C3] rounded-2xl p-4 lg:p-5 shadow-lg max-w-[180px] lg:max-w-[200px]">
+          <div className="absolute -bottom-5 right-4 lg:-right-5 bg-[#DFF0C3] rounded-2xl p-4 lg:p-5 shadow-lg max-w-[180px] lg:max-w-[200px] transition-shadow duration-300 group-hover:shadow-xl">
             <BookOpen size={20} className="text-[#75876D] mb-2" strokeWidth={1.75} />
             <p className="text-sm font-semibold text-[#141414] leading-snug">
               Puppyagenda voor elke week
             </p>
           </div>
-        </div>
+        </Link>
 
         {/* Right: outcomes */}
         <div className="order-1 lg:order-2">
@@ -91,7 +96,7 @@ export function Hope() {
               rel="noopener noreferrer"
               className="inline-flex items-center px-7 py-3.5 rounded-full bg-[#75876D] text-white text-[16px] font-semibold hover:bg-[#65775D] transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
             >
-              Maak een gratis account
+              Start vandaag
             </a>
           </div>
         </div>

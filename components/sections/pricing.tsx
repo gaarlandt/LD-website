@@ -22,7 +22,7 @@ const tiers: Tier[] = [
     key: "flex",
     name: "Flexibel",
     cornerBadge: "Flexibel",
-    description: "Maandelijks opzegbaar — eerst proeven, geen verplichting.",
+    description: "Maandelijks opzegbaar — geen jaarcontract, geen verplichting.",
     priceMain: "€12,99",
     priceUnit: "/maand",
     priceSub: "",
@@ -32,9 +32,9 @@ const tiers: Tier[] = [
       "Let's Dog Community",
     ],
     ctaLabel: "Start Maandelijks",
-    ctaHref: "https://app.letsdog.nl",
+    ctaHref: "https://maartend8.sg-host.com/checkout/?add-to-cart=1978&quantity=1",
     ctaStyle: "neutral",
-    footerNote: "Maandelijks opzegbaar",
+    footerNote: "Geen geld-terug-garantie · opzegbaar per maand",
   },
   {
     key: "early",
@@ -53,7 +53,7 @@ const tiers: Tier[] = [
     ctaLabel: "Claim Early Member Prijs",
     ctaHref: "https://maartend8.sg-host.com/checkout/?add-to-cart=592&quantity=1",
     ctaStyle: "peach",
-    footerNote: "Eerste jaar €59 · daarna €99",
+    footerNote: "7 dagen geld-terug-garantie · eerste jaar €59",
     highlighted: true,
     topBadge: "Meest gekozen",
   },
@@ -75,14 +75,14 @@ const tiers: Tier[] = [
     ctaLabel: "Kies Jaar + Consult",
     ctaHref: "https://app.letsdog.nl",
     ctaStyle: "dark",
-    footerNote: "Totale waarde €138",
+    footerNote: "7 dagen geld-terug-garantie · totale waarde €138",
   },
 ];
 
 const trustItems = [
   { icon: Shield, label: "Veilig betalen via Mollie" },
   { icon: Wallet, label: "Geen verborgen kosten" },
-  { icon: RefreshCw, label: "Opzegbaar wanneer je wilt" },
+  { icon: RefreshCw, label: "Opzegbaar in accountinstellingen" },
 ];
 
 function PricingCard({ tier }: { tier: Tier }) {

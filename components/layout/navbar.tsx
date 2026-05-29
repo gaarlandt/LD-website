@@ -83,7 +83,7 @@ export function Navbar() {
             rel="noopener noreferrer"
             className="inline-flex items-center px-5 py-2.5 rounded-full bg-[#75876D] text-white text-[15px] font-medium hover:bg-[#65775D] transition-colors duration-200 cursor-pointer"
           >
-            Start gratis
+            Start vandaag
           </a>
         </div>
 
@@ -133,7 +133,7 @@ export function Navbar() {
               rel="noopener noreferrer"
               className="block w-full text-center px-5 py-3 rounded-full bg-[#75876D] text-white font-medium text-[16px] hover:bg-[#65775D] transition-colors duration-200 cursor-pointer"
             >
-              Start gratis
+              Start vandaag
             </a>
           </div>
         </div>

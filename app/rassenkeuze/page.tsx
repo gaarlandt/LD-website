@@ -88,7 +88,7 @@ export default function Rassenkeuze() {
           Klaar om te beginnen?
         </h2>
         <p className="text-white/60 text-lg mb-8 max-w-md mx-auto">
-          Maak een gratis account en begin met je puppytraining — inclusief dagelijkse agenda en videolessen.
+          Meld je aan en begin met je puppytraining — inclusief dagelijkse agenda en videolessen.
         </p>
         <a
           href="https://app.letsdog.nl"
@@ -96,7 +96,7 @@ export default function Rassenkeuze() {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-[#FFA580] text-[#141414] text-[16px] font-bold hover:bg-[#ff9060] transition-all duration-200 cursor-pointer"
         >
-          Maak een gratis account
+          Start vandaag
           <ExternalLink size={16} strokeWidth={2} />
         </a>
       </SectionWrapper>

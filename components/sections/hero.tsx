@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { asset } from "@/lib/utils";
 
 export function Hero() {
@@ -56,16 +57,14 @@ export function Hero() {
 
           {/* CTA */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <a
-              href="https://app.letsdog.nl"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/prijzen"
               className="inline-flex items-center px-8 py-4 rounded-full bg-[#FFA580] text-[#141414] text-[17px] font-semibold hover:bg-[#ff9060] transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 cursor-pointer"
             >
-              Maak een gratis account
-            </a>
+              Start vandaag
+            </Link>
             <p className="text-sm text-white/60">
-              7 dagen proberen · opzegbaar in de app
+              Opzegbaar in de app
             </p>
           </div>
 
