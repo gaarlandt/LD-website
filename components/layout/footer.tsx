@@ -5,8 +5,8 @@ import { asset } from "@/lib/utils";
 export function Footer() {
   return (
     <footer className="bg-[#141414] text-white/70 mt-0">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 lg:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-16 mb-12">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10 lg:py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 mb-8">
           {/* Brand */}
           <div>
             <Image
@@ -14,22 +14,22 @@ export function Footer() {
               alt="Let's Dog"
               width={120}
               height={35}
-              className="h-8 w-auto mb-3"
+              className="h-7 w-auto mb-3"
             />
             <p className="text-sm leading-relaxed text-white/60 max-w-xs">
               Puppytraining die werkt. Gebouwd door gecertificeerde hondengedragstherapeuten.
             </p>
           </div>
 
-          {/* Links */}
+          {/* Links — two columns */}
           <div>
             <p className="text-sm font-semibold text-white/90 mb-4 uppercase tracking-wider">
               Navigatie
             </p>
-            <ul className="space-y-2.5" role="list">
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-2.5" role="list">
               {[
                 { href: "/", label: "Homepage" },
-                { href: "/hondenkeuze", label: "Hondenkeuze" },
+                { href: "/rassenkeuze", label: "Rassenkeuze hulp" },
                 { href: "/puppyagenda", label: "Puppyagenda" },
                 { href: "/prijzen", label: "Prijzen" },
                 { href: "/over-ons", label: "Over ons" },
@@ -47,28 +47,10 @@ export function Footer() {
               ))}
             </ul>
           </div>
-
-          {/* CTA */}
-          <div>
-            <p className="text-sm font-semibold text-white/90 mb-4 uppercase tracking-wider">
-              Begin nu
-            </p>
-            <p className="text-sm text-white/60 mb-5 leading-relaxed">
-              Maak een gratis account aan en begin vandaag nog.
-            </p>
-            <a
-              href="https://app.letsdog.nl"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center px-5 py-2.5 rounded-full bg-[#FFA580] text-[#141414] text-sm font-semibold hover:bg-[#ff9060] transition-colors duration-200 cursor-pointer"
-            >
-              Maak een gratis account
-            </a>
-          </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <p className="text-xs text-white/40">
             © {new Date().getFullYear()} Let&apos;s Dog. Alle rechten voorbehouden.
           </p>

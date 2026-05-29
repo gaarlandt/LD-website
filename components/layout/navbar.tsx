@@ -7,7 +7,7 @@ import { asset } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
 
 const links = [
-  { href: "/hondenkeuze", label: "Hondenkeuze" },
+  { href: "/rassenkeuze", label: "Rassenkeuze hulp" },
   { href: "/puppyagenda", label: "Puppyagenda" },
   { href: "/prijzen", label: "Prijzen" },
   { href: "/over-ons", label: "Over ons" },
@@ -67,15 +67,25 @@ export function Navbar() {
           ))}
         </ul>
 
-        {/* Desktop CTA */}
-        <a
-          href="https://app.letsdog.nl"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hidden md:inline-flex items-center px-5 py-2.5 rounded-full bg-[#75876D] text-white text-[15px] font-medium hover:bg-[#65775D] transition-colors duration-200 cursor-pointer"
-        >
-          Start gratis
-        </a>
+        {/* Desktop CTAs */}
+        <div className="hidden md:flex items-center gap-3">
+          <a
+            href="https://app.letsdog.nl"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center px-5 py-2.5 rounded-full border border-[#141414]/30 bg-white/40 backdrop-blur-sm text-[#141414] text-[15px] font-medium hover:bg-white hover:border-[#141414] transition-colors duration-200 cursor-pointer"
+          >
+            Inloggen
+          </a>
+          <a
+            href="https://app.letsdog.nl"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center px-5 py-2.5 rounded-full bg-[#75876D] text-white text-[15px] font-medium hover:bg-[#65775D] transition-colors duration-200 cursor-pointer"
+          >
+            Start gratis
+          </a>
+        </div>
 
         {/* Mobile menu button */}
         <button
@@ -108,14 +118,24 @@ export function Navbar() {
               </li>
             ))}
           </ul>
-          <a
-            href="https://app.letsdog.nl"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full text-center px-5 py-3 rounded-full bg-[#75876D] text-white font-medium text-[16px] hover:bg-[#65775D] transition-colors duration-200 cursor-pointer"
-          >
-            Start gratis
-          </a>
+          <div className="flex flex-col gap-3">
+            <a
+              href="https://app.letsdog.nl"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center px-5 py-3 rounded-full border border-[#141414]/30 bg-white text-[#141414] font-medium text-[16px] hover:border-[#141414] transition-colors duration-200 cursor-pointer"
+            >
+              Inloggen
+            </a>
+            <a
+              href="https://app.letsdog.nl"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center px-5 py-3 rounded-full bg-[#75876D] text-white font-medium text-[16px] hover:bg-[#65775D] transition-colors duration-200 cursor-pointer"
+            >
+              Start gratis
+            </a>
+          </div>
         </div>
       )}
     </header>

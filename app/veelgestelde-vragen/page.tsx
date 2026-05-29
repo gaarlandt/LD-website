@@ -43,8 +43,8 @@ const categories = [
     name: "Abonnement & betaling",
     faqs: [
       {
-        q: "Wat kost het volledige abonnement?",
-        a: "Tijdens de launch: €59/jaar incl. btw. Normaal is dit €99/jaar. Betaling verloopt via Mollie.",
+        q: "Wat kost het abonnement?",
+        a: "Drie smaken: Flexibel €12,99/maand (maandelijks opzegbaar), Early Member €59/eerste jaar (daarna €99 — onze launch-prijs), of Jaar + Consult €79/eerste jaar inclusief een 1-op-1 online consult. Betaling verloopt via Mollie.",
       },
       {
         q: "Kan ik opzeggen wanneer ik wil?",

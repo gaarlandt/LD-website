@@ -45,7 +45,7 @@ export function FinalCta() {
             Maak een gratis account
           </a>
           <p className="text-white/40 text-sm">
-            Gratis starten · Geen creditcard
+            7 dagen proberen · opzegbaar in de app
           </p>
         </div>
 
