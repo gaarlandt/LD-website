@@ -2,7 +2,9 @@ import { pageMetadata } from "@/lib/seo";
 import Image from "next/image";
 import { asset } from "@/lib/utils";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
-import { Pricing } from "@/components/sections/pricing";
+import { JsonLd } from "@/components/shared/json-ld";
+import { productLd } from "@/lib/structured-data";
+import { Pricing, tiers } from "@/components/sections/pricing";
 
 export const metadata = pageMetadata({
   title: "Prijzen — Let's Dog",
@@ -38,6 +40,7 @@ const faqs = [
 export default function Prijzen() {
   return (
     <>
+      <JsonLd data={productLd(tiers)} />
       {/* Upper hero — beige */}
       <section className="relative bg-[#EFE8E4] pt-32 pb-20 lg:pb-24 px-6 lg:px-8 overflow-hidden">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">

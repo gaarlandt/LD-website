@@ -2,6 +2,8 @@ import { pageMetadata } from "@/lib/seo";
 import Image from "next/image";
 import { asset } from "@/lib/utils";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
+import { JsonLd } from "@/components/shared/json-ld";
+import { personLd } from "@/lib/structured-data";
 import { CheckCircle2, Award } from "lucide-react";
 
 export const metadata = pageMetadata({
@@ -26,6 +28,7 @@ const certs = [
 export default function OverOns() {
   return (
     <>
+      <JsonLd data={personLd()} />
       {/* Hero */}
       <div className="bg-[#75876D] pt-32 pb-14 min-h-[220px] flex items-end px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">

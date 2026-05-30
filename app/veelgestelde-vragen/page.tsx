@@ -1,5 +1,8 @@
 import { pageMetadata } from "@/lib/seo";
+import { JsonLd } from "@/components/shared/json-ld";
+import { faqPageLd } from "@/lib/structured-data";
 import { FaqContent } from "./faq-content";
+import { faqCategories } from "./faq-data";
 
 export const metadata = pageMetadata({
   title: "Veelgestelde vragen — Let's Dog",
@@ -9,5 +12,10 @@ export const metadata = pageMetadata({
 });
 
 export default function Page() {
-  return <FaqContent />;
+  return (
+    <>
+      <JsonLd data={faqPageLd(faqCategories)} />
+      <FaqContent />
+    </>
+  );
 }

@@ -1,6 +1,6 @@
 import { Check, Shield, Wallet, RefreshCw, Star } from "lucide-react";
 
-type Tier = {
+export type Tier = {
   key: "flex" | "early" | "consult";
   name: string;
   cornerBadge: string;
@@ -17,7 +17,7 @@ type Tier = {
   topBadge?: string;
 };
 
-const tiers: Tier[] = [
+export const tiers: Tier[] = [
   {
     key: "flex",
     name: "Flexibel",
