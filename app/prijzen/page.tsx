@@ -1,6 +1,5 @@
 import { pageMetadata } from "@/lib/seo";
-import Image from "next/image";
-import { asset } from "@/lib/utils";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { JsonLd } from "@/components/shared/json-ld";
 import { productLd } from "@/lib/structured-data";
@@ -77,8 +76,8 @@ export default function Prijzen() {
           {/* Image column */}
           <div className="relative">
             <div className="relative rounded-3xl overflow-hidden aspect-[4/5] lg:aspect-[5/6] bg-[#E8DDD6]">
-              <Image
-                src={asset("/images/hero.jpeg")}
+              <OptimizedImage
+                src="/images/hero.jpeg"
                 alt="Eigenaar met haar puppy"
                 fill
                 priority

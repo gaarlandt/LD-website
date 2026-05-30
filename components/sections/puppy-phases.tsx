@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
-import { asset } from "@/lib/utils";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 import { CheckSquare } from "lucide-react";
 
 const phases = [
   {
     phase: "Vóór de komst",
     weeks: "Week −4 t/m −1",
-    image: asset("/images/puppy-harness.jpeg"),
+    image: "/images/puppy-harness.jpeg",
     items: [
       "Wat heb je nodig? De complete boodschappenlijst",
       "Hoe bereid je je huis voor?",
@@ -20,7 +19,7 @@ const phases = [
   {
     phase: "De eerste weken",
     weeks: "Week 1 t/m 4",
-    image: asset("/images/training.jpeg"),
+    image: "/images/training.jpeg",
     items: [
       "Socialisatie: wat, wanneer en hoe",
       "Slaaptraining stap voor stap",
@@ -32,7 +31,7 @@ const phases = [
   {
     phase: "Groei en grenzen",
     weeks: "Week 5 t/m 12",
-    image: asset("/images/beagle.jpeg"),
+    image: "/images/beagle.jpeg",
     items: [
       "Puberteit: wat verandert er?",
       "Loslaten en vertrouwen opbouwen",
@@ -110,7 +109,7 @@ export function PuppyPhases() {
 
             {/* Mobile: show image inline below each phase */}
             <div className="lg:hidden mt-4 rounded-2xl overflow-hidden aspect-[4/3] relative">
-              <Image
+              <OptimizedImage
                 src={image}
                 alt={`${phase} — afbeelding`}
                 fill
@@ -127,7 +126,7 @@ export function PuppyPhases() {
         <div className="sticky top-28">
           <div className="rounded-2xl overflow-hidden aspect-[3/4] relative">
             {phases.map(({ phase, image }, i) => (
-              <Image
+              <OptimizedImage
                 key={phase}
                 src={image}
                 alt={`${phase} — afbeelding`}

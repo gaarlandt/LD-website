@@ -1,6 +1,5 @@
 import { pageMetadata } from "@/lib/seo";
-import Image from "next/image";
-import { asset } from "@/lib/utils";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { ArrowRight, ExternalLink } from "lucide-react";
 
@@ -46,8 +45,8 @@ export default function Rassenkeuze() {
           </div>
 
           <div className="relative rounded-2xl overflow-hidden aspect-[4/3]">
-            <Image
-              src={asset("/images/puppy-harness.jpeg")}
+            <OptimizedImage
+              src="/images/puppy-harness.jpeg"
               alt="Puppy met tuigje — klaar voor een nieuw avontuur"
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"

@@ -4,6 +4,7 @@ import { asset } from "@/lib/utils";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { JsonLd } from "@/components/shared/json-ld";
 import { personLd } from "@/lib/structured-data";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 import { CheckCircle2, Award } from "lucide-react";
 
 export const metadata = pageMetadata({
@@ -43,8 +44,8 @@ export default function OverOns() {
       <SectionWrapper className="bg-white">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           <div className="relative rounded-2xl overflow-hidden aspect-[3/4]">
-            <Image
-              src={asset("/images/elien.jpeg")}
+            <OptimizedImage
+              src="/images/elien.jpeg"
               alt="Elien met een puppy"
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"

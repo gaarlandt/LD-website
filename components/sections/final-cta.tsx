@@ -1,5 +1,4 @@
-import Image from "next/image";
-import { asset } from "@/lib/utils";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 
 export function FinalCta() {
   return (
@@ -9,13 +8,13 @@ export function FinalCta() {
     >
       {/* Background image */}
       <div className="absolute inset-0 opacity-20">
-        <Image
-          src={asset("/images/kid-dog.jpeg")}
+        <OptimizedImage
+          src="/images/kid-dog.jpeg"
           alt=""
           fill
           sizes="100vw"
           className="object-cover object-center"
-          aria-hidden="true"
+          ariaHidden
         />
       </div>
 

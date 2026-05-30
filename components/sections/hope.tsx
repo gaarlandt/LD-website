@@ -1,6 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
-import { asset } from "@/lib/utils";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { CheckCircle2, Video, BookOpen, Headphones, Users } from "lucide-react";
 
@@ -42,8 +41,8 @@ export function Hope() {
           className="relative order-2 lg:order-1 block group cursor-pointer"
         >
           <div className="relative rounded-2xl overflow-hidden aspect-[4/5] transition-transform duration-300 group-hover:scale-[1.01]">
-            <Image
-              src={asset("/images/hope.jpeg")}
+            <OptimizedImage
+              src="/images/hope.jpeg"
               alt="Hondeneigenaar geniet thuis met zijn hond"
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"

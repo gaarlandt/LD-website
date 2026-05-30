@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import { asset } from "@/lib/utils";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { Send, CheckCircle2, Mail, Phone, ExternalLink } from "lucide-react";
 
@@ -72,8 +71,8 @@ export function ContactContent() {
           </div>
 
           <div className="relative rounded-2xl overflow-hidden aspect-[4/3]">
-            <Image
-              src={asset("/images/problem.jpeg")}
+            <OptimizedImage
+              src="/images/problem.jpeg"
               alt="Hond met eigenaar — persoonlijk consult"
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
