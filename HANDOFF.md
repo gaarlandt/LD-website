@@ -2,7 +2,7 @@
 
 **Purpose**: this file lets a fresh Claude session (or a human picking up the project) get fully oriented in <5 minutes without re-asking what's been done. Read me first whenever you start work here.
 
-**Last session ended**: 2026-05-29. Pricing refresh + UX sweep shipped: 3-tier pricing model (Flexibel €12,99/mo, Early Member €59/€99, Jaar + Consult €79/€119) replaced the old free-vs-paid split; all "Geen creditcard" copy swept to "7 dagen proberen · opzegbaar in de app"; Navbar got an Inloggen button next to Start gratis; Play Store badge now links to the real app; hero scaled up; Hondenkeuze renamed to "Rassenkeuze hulp" (path `/rassenkeuze/`, 10 questions); soft blue `#6E8FB8` added to the brand palette for sparing use. Previous session (2026-05-28) landed: CE harness fully wired + markdown content refactor for the 5 legal pages. DNS cutover to `www.letsdog.nl` still deferred.
+**Last session ended**: 2026-05-30. **Website spec-compliance planning** — audited the new site *and* the live old WordPress site (`letsdog.nl`) against The Website Specification (specification.website, now installed as a `specification-website` skill + MCP server); wrote the build plan at `docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md`, locked all owner decisions, and produced a stakeholder old-vs-new comparison (`docs/2026-05-30-current-vs-new-site-spec-audit.{md,html}`) for the Maarten conversation. **No code shipped — the plan is ready to build via `/new-feature` (see First action below).** Previous session (2026-05-29): Pricing refresh + UX sweep shipped: 3-tier pricing model (Flexibel €12,99/mo, Early Member €59/€99, Jaar + Consult €79/€119) replaced the old free-vs-paid split; all "Geen creditcard" copy swept to "7 dagen proberen · opzegbaar in de app"; Navbar got an Inloggen button next to Start gratis; Play Store badge now links to the real app; hero scaled up; Hondenkeuze renamed to "Rassenkeuze hulp" (path `/rassenkeuze/`, 10 questions); soft blue `#6E8FB8` added to the brand palette for sparing use. Previous session (2026-05-28) landed: CE harness fully wired + markdown content refactor for the 5 legal pages. DNS cutover to `www.letsdog.nl` still deferred.
 
 ---
 
@@ -12,13 +12,31 @@ Marketing site built with Next.js 16 static export, deployed on Cloudflare Pages
 
 The 5 legal pages now read their copy from `content/<slug>.md` (gray-matter + react-markdown + remark-gfm) — Jur can edit prose without touching TSX. Marketing/homepage stays TSX; re-evaluate after a month.
 
-Next priority: ongoing website tweaks. Jur drives each tweak; you implement.
+Next priority: **build the website spec-compliance plan** (`docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md`) via `/new-feature` — see First action below. Jur drives sequencing; you implement.
 
-## ⚡ First action for the new session
+## ⚡ First action for the new session — build the spec-compliance plan
 
-**Run `/ce-setup` before anything else.** The Compound Engineering harness was enabled for this project on 2026-05-28 (`harness: compound-engineering` in `~/.claude/skills/new-feature/project-ci-rules.md`, decision matrix documented in CLAUDE.md's "Workflow harness" section). The repo doesn't yet have `.compound-engineering/config.local.yaml` — `/ce-setup` bootstraps it interactively and adds the `.gitignore` entry. Takes <1 minute.
+**Source of truth → read it first:** [`docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md`](docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md). It's the **actual build plan** (work to do): Phases A–G, units U1–U15, a per-page on-page-SEO spec, risks, and verification. Owner decisions are locked in its "Decisions locked (2026-05-30 review)" section — **do not re-litigate them.**
 
-After that, you can use `/ce-brainstorm` / `/ce-plan` / `/ce-work` / `/ce-debug` / `/ce-code-review` / `/ce-compound` alongside `/new-feature`. See CLAUDE.md for which to pick when.
+**Not a build artifact:** `docs/2026-05-30-current-vs-new-site-spec-audit.{md,html}` is a stakeholder old-vs-new comparison (new site shown in its complete state) for the **Maarten** conversation. Don't confuse it with the plan.
+
+**How to build:** `/new-feature` per unit/batch — branch → implement → verify on the Cloudflare **preview** URL → PR → merge. Owner approved building; this is execution, not re-planning.
+
+**Suggested first PR batch — U1, U2, U15, U14:**
+- **U1** — fix the broken `/algemene-voorwaarden/` footer link (404 sitewide) in `components/layout/footer.tsx`.
+- **U2** — `metadataBase = https://letsdog.nl` (apex) + per-page **self-referencing** canonical + per-page `og:url` (fixes "og:url = homepage on every page") + unique title/description for `/contact/` and `/veelgestelde-vragen/` (split a thin server `page.tsx` from the client component).
+- **U15** — delete `app/card-styles/` entirely (live, crawlable design demo).
+- **U14** — add TikTok `https://www.tiktok.com/@letsdogworld6` + Instagram `https://www.instagram.com/letsdogworld/` to the footer **and** the `Organization` JSON-LD `sameAs`.
+
+Then **Phase B** (robots.ts, sitemap.ts, JSON-LD, og:image), **Phase C** (all security headers + security.txt), then D (favicons/manifest/theme-color + Dutch 404), E (images route B + a11y verify), F (llms.txt + link headers), G (CUTOVER.md update).
+
+**Locked decisions (recap):** canonical host = apex `letsdog.nl` (`www`→apex 301 via a Cloudflare Redirect Rule **at cutover**, not in code); security headers = add **all** in `public/_headers` (HSTS basic, `frame-ancestors`, Permissions-Policy, security.txt; keep Cloudflare's `nosniff` + `referrer-policy`); CSP = `frame-ancestors` only (full content-CSP **de-scoped**); image optimization = **route B** (build-time AVIF/WebP, in-repo `sharp`/export-optimizer); cookie-consent = **keep as-is** (no gating); agent-readiness = **include**.
+
+**Apply as docs during the work:** the two `CLAUDE.md` conventions in the plan's "Proposed CLAUDE.md additions" (image-optimization guardrail + post-cutover checklist discipline), and tick `docs/CUTOVER.md`'s post-cutover checklist after each PR.
+
+**Constraints:** static export (no SSR/API); **preview-first** (verify on `<branch>.website-letsdog.pages.dev` before merge); don't touch DNS/cutover; bake the apex `https://letsdog.nl` into absolute URLs; **no test suite** — verify via `npm run build` + `curl` + Lighthouse + axe + the spec MCP (`audit_url` / `get_checklist`). The `specification-website` skill + MCP are installed for re-auditing.
+
+**Housekeeping:** if `.compound-engineering/config.local.yaml` still doesn't exist, run `/ce-setup` once (<1 min). The CE skills (`/ce-work` etc.) are available alongside `/new-feature` — see CLAUDE.md for which to pick when.
 
 ---
 
