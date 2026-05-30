@@ -1,14 +1,15 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Image from "next/image";
 import { asset } from "@/lib/utils";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { Pricing } from "@/components/sections/pricing";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Prijzen — Let's Dog",
   description:
     "Drie manieren om te starten met Let's Dog: Flexibel maandelijks, Early Member jaar, of Jaar + Consult. Vanaf €4,92 per maand. Betalen via Mollie.",
-};
+  path: "/prijzen/",
+});
 
 const heroPills = [
   "Welzijnsgericht",

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_URL, OG_IMAGE } from "@/lib/seo";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
@@ -16,18 +17,29 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
+  // Canonical host = apex letsdog.nl. metadataBase makes every relative
+  // canonical / og:url resolve to an absolute apex URL. (www → apex 301
+  // is a Cloudflare Redirect Rule added at cutover, not in code.)
+  metadataBase: new URL(SITE_URL),
   title: "Let's Dog — Puppytraining die werkt",
   description:
     "Nieuwe pup thuis en totaal de kluts kwijt? Let's Dog geeft je een dagelijks plan, videolessen van gecertificeerde trainers en een community die je begrijpt.",
   keywords: ["puppytraining", "hondentraining", "puppy opvoeding", "hond training", "puppycursus"],
+  // Fallback OG/Twitter block. Real pages set their own complete openGraph
+  // (incl. a self-referential og:url) via lib/seo.ts → pageMetadata(); this
+  // only applies to routes without their own metadata export (e.g. 404).
   openGraph: {
     title: "Let's Dog — Puppytraining die werkt",
     description:
-      "Jouw pup begrijpen. Samen groeien. Videolessen, puppyagenda en community voor €59/jaar.",
-    url: "https://www.letsdog.nl",
+      "Jouw pup begrijpen. Samen groeien. Videolessen, puppyagenda en community.",
     siteName: "Let's Dog",
     locale: "nl_NL",
     type: "website",
+    images: [OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: [OG_IMAGE.url],
   },
 };
 

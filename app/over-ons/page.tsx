@@ -1,14 +1,15 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Image from "next/image";
 import { asset } from "@/lib/utils";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { CheckCircle2, Award } from "lucide-react";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Over ons — Let's Dog",
   description:
     "Leer Elien kennen — gecertificeerde hondengedragstherapeut en oprichtster van Let's Dog. Welzijnsgericht, wetenschappelijk onderbouwd.",
-};
+  path: "/over-ons/",
+});
 
 const values = [
   "Geen fysieke correcties — nooit",

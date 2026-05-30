@@ -1,15 +1,16 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Image from "next/image";
 import { asset } from "@/lib/utils";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { Calendar, Video, BookOpen, CheckSquare } from "lucide-react";
 import { PuppyPhases } from "@/components/sections/puppy-phases";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Puppyagenda — Let's Dog",
   description:
     "Alles wat je moet doen, lezen en bekijken voor en tijdens de puppyfase. Gestructureerd week voor week.",
-};
+  path: "/puppyagenda/",
+});
 
 const features = [
   { icon: Calendar, text: "Week-voor-week structuur" },
