@@ -104,3 +104,14 @@ h1, h2, h3, h4, h5, h6 {
     scroll-behavior: auto;
   }
 }
+
+/* Visible keyboard-focus indicator on every interactive element. Using
+   currentColor ties the ring to the element's own text colour — which is
+   already chosen to contrast with its background — so it stays visible on
+   beige, white, brand-green and the dark footer alike. Only shows for
+   keyboard focus (:focus-visible), so mouse clicks stay ring-free. */
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 2px;
+}

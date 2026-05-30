@@ -65,7 +65,7 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-white/60 hover:text-white transition-colors duration-200"
+                    className="inline-block py-1 text-sm text-white/60 hover:text-white transition-colors duration-200"
                   >
                     {link.label}
                   </Link>
@@ -83,7 +83,7 @@ export function Footer() {
           <div className="flex items-center gap-6 flex-wrap">
             <Link
               href="/privacybeleid"
-              className="text-xs text-white/40 hover:text-white/70 transition-colors duration-200"
+              className="inline-block py-1.5 text-xs text-white/60 hover:text-white transition-colors duration-200"
             >
               Privacybeleid
             </Link>
@@ -91,25 +91,25 @@ export function Footer() {
               href="https://app.letsdog.nl/algemene-voorwaarden/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-white/40 hover:text-white/70 transition-colors duration-200"
+              className="inline-block py-1.5 text-xs text-white/60 hover:text-white transition-colors duration-200"
             >
               Algemene voorwaarden
             </a>
             <Link
               href="/ai-gebruiksvoorwaarden"
-              className="text-xs text-white/40 hover:text-white/70 transition-colors duration-200"
+              className="inline-block py-1.5 text-xs text-white/60 hover:text-white transition-colors duration-200"
             >
               AI-gebruiksvoorwaarden
             </Link>
             <Link
               href="/cookieverklaring"
-              className="text-xs text-white/40 hover:text-white/70 transition-colors duration-200"
+              className="inline-block py-1.5 text-xs text-white/60 hover:text-white transition-colors duration-200"
             >
               Cookieverklaring
             </Link>
             <Link
               href="/retour"
-              className="text-xs text-white/40 hover:text-white/70 transition-colors duration-200"
+              className="inline-block py-1.5 text-xs text-white/60 hover:text-white transition-colors duration-200"
             >
               Retour
             </Link>
