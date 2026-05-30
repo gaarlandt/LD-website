@@ -10,15 +10,18 @@ Marketing website for Let's Dog, a puppy training platform. Built as a static Ne
 - **Animations**: Framer Motion
 - **Icons**: Lucide React + inline SVGs (WhatsApp, TikTok)
 - **Fonts**: National2 (headings, local OTF), DM Sans (body, Google Fonts)
+- **Images**: photographic JPEGs served as AVIF/WebP via the `OptimizedImage` `<picture>` component; variants generated at build-time by `sharp` ^0.34 (`scripts/optimize-images.mjs`) — see "On-page SEO, metadata & spec compliance" below
 - **Content (legal pages)**: Markdown via `gray-matter` ^4 + `react-markdown` ^10 + `remark-gfm` ^4 — see "Markdown-driven legal pages" below
 - **Analytics**: GA4 (`G-0FCGXJHMMY`, fires immediately) + Cookiebot banner (display-only, does not gate tracking)
 - **Deployment**: Cloudflare Pages (project: `website-letsdog`, production URL: `website-letsdog.pages.dev`, custom domains flip in at cutover)
 
 ## Key Commands
 ```bash
-npm run dev       # Start dev server (Turbopack)
-npm run build     # Static export to ./out
-npm run lint      # ESLint
+npm run dev             # Start dev server (Turbopack)
+npm run build           # Static export to ./out
+npm run lint            # ESLint (no config committed yet — pre-existing, don't block on it)
+npm run optimize:images # Regenerate AVIF/WebP variants after adding/changing a photo
+npm run assets          # optimize:images + regenerate favicons + og image
 ```
 
 ## Dev Server / Preview
@@ -34,7 +37,12 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 ├── app/                    # Next.js App Router pages
 │   ├── layout.tsx          # Root layout (navbar, footer, WhatsApp, analytics)
 │   ├── page.tsx            # Homepage
-│   ├── icon.svg            # Favicon (Next auto-wires to <link rel="icon">)
+│   ├── icon.svg            # SVG favicon (wordmark; Next auto-wires <link rel="icon">)
+│   ├── apple-icon.png      # apple-touch-icon (square brand mark; Next auto-wires)
+│   ├── manifest.ts         # PWA web app manifest → /manifest.webmanifest
+│   ├── robots.ts           # /robots.txt (Allow + Sitemap)
+│   ├── sitemap.ts          # /sitemap.xml (canonical apex URLs)
+│   ├── not-found.tsx       # Branded Dutch 404
 │   ├── contact/            # Contact page
 │   ├── rassenkeuze/        # Rassenkeuze hulp — breed selector quiz (iframe to keuzehulp.letsdog.nl)
 │   ├── over-ons/           # About page
@@ -49,14 +57,17 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 ├── components/
 │   ├── layout/             # Navbar, Footer
 │   ├── sections/           # Homepage sections (hero, problem, hope, etc.)
-│   ├── shared/             # Reusable (WhatsApp button, reveal, section-wrapper)
+│   ├── shared/             # Reusable (WhatsApp, reveal, section-wrapper, JsonLd, OptimizedImage, legal layout)
 │   └── analytics/          # Cookiebot, GA4, CTATracker
 ├── content/                # Markdown source for the 5 legal pages (privacybeleid, ai-gebruiksvoorwaarden, cookieverklaring, retour, ip-overdrachtsverklaring). Edit these to change copy without touching TSX.
 ├── lib/
 │   ├── utils.ts            # Asset path helper
+│   ├── seo.ts              # SITE_URL/SITE_NAME + pageMetadata() (per-page canonical/og/twitter)
+│   ├── structured-data.ts  # JSON-LD builders (Organization, WebSite, FAQPage, Product, Person)
 │   ├── content.ts          # loadLegalContent(slug) — reads content/<slug>.md at build time via gray-matter
 │   └── analytics.ts        # trackEvent helper + window.gtag types
-├── public/                 # Static assets (images, fonts, _headers, _redirects)
+├── public/                 # Static assets (images, fonts, _headers, _redirects, llms.txt, .well-known/security.txt, og/, images/optimized/)
+├── scripts/                # Build-time asset generators (optimize-images, generate-icons, generate-og-image) — sharp
 ├── docs/                   # Documentation
 │   ├── CUTOVER.md          # DNS cutover runbook
 │   └── solutions/          # /ce-compound learnings, organized by category (developer-experience, integration-issues, etc.) with YAML frontmatter for searchability
@@ -104,6 +115,22 @@ The 5 legal pages (`privacybeleid`, `ai-gebruiksvoorwaarden`, `cookieverklaring`
 - **Build-time read only**: `lib/content.ts` does `fs.readFileSync` at module scope (Next.js static export resolves at build time). No client bundle impact; `react-markdown` is server-only.
 - **Not in scope (yet)**: homepage and marketing pages (over-ons, prijzen, contact, faq, puppyagenda) stay in TSX. Re-evaluate after a month of real editing — see `docs/brainstorms/markdown-content-refactor-requirements.md`.
 
+## On-page SEO, metadata & spec compliance
+
+Brought up to [The Website Specification](https://specification.website) on 2026-05-30 (plan: `docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md`). Key infrastructure:
+
+- **Per-page metadata** — build it with `pageMetadata({ title, description, path })` from `lib/seo.ts`. It returns a complete title + self-referential canonical + full openGraph + twitter (incl. og:image), so we don't rely on Next's layout→page openGraph merge (which had leaked the homepage `og:url` onto every page). `metadataBase` = **apex `https://letsdog.nl`** (in `app/layout.tsx`); canonical host = apex, trailing slash. `/contact/` + `/veelgestelde-vragen/` are client components split into a server `page.tsx` (exports metadata) + a `*-content.tsx` (the client UI).
+- **Structured data** — `lib/structured-data.ts` builds JSON-LD (Organization + WebSite sitewide via layout; FAQPage on FAQ; Product/Offer on prijzen; Person on over-ons), rendered by `components/shared/json-ld.tsx`. FAQ data is in `app/veelgestelde-vragen/faq-data.ts`, shared by the page and the FAQPage markup — **keep them in sync**.
+- **robots / sitemap / manifest** — `app/robots.ts`, `app/sitemap.ts`, `app/manifest.ts`. All metadata routes need `export const dynamic = "force-static"` under `output: export`.
+- **Security** — `public/_headers` `/*` block: HSTS (basic `max-age` only), `X-Frame-Options: SAMEORIGIN`, CSP `frame-ancestors 'self'`, a restrictive `Permissions-Policy`, and RFC 8288 `Link` headers. `public/.well-known/security.txt` (RFC 9116). Cloudflare auto-injects `nosniff` + `referrer-policy` — don't duplicate.
+- **Agent-readiness** — `public/llms.txt` (curated index) advertised via the `Link` headers.
+- **Cutover-gated items** (HSTS `preload`, CAA, `www`→apex 301, GSC sitemap, `*.pages.dev` noindex rule) live in `docs/CUTOVER.md` → "Spec compliance — post-cutover".
+- **Known follow-up (brand decision):** body/small text on brand-green `#75876D` maxes at 3.86:1 even in pure white — can't hit AA 4.5:1 without darkening the green or using dark text. Large headings pass (3:1). Not fixed unilaterally.
+
+**Convention — image optimization:** photographic images are served as AVIF/WebP through `OptimizedImage` (`components/shared/optimized-image.tsx`), not raw `next/image`. When you add or swap a photo in `public/images/`: (1) `npm run optimize:images` to generate variants into `public/images/optimized/`, (2) **commit those variants** (committed so the Cloudflare build stays a plain `next build` — no native step in CI), (3) render with `<OptimizedImage src="/images/x.jpeg" … />` (raw path, no `asset()`). Image filenames must have **no spaces** (breaks `srcset`). Logos, SVGs and the app-store badges intentionally stay on `next/image`.
+
+**Convention — post-cutover checklist discipline:** after any change touching SEO / security / headers / canonical, update the "Spec compliance — post-cutover" checklist in `docs/CUTOVER.md`.
+
 ## Feature Development Workflow
 Use the `/new-feature` skill for all new features. This handles branch creation, implementation, and PR workflow. The branch will get a preview build at `<branch-slug>.website-letsdog.pages.dev` — verify there before merging.
 
@@ -131,8 +158,8 @@ This project uses the **compound-engineering** harness (`harness: compound-engin
 **Bootstrap**: if `.compound-engineering/config.local.yaml` doesn't exist in this repo yet, run `/ce-setup` once. It checks CE tool availability and creates the local config (gitignored).
 
 ## Important Notes
-- Static export: no server-side features (no API routes, no SSR)
-- Images are unoptimized (required for static export)
-- The `asset()` helper in `lib/utils.ts` prepends the base path to image URLs
+- Static export: no server-side features (no API routes, no SSR). Metadata routes (`app/robots.ts`, `app/sitemap.ts`, `app/manifest.ts`) need `export const dynamic = "force-static"`.
+- Next's image optimizer is off (`images.unoptimized: true`, required for static export) — modern formats come from the `OptimizedImage` `<picture>` component + committed `sharp` variants instead (see the spec-compliance section).
+- The `asset()` helper in `lib/utils.ts` prepends the base path to image URLs. Logos/badges still use it via `next/image`; `OptimizedImage` takes a raw path and applies `asset()` internally.
 - Rassenkeuze hulp page embeds an iframe from `keuzehulp.letsdog.nl` (renamed from "Hondenkeuze" 2026-05-29; old `/hondenkeuze/` URL 301-redirects via `public/_redirects`)
-- `public/_headers` and `public/_redirects` are Cloudflare-Pages-specific config files (copied to `out/` during build) — DO NOT use overlapping path patterns in `_headers`, Cloudflare MERGES headers when rules overlap and you'll get duplicated `Cache-Control` directives
+- `public/_headers` and `public/_redirects` are Cloudflare-Pages-specific config files (copied to `out/` during build). The merge gotcha is specifically about the **same** header set by two matching rules — keep the `/*` block (security + `Link` headers, **no Cache-Control**) disjoint from the per-directory Cache-Control blocks. Never add Cache-Control to `/*`; never add a second rule that sets a header `/*` already sets.

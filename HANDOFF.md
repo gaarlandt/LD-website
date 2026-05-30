@@ -2,7 +2,7 @@
 
 **Purpose**: this file lets a fresh Claude session (or a human picking up the project) get fully oriented in <5 minutes without re-asking what's been done. Read me first whenever you start work here.
 
-**Last session ended**: 2026-05-30. **Website spec-compliance planning** — audited the new site *and* the live old WordPress site (`letsdog.nl`) against The Website Specification (specification.website, now installed as a `specification-website` skill + MCP server); wrote the build plan at `docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md`, locked all owner decisions, and produced a stakeholder old-vs-new comparison (`docs/2026-05-30-current-vs-new-site-spec-audit.{md,html}`) for the Maarten conversation. **No code shipped — the plan is ready to build via `/new-feature` (see First action below).** Previous session (2026-05-29): Pricing refresh + UX sweep shipped: 3-tier pricing model (Flexibel €12,99/mo, Early Member €59/€99, Jaar + Consult €79/€119) replaced the old free-vs-paid split; all "Geen creditcard" copy swept to "7 dagen proberen · opzegbaar in de app"; Navbar got an Inloggen button next to Start gratis; Play Store badge now links to the real app; hero scaled up; Hondenkeuze renamed to "Rassenkeuze hulp" (path `/rassenkeuze/`, 10 questions); soft blue `#6E8FB8` added to the brand palette for sparing use. Previous session (2026-05-28) landed: CE harness fully wired + markdown content refactor for the 5 legal pages. DNS cutover to `www.letsdog.nl` still deferred.
+**Last session ended**: 2026-05-30. **Website spec-compliance BUILD** — implemented the entire plan (units U1–U15, Phases A–G) on branch `feature/website-spec-compliance` as **one PR with one commit per unit** (rollback-friendly, per owner request), folding the planning docs into it. `npm run build` passes; verified locally via `out/` HTML + `curl` checks and the dev-server preview (hero/images/canonical/JSON-LD/robots/sitemap/manifest/404 all confirmed). **Awaiting Cloudflare preview verification of the header-level bits + merge** (see First action below). Earlier the same day — **spec-compliance planning** — audited the new site *and* the live old WordPress site against The Website Specification (now installed as a `specification-website` skill + MCP); wrote the build plan at `docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md`, locked all owner decisions, and produced the stakeholder comparison (`docs/2026-05-30-current-vs-new-site-spec-audit.{md,html}`). Previous session (2026-05-29): Pricing refresh + UX sweep shipped: 3-tier pricing model (Flexibel €12,99/mo, Early Member €59/€99, Jaar + Consult €79/€119) replaced the old free-vs-paid split; all "Geen creditcard" copy swept to "7 dagen proberen · opzegbaar in de app"; Navbar got an Inloggen button next to Start gratis; Play Store badge now links to the real app; hero scaled up; Hondenkeuze renamed to "Rassenkeuze hulp" (path `/rassenkeuze/`, 10 questions); soft blue `#6E8FB8` added to the brand palette for sparing use. Previous session (2026-05-28) landed: CE harness fully wired + markdown content refactor for the 5 legal pages. DNS cutover to `www.letsdog.nl` still deferred.
 
 ---
 
@@ -14,7 +14,15 @@ The 5 legal pages now read their copy from `content/<slug>.md` (gray-matter + re
 
 Next priority: **build the website spec-compliance plan** (`docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md`) via `/new-feature` — see First action below. Jur drives sequencing; you implement.
 
-## ⚡ First action for the new session — build the spec-compliance plan
+## ⚡ First action for the new session — verify + merge the spec-compliance PR
+
+**STATUS (2026-05-30): BUILT.** The plan below was implemented end-to-end on branch `feature/website-spec-compliance` (one PR, one commit per unit U1–U15). **What's left:**
+1. Wait for the Cloudflare preview at `feature-website-spec-compliance.website-letsdog.pages.dev`, then verify the **Cloudflare-only** bits with `curl -sI` — security headers (HSTS / `frame-ancestors` / `Permissions-Policy`), the `Link` headers, and **no duplicated `Cache-Control`** on `/images/*` & `/_next/static/*` — plus a Lighthouse/axe pass and the spec `audit_url`. (These can't be checked locally; `_headers` is interpreted by Cloudflare.)
+2. Merge to main (squash).
+3. **Set the `*.pages.dev` noindex dashboard rule NOW** + work the rest of the post-cutover list in `docs/CUTOVER.md` → "Spec compliance — post-cutover" (www→apex 301, HSTS preload after subdomain audit, CAA, GSC sitemap).
+4. **Brand decision needed (not fixed):** white/soft text on brand-green `#75876D` can't reach AA 4.5:1 (maxes 3.86:1 even pure white). Darken the green sections or accept it — large headings already pass 3:1.
+
+The original plan + how-to-build notes are kept below for reference.
 
 **Source of truth → read it first:** [`docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md`](docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md). It's the **actual build plan** (work to do): Phases A–G, units U1–U15, a per-page on-page-SEO spec, risks, and verification. Owner decisions are locked in its "Decisions locked (2026-05-30 review)" section — **do not re-litigate them.**
 
@@ -55,6 +63,29 @@ Then **Phase B** (robots.ts, sitemap.ts, JSON-LD, og:image), **Phase C** (all se
 | Consent banner | Cookiebot loads on production but is **display-only** — does not gate tracking. CBID stored in CF env var `NEXT_PUBLIC_COOKIEBOT_CBID`. |
 
 ---
+
+## What was accomplished in this session (2026-05-30 — spec-compliance build)
+
+**Single PR `feature/website-spec-compliance`, one commit per unit** (rollback-friendly). All 15 units of the plan shipped:
+
+- **U1** broken `/algemene-voorwaarden` footer link → points to the real terms page `app.letsdog.nl/algemene-voorwaarden/` (external).
+- **U2** `metadataBase` = apex `letsdog.nl` + per-page canonical/og:url via new `lib/seo.ts` `pageMetadata()`; split server wrappers for `/contact/` + `/veelgestelde-vragen/` (client UI → `*-content.tsx`). Fixes the homepage-og:url-everywhere bug.
+- **U3/U4** `app/robots.ts` + `app/sitemap.ts` (12 canonical apex URLs).
+- **U5** JSON-LD (`lib/structured-data.ts` + `components/shared/json-ld.tsx`): Organization+WebSite sitewide, FAQPage, Product/Offer, Person.
+- **U6** 1200×630 og:image (`public/og/og-default.jpg`, `scripts/generate-og-image.mjs`) + twitter `summary_large_image`.
+- **U7** security headers in `public/_headers` `/*` (HSTS basic, `frame-ancestors`, `X-Frame-Options`, `Permissions-Policy`) + `public/.well-known/security.txt`.
+- **U8** favicons/apple-touch/maskable + `app/manifest.ts` + theme-color/color-scheme (`scripts/generate-icons.mjs`).
+- **U9** branded Dutch 404 (`app/not-found.tsx`).
+- **U10** build-time AVIF/WebP via `OptimizedImage` `<picture>` drop-in + `scripts/optimize-images.mjs` (`sharp` devDep); hero 375 KB → ~100 KB. Variants committed; not wired into CI build.
+- **U11** global `:focus-visible` ring + footer link touch targets (≥24px) + footer legal-link contrast (white/40 → white/60).
+- **U12** `public/llms.txt` + RFC 8288 `Link` headers.
+- **U14** TikTok + Instagram in the footer (+ JSON-LD `sameAs`).
+- **U15** deleted the live `/card-styles/` demo page.
+- **U13** `docs/CUTOVER.md` "Spec compliance — post-cutover" section + 2 `CLAUDE.md` conventions + this handover.
+
+**Security model:** unchanged from prior — static export, client-only, no auth-adjacent data; the new code is presentational metadata/markup + build-time asset generation + Cloudflare header config. No server logic, no secrets. Verification = `npm run build` + `out/`/`curl` checks + dev-server preview + (pending) Cloudflare preview header curl.
+
+**Session log:** 2026-05-30 — spec-compliance build (U1–U15) — security model: static export, client-only, no auth-adjacent data; metadata/markup + sharp asset generation + `_headers` config only.
 
 ## What was accomplished in this session (2026-05-29)
 
