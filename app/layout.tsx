@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { SITE_URL, OG_IMAGE } from "@/lib/seo";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
@@ -43,6 +43,11 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     images: [OG_IMAGE.url],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#75876D",
+  colorScheme: "light",
 };
 
 export default function RootLayout({
