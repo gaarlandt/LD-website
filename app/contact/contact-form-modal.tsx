@@ -125,6 +125,7 @@ export function ContactFormModal({
     <AnimatePresence>
       {open && (
         <motion.div
+          key="contact-modal"
           className="fixed inset-0 z-[100] flex items-center justify-center p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
