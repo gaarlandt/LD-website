@@ -4,7 +4,7 @@ import { asset } from "@/lib/utils";
 
 export function Footer() {
   return (
-    <footer className="bg-[#141414] text-white/70 mt-0">
+    <footer className="bg-[#162A0E] text-white/70 -mt-10 rounded-t-[2.5rem] relative">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10 lg:py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 mb-8">
           {/* Brand */}
@@ -78,7 +78,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <p className="text-xs text-white/40">
-            © {new Date().getFullYear()} Let&apos;s Dog. Alle rechten voorbehouden.
+            © {new Date().getFullYear()}{" "}Let&apos;s Dog. Alle rechten voorbehouden.
           </p>
           <div className="flex items-center gap-6 flex-wrap">
             <Link
