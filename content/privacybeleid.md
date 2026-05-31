@@ -52,4 +52,4 @@ Let's Dog gebruikt data om gebruikersprofielen op te stellen en gepersonaliseerd
 
 ## 11. Contact en klachten
 
-Voor vragen of klachten over gegevensbescherming kun je mailen naar [privacy@letsdog.com](mailto:privacy@letsdog.com) of contact opnemen met de Autoriteit Persoonsgegevens.
+Voor vragen of klachten over gegevensbescherming kun je mailen naar [privacy@letsdog.nl](mailto:privacy@letsdog.nl) of contact opnemen met de Autoriteit Persoonsgegevens.
