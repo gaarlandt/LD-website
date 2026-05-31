@@ -117,7 +117,7 @@ export function HowItWorks() {
             alt="Get it on Google Play"
             width={156}
             height={46}
-            className="h-[56px] w-auto"
+            className="h-[66px] w-auto"
           />
         </a>
         {/* iOS (App Store) — right, not yet released → toast */}
