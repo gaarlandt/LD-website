@@ -14,6 +14,22 @@ The 5 legal pages now read their copy from `content/<slug>.md` (gray-matter + re
 
 Next priority: **the post-merge open items** — privacy email → `.nl`, National2→WOFF2, a 512px image variant, optional `*.pages.dev` noindex (see "⚡ Next session — open items" below). The big spec-compliance build (PR #15) is **done + merged**.
 
+## What was accomplished (2026-05-31, later — website fixes bundle PR)
+
+Branch `feature/website-fixes-bundle` → one PR, atomic commit per item. Seven owner-requested polish fixes (plan: [`docs/plans/2026-05-31-001-feat-website-fixes-bundle-plan.md`](docs/plans/2026-05-31-001-feat-website-fixes-bundle-plan.md)):
+
+1. **Footer copyright spacing** — `© 2026Let's Dog` rendered with **no space**. Root cause: **SWC/Turbopack collapses the space between a `{expr}` and adjacent inline text** (`© {year} Let's`). Fixed with an explicit `{" "}`. Verified in the DOM — this was a real bug, not a mockup artifact.
+2. **Retour §3** scoped to *fysieke producten* (`content/retour.md`).
+3. **App-store badges** (`components/sections/how-it-works.tsx`) — equal size, reordered **Android (Google Play) left / iOS (App Store) right**; iOS keeps the "Binnenkort beschikbaar" toast.
+4. **Puppyagenda CTA** → `/prijzen` (internal Link), relabeled "Bekijk de abonnementen".
+5. **Footer restyle, sitewide** (`components/layout/footer.tsx`) — `#141414` → dark sage `#162A0E`, `rounded-t-[2.5rem]`, `-mt-10` so the rounded corners reveal the (light) section above → soft transition. Needs every page to END light: homepage `FinalCta` and over-ons's "Klaar om te beginnen?" CTA recolored `#162A0E` → `#EFE8E4` (`final-cta.tsx`, `over-ons/page.tsx`). Body is already `#EFE8E4`. All other pages already end light (verified).
+6. **Prijzen** — removed the "Prijzen · Transparant" pill above the H1.
+7. **Rassenkeuze redesign** (`app/rassenkeuze/page.tsx`) to the supplied mockup: beige split hero ("Welk ras past *écht* bij jou?", pills, "Persoonlijk rasadvies" badge, new `public/images/rassenkeuze.jpeg`) → "Van vraag naar advies in drie stappen" 3 steps → "Doe de test" keeping the **live `keuzehulp.letsdog.nl` iframe** → "Nog geen hond?" 3 text-only cross-link cards. Hero via `OptimizedImage` (variants committed).
+
+**Security model:** unchanged — static export, client-only, no auth-adjacent data; presentational/content + one committed image.
+
+---
+
 ## ⚡ Next session — open items (post PR #15 merge)
 
 PR #15 is merged + deployed. **None of the below were touched this session** (owner: "we'll do that next session"). Owner answers are baked in — just execute. Use `/new-feature` for the code ones.
@@ -256,6 +272,8 @@ HANDOFF.md                   # this file
 5. **Cookiebot banner cannot appear on `*.pages.dev`** — Cookiebot rejects unauthorized hostnames. Console will show `Error: The domain ... is not authorized`. Don't try to fix this for preview; just verify Cookiebot on production after DNS cutover.
 6. **`npm run lint` is broken on main.** No ESLint config committed. Pre-existing issue, don't block on it. If you fix it, it'll need an `eslint.config.js` per ESLint v9 flat-config spec.
 7. **The hydration mismatch warning in Next.js dev mode for the Cookiebot script is benign.** Production static export doesn't have this issue because the script tag is rendered server-side once and never mutated.
+8. **SWC/Turbopack drops the space in `{expr} text` JSX.** `© {year} Let's` renders as `2026Let's` — the whitespace between a `{}` expression and adjacent inline text is collapsed. Use an explicit `{" "}` between them. (Bit the footer copyright; fixed 2026-05-31.)
+9. **macOS `com.apple.macl` xattr breaks the local static-export build.** A photo dropped into `public/images/` via Finder/Shortcuts can carry a sticky `com.apple.macl` extended attribute; `next build`'s public→`out/` copy then fails with `EPERM: copyfile`. `xattr -c` can't remove `macl`. Fix: recreate the file without xattrs — `ditto --noextattr --norsrc src tmp && mv tmp src`. Git never stores xattrs, so Cloudflare's Linux build is unaffected (local-only).
 
 ---
 
