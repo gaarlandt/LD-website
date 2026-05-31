@@ -19,9 +19,9 @@ Het maandabonnement is **niet restitueerbaar**. Er is geen proefperiode en geen 
 
 Het jaarabonnement heeft een **proefperiode van 7 dagen**. Als je binnen 7 dagen na de start van je abonnement opzegt via je accountinstellingen, krijg je het volledige bedrag terug. Na deze 7 dagen vervalt het recht op restitutie en geldt het jaarabonnement voor de volledige looptijd. Aan het einde van de looptijd kun je opzeggen of laten doorlopen.
 
-## 3. Retourprocedure
+## 3. Retourprocedure (fysieke producten)
 
-Neem contact op via support@letsdog.nl en start de retour binnen 14 dagen. De kosten van het retour zenden zijn voor de klant.
+Deze procedure geldt alleen voor **fysieke producten**. Neem contact op via support@letsdog.nl en start de retour binnen 14 dagen na ontvangst. De kosten van het retour zenden zijn voor de klant. Digitale abonnementen worden niet fysiek geretourneerd — daarvoor gelden de regels uit sectie 2.
 
 ## 4. Uitzonderingen
 
