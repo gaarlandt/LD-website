@@ -14,6 +14,7 @@ Tick these off **before** touching DNS:
 - [ ] All new pages serve 200 on production: `/retour/`, `/ip-overdrachtsverklaring/`, `/privacybeleid/`, `/cookieverklaring/`, `/ai-gebruiksvoorwaarden/`.
 - [ ] Redirects work on production: `curl -sI https://website-letsdog.pages.dev/privacy-policy/` returns `301` with `Location: /privacybeleid/`.
 - [ ] GA4 fires on production (check Realtime in GA4 — should see `hostname=website-letsdog.pages.dev` with `debug_mode=true`).
+- [ ] **Contact form delivers:** `POSTMARK_SERVER_TOKEN` is set in Cloudflare Pages (Production **and** Preview) and `CONTACT_FROM` is a Postmark-verified sender. Submit the form on production and confirm it arrives at `support@letsdog.nl` (check Postmark Activity). Without the token, `/api/contact` returns 500.
 - [ ] Cookiebot Domain Group includes both `www.letsdog.nl` and `letsdog.nl` (it should already, since those are the original WP domains). Verify in `manage.cookiebot.com` → Settings → Domain Groups.
 - [ ] You have access to the Cloudflare dashboard and the `letsdog.nl` zone is yours.
 
