@@ -1,5 +1,5 @@
 // Generates the app-icon set from the square brand dog-mark
-// (public/images/icon-white.svg) on a brand-green field. Re-run with:
+// (public/images/icon-black.svg) on a white field. Re-run with:
 //   node scripts/generate-icons.mjs
 //
 // Outputs:
@@ -14,12 +14,12 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const MARK = path.join(ROOT, "public", "images", "icon-white.svg");
-const GREEN = "#75876D";
+const MARK = path.join(ROOT, "public", "images", "icon-black.svg");
+const BG = "#FFFFFF";
 
 mkdirSync(path.join(ROOT, "public", "icons"), { recursive: true });
 
-// White mark centered on a full-bleed brand-green square. markRatio leaves a
+// Black mark centered on a full-bleed white square. markRatio leaves a
 // safe-zone margin so the same image works as a maskable icon.
 async function iconPng(size, markRatio) {
   const mark = await sharp(MARK, { density: 512 })
@@ -27,7 +27,7 @@ async function iconPng(size, markRatio) {
     .png()
     .toBuffer();
   return sharp({
-    create: { width: size, height: size, channels: 4, background: GREEN },
+    create: { width: size, height: size, channels: 4, background: BG },
   })
     .composite([{ input: mark, gravity: "center" }])
     .png()
