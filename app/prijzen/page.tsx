@@ -45,11 +45,6 @@ export default function Prijzen() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Text column */}
           <div>
-            <div className="inline-flex items-center gap-2 mb-7 px-3.5 py-1.5 rounded-full bg-[#DFF0C3] text-[#162A0E] text-xs font-bold uppercase tracking-widest">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#75876D]" />
-              Prijzen · Transparant
-            </div>
-
             <h1 className="font-heading font-bold text-4xl md:text-5xl lg:text-[3.75rem] text-[#141414] leading-[1.05] tracking-tight mb-7">
               Eén juiste aanpak.{" "}
               <span className="text-[#FFA580]">Drie manieren</span> om te starten.
