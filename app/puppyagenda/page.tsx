@@ -1,4 +1,5 @@
 import { pageMetadata } from "@/lib/seo";
+import Link from "next/link";
 import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { Calendar, Video, BookOpen, CheckSquare } from "lucide-react";
@@ -70,14 +71,12 @@ export default function Puppyagenda() {
             <p className="text-[#141414]/60 text-lg mb-8 leading-relaxed">
               Maak een account en bekijk de preview. Upgrade naar volledig voor toegang tot alle weken, videolessen en audio-lessen.
             </p>
-            <a
-              href="https://app.letsdog.nl"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/prijzen"
               className="inline-flex items-center px-7 py-3.5 rounded-full bg-[#75876D] text-white text-[16px] font-semibold hover:bg-[#65775D] transition-all duration-200 cursor-pointer"
             >
-              Bekijk de agenda in de app
-            </a>
+              Bekijk de abonnementen
+            </Link>
           </div>
         </div>
       </SectionWrapper>
