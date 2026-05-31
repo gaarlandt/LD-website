@@ -2,7 +2,7 @@
 
 **Purpose**: this file lets a fresh Claude session (or a human picking up the project) get fully oriented in <5 minutes without re-asking what's been done. Read me first whenever you start work here.
 
-**Last session ended**: 2026-05-30. **Website spec-compliance BUILD** — implemented the entire plan (units U1–U15, Phases A–G) on branch `feature/website-spec-compliance` as **one PR with one commit per unit** (rollback-friendly, per owner request), folding the planning docs into it. `npm run build` passes; verified locally via `out/` HTML + `curl` checks and the dev-server preview (hero/images/canonical/JSON-LD/robots/sitemap/manifest/404 all confirmed). **Awaiting Cloudflare preview verification of the header-level bits + merge** (see First action below). Earlier the same day — **spec-compliance planning** — audited the new site *and* the live old WordPress site against The Website Specification (now installed as a `specification-website` skill + MCP); wrote the build plan at `docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md`, locked all owner decisions, and produced the stakeholder comparison (`docs/2026-05-30-current-vs-new-site-spec-audit.{md,html}`). Previous session (2026-05-29): Pricing refresh + UX sweep shipped: 3-tier pricing model (Flexibel €12,99/mo, Early Member €59/€99, Jaar + Consult €79/€119) replaced the old free-vs-paid split; all "Geen creditcard" copy swept to "7 dagen proberen · opzegbaar in de app"; Navbar got an Inloggen button next to Start gratis; Play Store badge now links to the real app; hero scaled up; Hondenkeuze renamed to "Rassenkeuze hulp" (path `/rassenkeuze/`, 10 questions); soft blue `#6E8FB8` added to the brand palette for sparing use. Previous session (2026-05-28) landed: CE harness fully wired + markdown content refactor for the 5 legal pages. DNS cutover to `www.letsdog.nl` still deferred.
+**Last session ended**: 2026-05-31. **Website spec-compliance MERGED.** PR #15 — the full plan (units U1–U15, Phases A–G) **plus review follow-ups** — was verified (build + `curl` + dev-server preview + Lighthouse) and **merged to `main` via a merge commit** (`6ed3ff2`; all per-unit commits preserved for granular rollback), tagged `release/website-spec-compliance-20260531-091748`. Production auto-deploys from `main`. Follow-ups folded into the same PR: a real on-domain **Algemene Voorwaarden** page + privacy/AI copied verbatim from the live site; **icons recolored to black-on-white**; all **"Start vandaag" CTAs → `/prijzen`** (Inloggen → app); **maintenance docs** (`docs/website-spec-maintenance.md` + a shareable copy for Reinoud); obsolete Firebase CI failures purged. Lighthouse (mobile preview): Perf ~89, CWV green (LCP 166 ms / CLS 0.033 / TBT 18 ms), A11y ~100 (only the documented brand-green contrast item remains). **👉 Start at "⚡ Next session — open items" below.** On 2026-05-30 — **spec-compliance planning** — audited the new site *and* the live old WordPress site against The Website Specification (now installed as a `specification-website` skill + MCP); wrote the build plan at `docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md`, locked all owner decisions, and produced the stakeholder comparison (`docs/2026-05-30-current-vs-new-site-spec-audit.{md,html}`). Previous session (2026-05-29): Pricing refresh + UX sweep shipped: 3-tier pricing model (Flexibel €12,99/mo, Early Member €59/€99, Jaar + Consult €79/€119) replaced the old free-vs-paid split; all "Geen creditcard" copy swept to "7 dagen proberen · opzegbaar in de app"; Navbar got an Inloggen button next to Start gratis; Play Store badge now links to the real app; hero scaled up; Hondenkeuze renamed to "Rassenkeuze hulp" (path `/rassenkeuze/`, 10 questions); soft blue `#6E8FB8` added to the brand palette for sparing use. Previous session (2026-05-28) landed: CE harness fully wired + markdown content refactor for the 5 legal pages. DNS cutover to `www.letsdog.nl` still deferred.
 
 ---
 
@@ -12,17 +12,40 @@ Marketing site built with Next.js 16 static export, deployed on Cloudflare Pages
 
 The 5 legal pages now read their copy from `content/<slug>.md` (gray-matter + react-markdown + remark-gfm) — Jur can edit prose without touching TSX. Marketing/homepage stays TSX; re-evaluate after a month.
 
-Next priority: **build the website spec-compliance plan** (`docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md`) via `/new-feature` — see First action below. Jur drives sequencing; you implement.
+Next priority: **the post-merge open items** — privacy email → `.nl`, National2→WOFF2, a 512px image variant, optional `*.pages.dev` noindex (see "⚡ Next session — open items" below). The big spec-compliance build (PR #15) is **done + merged**.
 
-## ⚡ First action for the new session — verify + merge the spec-compliance PR
+## ⚡ Next session — open items (post PR #15 merge)
 
-**STATUS (2026-05-30): BUILT.** The plan below was implemented end-to-end on branch `feature/website-spec-compliance` (one PR, one commit per unit U1–U15). **What's left:**
-1. Wait for the Cloudflare preview at `feature-website-spec-compliance.website-letsdog.pages.dev`, then verify the **Cloudflare-only** bits with `curl -sI` — security headers (HSTS / `frame-ancestors` / `Permissions-Policy`), the `Link` headers, and **no duplicated `Cache-Control`** on `/images/*` & `/_next/static/*` — plus a Lighthouse/axe pass and the spec `audit_url`. (These can't be checked locally; `_headers` is interpreted by Cloudflare.)
-2. Merge to main (squash).
-3. **Set the `*.pages.dev` noindex dashboard rule NOW** + work the rest of the post-cutover list in `docs/CUTOVER.md` → "Spec compliance — post-cutover" (www→apex 301, HSTS preload after subdomain audit, CAA, GSC sitemap).
-4. **Brand decision needed (not fixed):** white/soft text on brand-green `#75876D` can't reach AA 4.5:1 (maxes 3.86:1 even pure white). Darken the green sections or accept it — large headings already pass 3:1.
+PR #15 is merged + deployed. **None of the below were touched this session** (owner: "we'll do that next session"). Owner answers are baked in — just execute. Use `/new-feature` for the code ones.
 
-The original plan + how-to-build notes are kept below for reference.
+1. **Privacy contact email → `.nl`** *(owner confirmed)*. In `content/privacybeleid.md`, section "11. Contact en klachten", change `privacy@letsdog.com` → **`privacy@letsdog.nl`** (both the link text and the `mailto:`). It was copied verbatim from the live site, which has the `.com` typo. Pure-content edit.
+
+2. **National2 → WOFF2** *(GO — owner is supplying subsetted files)*. Today National2 ships as two **unsubsetted OTFs** (`public/fonts/National2-Bold.otf`, `-Medium.otf`); the Bold (~66 KB) sits in the LCP critical chain. When the WOFF2 files arrive: drop them in `public/fonts/`, change the two `@font-face` `src:` rules in `app/globals.css` from `…format("opentype")` to the `.woff2 …format("woff2")` (keep `font-display: swap`), rebuild, and confirm via Lighthouse that the font no longer dominates the network-dependency chain.
+
+3. **512 px image variant** *(Claude does this — no owner action; it is NOT an SVG)*. Lighthouse flagged ~28 KB of mobile over-delivery because the smallest hero variant (384 px) is below the ~412 px mobile viewport, so the browser jumps to 768 px. Fix = **one line in `scripts/optimize-images.mjs`**: add `512` to `VARIANT_WIDTHS` (→ `[384, 512, 768, 1280]`), run `npm run optimize:images`, commit the new `*-512.avif/.webp`. The `<picture>` srcset picks it up automatically. **No new source files needed** — variants are generated from the existing `public/images/*.jpeg`.
+
+4. **`*.pages.dev` noindex — corrected guidance.** Earlier "dashboard Transform Rule" advice was **wrong**: Transform Rules are zone-scoped and can't be added to Cloudflare's `pages.dev` zone. **Mostly already handled:** every page has a self-referential `<link rel="canonical" href="https://letsdog.nl/…">`, so Google won't index the `website-letsdog.pages.dev` duplicate (it honours canonical). For explicit belt-and-suspenders noindex, the in-repo way is a tiny **Pages Function** (host-aware, cutover-safe — `letsdog.nl` never matches `.pages.dev`, so nothing to remove later). **Low priority.** Code — create `functions/_middleware.js`:
+   ```js
+   export async function onRequest(context) {
+     const response = await context.next();
+     if (new URL(context.request.url).hostname.endsWith(".pages.dev")) {
+       const r = new Response(response.body, response);
+       r.headers.set("X-Robots-Tag", "noindex");
+       return r;
+     }
+     return response;
+   }
+   ```
+   Verify: `curl -sI https://website-letsdog.pages.dev/ | grep -i x-robots` → present; on `letsdog.nl` (post-cutover) → absent. (Adding `functions/` turns on Pages Functions — every request flows through this passthrough; trivial overhead.)
+
+5. **Brand-green contrast — leave as-is** *(owner decision, recorded)*. Body/small text on `#75876D` maxes at 3.86:1; large headings pass 3:1. Revisit only if the brand palette changes.
+
+### Merge convention (decided 2026-05-31): merge commit, not squash
+Default to **merge commits** going forward — preserve per-unit commits on `main` for granular `git revert`, keeping commits atomic so `main` history + `git bisect` stay useful. Squash only small/throwaway PRs. **To codify next session:** update the Conventions line below, `CLAUDE.md`, and `~/.claude/skills/new-feature/project-ci-rules.md`.
+
+---
+
+The original spec plan + how-to-build notes are kept below for reference — **all implemented + merged** in PR #15; read them only for context on *why* something is the way it is.
 
 **Source of truth → read it first:** [`docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md`](docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md). It's the **actual build plan** (work to do): Phases A–G, units U1–U15, a per-page on-page-SEO spec, risks, and verification. Owner decisions are locked in its "Decisions locked (2026-05-30 review)" section — **do not re-litigate them.**
 
@@ -84,6 +107,8 @@ Then **Phase B** (robots.ts, sitemap.ts, JSON-LD, og:image), **Phase C** (all se
 - **U13** `docs/CUTOVER.md` "Spec compliance — post-cutover" section + 2 `CLAUDE.md` conventions + this handover.
 
 **Security model:** unchanged from prior — static export, client-only, no auth-adjacent data; the new code is presentational metadata/markup + build-time asset generation + Cloudflare header config. No server logic, no secrets. Verification = `npm run build` + `out/`/`curl` checks + dev-server preview + (pending) Cloudflare preview header curl.
+
+**Session log:** 2026-05-31 — spec-compliance verified (Lighthouse: Perf ~89, CWV green) + review follow-ups (real Algemene Voorwaarden page, privacy/AI verbatim from live, icon recolor to black-on-white, all "Start vandaag" → /prijzen, maintenance docs, a11y label-in-name fix) + **PR #15 merged via merge commit** + obsolete Firebase CI failures purged — security model unchanged (static export, client-only, no auth-adjacent data).
 
 **Session log:** 2026-05-30 — spec-compliance build (U1–U15) — security model: static export, client-only, no auth-adjacent data; metadata/markup + sharp asset generation + `_headers` config only.
 
@@ -201,7 +226,7 @@ HANDOFF.md                   # this file
 **Workflow**
 - Always use `/new-feature` skill for new work.
 - Always branch off `main`, push, open PR, wait for `<branch-slug>.website-letsdog.pages.dev` preview build (~90s), verify, then merge. This is the project's CI/CD discipline.
-- Squash merge + delete branch is the merge pattern.
+- **Merge convention (decided 2026-05-31): merge commit, not squash.** Preserve per-unit commits on `main` for granular `git revert`; keep commits atomic so history + `git bisect` stay useful. Squash only small/throwaway PRs. Delete the branch after merge. (Historical PRs #6/#7 were squash-merged; the rationale is in the "Merge convention" note up top.) *Still to codify in CLAUDE.md + project-ci-rules.md.*
 - Verify visually on the preview URL via the preview tool (`preview_start("letsdog-website")` for local dev; live preview URL for shared validation).
 
 **CLAUDE.md must list major versions of all tech.** When upgrading a dependency, update CLAUDE.md's Tech Stack section in the same commit.
