@@ -64,9 +64,6 @@ export default function Rassenkeuze() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Text column */}
           <div>
-            <p className="text-sm font-semibold text-[#75876D] uppercase tracking-widest mb-5">
-              Rassenkeuze hulp
-            </p>
             <h1 className="font-heading font-bold text-4xl md:text-5xl lg:text-[3.75rem] text-[#141414] leading-[1.05] tracking-tight mb-7">
               Welk ras past <span className="text-[#FFA580]">écht</span> bij jou?
             </h1>
