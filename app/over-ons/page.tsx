@@ -112,11 +112,11 @@ export default function OverOns() {
       </SectionWrapper>
 
       {/* CTA */}
-      <SectionWrapper className="bg-[#162A0E] text-center">
-        <h2 className="font-heading font-bold text-3xl md:text-4xl text-white mb-4">
+      <SectionWrapper className="bg-[#EFE8E4] text-center">
+        <h2 className="font-heading font-bold text-3xl md:text-4xl text-[#141414] mb-4">
           Klaar om te beginnen?
         </h2>
-        <p className="text-white/60 text-lg mb-8 max-w-md mx-auto">
+        <p className="text-[#141414]/60 text-lg mb-8 max-w-md mx-auto">
           Meld je aan en start vandaag nog met de puppyagenda en videolessen.
         </p>
         <Link
