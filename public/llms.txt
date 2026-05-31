@@ -1,0 +1,23 @@
+# Let's Dog
+
+> Let's Dog is een Nederlands platform voor welzijnsgerichte puppytraining: een dagelijkse puppyagenda, videolessen van gecertificeerde hondengedragstherapeuten, audiolessen en een community. De web app draait op app.letsdog.nl.
+
+Let's Dog B.V. is gevestigd in Nederland en de site is Nederlandstalig. Onderstaande pagina's zijn de belangrijkste ingangen.
+
+## Pagina's
+
+- [Homepage](https://letsdog.nl/): Wat Let's Dog is en voor wie het bedoeld is.
+- [Rassenkeuze hulp](https://letsdog.nl/rassenkeuze/): Gratis test van 10 vragen die helpt het best passende hondenras te kiezen.
+- [Puppyagenda](https://letsdog.nl/puppyagenda/): Week-voor-week plan voor en tijdens de puppyfase.
+- [Prijzen](https://letsdog.nl/prijzen/): Drie abonnementen — Flexibel (EUR 12,99/maand), Early Member (EUR 59/eerste jaar) en Jaar + Consult (EUR 79/eerste jaar). Betaling via Mollie.
+- [Over ons](https://letsdog.nl/over-ons/): Achtergrond van Let's Dog en oprichtster Elien, gecertificeerd hondengedragstherapeut.
+- [Veelgestelde vragen](https://letsdog.nl/veelgestelde-vragen/): Antwoorden over de app, de trainingsmethode, het abonnement en betalingen.
+- [Contact](https://letsdog.nl/contact/): E-mail, telefoon, WhatsApp en het boeken van een consult.
+
+## Juridisch
+
+- [Privacybeleid](https://letsdog.nl/privacybeleid/)
+- [Algemene voorwaarden](https://letsdog.nl/algemene-voorwaarden/)
+- [AI-gebruiksvoorwaarden](https://letsdog.nl/ai-gebruiksvoorwaarden/)
+- [Cookieverklaring](https://letsdog.nl/cookieverklaring/)
+- [Retour- en annuleringsbeleid](https://letsdog.nl/retour/)

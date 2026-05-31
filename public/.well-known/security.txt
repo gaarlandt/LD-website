@@ -1,0 +1,4 @@
+Contact: mailto:mail@letsdog.nl
+Expires: 2027-05-30T00:00:00.000Z
+Preferred-Languages: nl, en
+Canonical: https://letsdog.nl/.well-known/security.txt

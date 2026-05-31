@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { asset } from "@/lib/utils";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { UserPlus, Play, Users } from "lucide-react";
 
@@ -82,8 +83,8 @@ export function HowItWorks() {
 
       {/* Visual: training photo */}
       <div className="rounded-2xl overflow-hidden aspect-[4/3] md:aspect-[21/7] relative">
-        <Image
-          src={asset("/images/training.jpeg")}
+        <OptimizedImage
+          src="/images/training.jpeg"
           alt="Eigenaar traint zijn hond in het park"
           fill
           sizes="100vw"

@@ -1,6 +1,27 @@
-# Cloudflare Pages _headers — rules are MERGED when multiple match a URL,
-# so patterns must NOT overlap or Cache-Control gets duplicated. Keep one
-# rule per asset directory; let Pages defaults handle HTML.
+# Cloudflare Pages _headers — rules are MERGED when multiple match a URL.
+# The trap (see CLAUDE.md): if two matching rules set the SAME header
+# (notably Cache-Control), it gets duplicated and the conservative value
+# wins, breaking immutable caching.
+#
+# Invariant that keeps this safe: the /* block sets ONLY security headers
+# (never Cache-Control); the per-directory blocks set ONLY Cache-Control.
+# So no single header is ever emitted by two matching rules. Keep it that
+# way — do not add Cache-Control to /*, and do not add security headers to
+# the asset blocks.
+#
+# Not set here (Cloudflare injects them automatically — adding would
+# duplicate): X-Content-Type-Options: nosniff, Referrer-Policy.
+# HSTS is basic max-age only; includeSubDomains + preload is set via the
+# Cloudflare dashboard at cutover, after the subdomain HTTPS audit (RFC 6797).
+
+/*
+  Strict-Transport-Security: max-age=31536000
+  X-Frame-Options: SAMEORIGIN
+  Content-Security-Policy: frame-ancestors 'self'
+  Permissions-Policy: accelerometer=(), autoplay=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), browsing-topics=(), interest-cohort=()
+  Link: </llms.txt>; rel="describedby"; type="text/markdown"; title="Site index for LLMs"
+  Link: </sitemap.xml>; rel="sitemap"; type="application/xml"
+  Link: </.well-known/security.txt>; rel="security"; type="text/plain"
 
 /_next/static/*
   Cache-Control: public, max-age=31536000, immutable

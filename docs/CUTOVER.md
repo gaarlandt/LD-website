@@ -97,10 +97,48 @@ Once you're confident the cutover is stable:
 
 - [ ] Remove the `*.pages.dev` URL from any internal docs / Slack mentions where you shared it with people during staging
 - [ ] If you added the staging hostname to Cookiebot Domain Group, remove it (avoid Cookiebot license-cost surprises)
-- [ ] Consider revisiting the Cookiebot bypass decision: do you want real consent gating? See `components/analytics/ga4.tsx` for the one-line change to restore it
+- [ ] Cookie-consent gating: **decided to keep as-is** (GA4 fires without gating) per the 2026-05-30 spec-compliance review — see decision #1 in the plan. Do not restore gating unless the legal position changes; if it does, see `components/analytics/ga4.tsx` for the one-line change.
 - [ ] Audit GA4 Realtime + standard reports for any unexpected traffic patterns from the migration window
 - [ ] The "Internal Traffic" Data Filter in GA4 should be set to **Active** (not Testing). It works together with the `traffic_type='internal'` parameter our code sends on non-prod hostnames (see `components/analytics/ga4.tsx`). Together they keep QA / preview / localhost traffic out of standard reports. DebugView still shows the events for verification.
 - [ ] Delete the orphaned `Website` GA4 data stream (ID `14274309491`) — it was auto-created by Firebase Hosting and is dormant since the migration. Wait ~24h after Firebase site deletion, then GA4 → Admin → Data Streams → click `Website` → ⋮ → Delete.
+
+---
+
+## Spec compliance — post-cutover
+
+The bulk of The Website Specification work shipped pre-cutover (in-repo: canonical/sitemap/robots/JSON-LD/og:image/security headers/security.txt/favicons/manifest/404/image-optimization/llms.txt/Link headers — see `docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md`). The items below are **DNS- or live-domain-gated** and must be done at/after cutover. Tick them as you go.
+
+**Canonical host = apex `letsdog.nl`.** The code already bakes `metadataBase = https://letsdog.nl`, so every canonical + og:url + sitemap loc is the apex. Make `www` bounce to apex so they never compete:
+
+- [ ] **Add a Cloudflare Redirect Rule: `www` → apex (301).** Dashboard → `letsdog.nl` zone → Rules → Redirect Rules → Create: *If* `Hostname equals www.letsdog.nl` *Then* Static/Dynamic 301 → `https://letsdog.nl${http.request.uri.path}` (preserve path + query). `_redirects` can't match on hostname, so this must be a zone rule. Verify: `curl -sI https://www.letsdog.nl/prijzen/ | grep -iE '^(HTTP|location)'` → `301` → `https://letsdog.nl/prijzen/`.
+- [ ] **Register both properties in Google Search Console** (`https://letsdog.nl` and `https://www.letsdog.nl`), then **submit `https://letsdog.nl/sitemap.xml`** to the apex property.
+
+**Staging hygiene (do NOW in the dashboard, pre-cutover):**
+
+- [ ] **Keep `*.pages.dev` out of the index** with a host-scoped Header Transform Rule: Dashboard → `website-letsdog` Pages project's zone / Rules → Response Header Transform: *If* `Hostname contains .pages.dev` *Then set* `X-Robots-Tag: noindex`. This is host-scoped, so it can NEVER affect the apex (the real domain doesn't match `.pages.dev`) — that's why it's a dashboard rule and not in `public/_headers` (a static `_headers` `noindex` would leak to the live domain). No removal needed at cutover; just confirm below that the apex is indexable.
+
+**HSTS upgrade (effectively irreversible — gate on an audit):**
+
+- [ ] Confirm **every** `*.letsdog.nl` subdomain that should stay reachable is HTTPS-only (`app`, `keuzehulp`, `agenda`, …). Only then enable the zone-wide HSTS toggle with **`includeSubDomains; preload`** (Dashboard → SSL/TLS → Edge Certificates → HSTS). RFC 6797: preload is hard to undo. The basic `Strict-Transport-Security: max-age=31536000` already ships via `public/_headers`.
+- [ ] **Add CAA DNS records** for `letsdog.nl` so only your CAs can issue certs (DNS-level; pick the CAs Cloudflare uses).
+
+**Verify the spec artifacts resolve on the real domain (after the redirect rule):**
+
+```bash
+U="https://letsdog.nl"
+curl -sI $U/ | grep -iE 'strict-transport|x-frame|content-security|permissions-policy|^link'   # security + Link headers
+curl -s  $U/robots.txt | grep -i sitemap          # Sitemap: https://letsdog.nl/sitemap.xml
+curl -s  $U/sitemap.xml | grep -c '<loc>'          # 12
+curl -sI $U/.well-known/security.txt | head -1     # 200
+curl -sI $U/manifest.webmanifest | head -1         # 200
+curl -sI $U/llms.txt | head -1                     # 200
+curl -s  $U/prijzen/ | grep -oE 'rel="canonical" href="[^"]*"'   # apex, trailing slash
+```
+
+- [ ] Run the spec MCP `audit_url("https://letsdog.nl")` + `get_checklist({ status: "required" })` and confirm the required items pass.
+- [ ] Confirm the apex itself is **indexable** (no stray `X-Robots-Tag: noindex` on `letsdog.nl`).
+
+**Decision already made:** cookie-consent gating stays off (see the post-cutover-cleanup item above).
 
 ---
 

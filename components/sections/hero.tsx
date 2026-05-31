@@ -1,6 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
-import { asset } from "@/lib/utils";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 
 export function Hero() {
   return (
@@ -10,8 +9,8 @@ export function Hero() {
     >
       {/* Mobile: visible image at top */}
       <div className="relative w-full aspect-[16/10] lg:hidden">
-        <Image
-          src={asset("/images/hero.jpeg")}
+        <OptimizedImage
+          src="/images/hero.jpeg"
           alt="Twee vrouwen lachen met hun honden"
           fill
           priority
@@ -23,8 +22,8 @@ export function Hero() {
 
       {/* Desktop: absolute right-half background */}
       <div className="absolute inset-0 left-[45%] hidden lg:block">
-        <Image
-          src={asset("/images/hero.jpeg")}
+        <OptimizedImage
+          src="/images/hero.jpeg"
           alt="Twee vrouwen lachen met hun honden"
           fill
           priority
@@ -71,17 +70,18 @@ export function Hero() {
           {/* Trust nudge */}
           <div className="mt-10 flex items-center gap-4">
             <div className="flex -space-x-2">
-              {[asset("/images/community.jpeg"), asset("/images/training.jpeg"), asset("/images/about.jpeg")].map(
+              {["/images/community.jpeg", "/images/training.jpeg", "/images/about.jpeg"].map(
                 (src, i) => (
                   <div
                     key={i}
                     className="w-8 h-8 rounded-full border-2 border-[#75876D] overflow-hidden bg-[#DFF0C3]"
                   >
-                    <Image
+                    <OptimizedImage
                       src={src}
                       alt=""
                       width={32}
                       height={32}
+                      sizes="32px"
                       className="object-cover w-full h-full"
                     />
                   </div>

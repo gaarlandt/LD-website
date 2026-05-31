@@ -1,14 +1,16 @@
-import type { Metadata } from "next";
-import Image from "next/image";
-import { asset } from "@/lib/utils";
+import { pageMetadata } from "@/lib/seo";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
-import { Pricing } from "@/components/sections/pricing";
+import { JsonLd } from "@/components/shared/json-ld";
+import { productLd } from "@/lib/structured-data";
+import { Pricing, tiers } from "@/components/sections/pricing";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Prijzen — Let's Dog",
   description:
     "Drie manieren om te starten met Let's Dog: Flexibel maandelijks, Early Member jaar, of Jaar + Consult. Vanaf €4,92 per maand. Betalen via Mollie.",
-};
+  path: "/prijzen/",
+});
 
 const heroPills = [
   "Welzijnsgericht",
@@ -37,6 +39,7 @@ const faqs = [
 export default function Prijzen() {
   return (
     <>
+      <JsonLd data={productLd(tiers)} />
       {/* Upper hero — beige */}
       <section className="relative bg-[#EFE8E4] pt-32 pb-20 lg:pb-24 px-6 lg:px-8 overflow-hidden">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -73,8 +76,8 @@ export default function Prijzen() {
           {/* Image column */}
           <div className="relative">
             <div className="relative rounded-3xl overflow-hidden aspect-[4/5] lg:aspect-[5/6] bg-[#E8DDD6]">
-              <Image
-                src={asset("/images/hero.jpeg")}
+              <OptimizedImage
+                src="/images/hero.jpeg"
                 alt="Eigenaar met haar puppy"
                 fill
                 priority

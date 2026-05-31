@@ -1,6 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
-import { asset } from "@/lib/utils";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { ArrowRight } from "lucide-react";
 
@@ -33,8 +32,8 @@ export function BreedSelector() {
 
         {/* Image */}
         <div className="relative rounded-2xl overflow-hidden aspect-[4/3]">
-          <Image
-            src={asset("/images/dalmatian.jpeg")}
+          <OptimizedImage
+            src="/images/dalmatian.jpeg"
             alt="Dalmatiër — ontdek welk ras bij je past"
             fill
             sizes="(max-width: 1024px) 100vw, 50vw"

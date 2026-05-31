@@ -1,14 +1,15 @@
-import type { Metadata } from "next";
-import Image from "next/image";
-import { asset } from "@/lib/utils";
+import { pageMetadata } from "@/lib/seo";
+import Link from "next/link";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Rassenkeuze hulp — Welk ras past bij jou? | Let's Dog",
   description:
     "Beantwoord 10 korte vragen en ontdek welk hondenras het beste bij jouw levensstijl past. Gratis, wetenschappelijk onderbouwd rasadvies.",
-};
+  path: "/rassenkeuze/",
+});
 
 export default function Rassenkeuze() {
   return (
@@ -45,8 +46,8 @@ export default function Rassenkeuze() {
           </div>
 
           <div className="relative rounded-2xl overflow-hidden aspect-[4/3]">
-            <Image
-              src={asset("/images/puppy-harness.jpeg")}
+            <OptimizedImage
+              src="/images/puppy-harness.jpeg"
               alt="Puppy met tuigje — klaar voor een nieuw avontuur"
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
@@ -90,15 +91,13 @@ export default function Rassenkeuze() {
         <p className="text-white/60 text-lg mb-8 max-w-md mx-auto">
           Meld je aan en begin met je puppytraining — inclusief dagelijkse agenda en videolessen.
         </p>
-        <a
-          href="https://app.letsdog.nl"
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href="/prijzen"
           className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-[#FFA580] text-[#141414] text-[16px] font-bold hover:bg-[#ff9060] transition-all duration-200 cursor-pointer"
         >
           Start vandaag
-          <ExternalLink size={16} strokeWidth={2} />
-        </a>
+          <ArrowRight size={16} strokeWidth={2} />
+        </Link>
       </SectionWrapper>
     </>
   );

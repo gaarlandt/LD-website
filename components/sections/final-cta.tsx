@@ -1,5 +1,5 @@
-import Image from "next/image";
-import { asset } from "@/lib/utils";
+import Link from "next/link";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 
 export function FinalCta() {
   return (
@@ -9,13 +9,13 @@ export function FinalCta() {
     >
       {/* Background image */}
       <div className="absolute inset-0 opacity-20">
-        <Image
-          src={asset("/images/kid-dog.jpeg")}
+        <OptimizedImage
+          src="/images/kid-dog.jpeg"
           alt=""
           fill
           sizes="100vw"
           className="object-cover object-center"
-          aria-hidden="true"
+          ariaHidden
         />
       </div>
 
@@ -36,14 +36,12 @@ export function FinalCta() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <a
-            href="https://app.letsdog.nl"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/prijzen"
             className="inline-flex items-center px-8 py-4 rounded-full bg-[#FFA580] text-[#141414] text-[16px] font-bold hover:bg-[#ff9060] transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 cursor-pointer"
           >
             Start vandaag
-          </a>
+          </Link>
           <p className="text-white/40 text-sm">
             Opzegbaar in de app
           </p>

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Let's Dog — Huidige site vs. nieuwe site</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green:#75876D; --green-dark:#162A0E; --beige:#EFE8E4; --ink:#141414;
+    --peach:#FFA580; --soft-blue:#6E8FB8; --paper:#FBF9F7;
+    --ok:#3f7d4e; --warn:#b9852b; --bad:#b4472e; --na:#8a8a8a;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--beige); color:var(--ink);
+    font-family:"DM Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    line-height:1.6; font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px; margin:0 auto; padding:0 22px 80px;}
+  header.hero{
+    background:linear-gradient(150deg,var(--green-dark),var(--green));
+    color:#fff; padding:54px 0 46px; margin-bottom:38px;
+  }
+  header.hero .wrap{padding-bottom:0}
+  .brand{font-weight:700; letter-spacing:.02em; font-size:15px; opacity:.85; text-transform:uppercase}
+  header.hero h1{font-size:34px; line-height:1.15; margin:.35em 0 .25em; font-weight:700; letter-spacing:-.01em}
+  header.hero p.lead{font-size:18px; opacity:.92; margin:.2em 0 0; max-width:42em}
+  .meta{margin-top:22px; font-size:13.5px; opacity:.8}
+  h2{font-size:23px; margin:46px 0 14px; font-weight:700; letter-spacing:-.01em; color:var(--green-dark)}
+  h3{font-size:18px; margin:26px 0 8px; font-weight:600}
+  p{margin:.6em 0}
+  a{color:var(--green); }
+  .tldr{
+    background:#fff; border-left:5px solid var(--green); border-radius:12px;
+    padding:20px 24px; box-shadow:0 1px 3px rgba(20,20,20,.06); font-size:16.5px;
+  }
+  .stats{display:flex; flex-wrap:wrap; gap:14px; margin:26px 0 8px}
+  .stat{flex:1 1 150px; background:#fff; border-radius:12px; padding:16px 18px; box-shadow:0 1px 3px rgba(20,20,20,.06)}
+  .stat .big{font-size:26px; font-weight:700; color:var(--green-dark); line-height:1.1}
+  .stat .big .old{color:var(--bad)}
+  .stat .lab{font-size:13px; color:#555; margin-top:4px}
+  table{width:100%; border-collapse:collapse; margin:14px 0 6px; font-size:14.5px; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(20,20,20,.06)}
+  th,td{padding:11px 13px; text-align:left; border-bottom:1px solid #eee; vertical-align:top}
+  th{background:var(--green-dark); color:#fff; font-weight:600; font-size:13px; letter-spacing:.01em}
+  th.new{background:var(--green)}
+  tr:last-child td{border-bottom:none}
+  td.area{font-weight:600; width:24%}
+  .b{display:inline-block; min-width:20px; text-align:center; font-weight:700; border-radius:6px; padding:1px 7px; font-size:13px; margin-right:4px}
+  .b.ok{background:#e3efe5; color:var(--ok)} .b.warn{background:#f6ecd6; color:var(--warn)}
+  .b.bad{background:#f6e0d9; color:var(--bad)} .b.na{background:#ececec; color:var(--na)}
+  td.newcol{background:#f4f7f1}
+  .card{background:#fff; border-radius:12px; padding:18px 22px; margin:14px 0; box-shadow:0 1px 3px rgba(20,20,20,.06)}
+  .card.bad{border-top:4px solid var(--bad)}
+  .card.good{border-top:4px solid var(--ok)}
+  .card h3{margin-top:4px}
+  .reco{background:var(--green-dark); color:#fff; border-radius:14px; padding:26px 28px; margin:34px 0 0}
+  .reco h2{color:#fff; margin-top:0}
+  .reco strong{color:var(--peach)}
+  ul{margin:.5em 0; padding-left:1.2em} li{margin:.3em 0}
+  .muted{color:#666; font-size:13.5px}
+  footer{margin-top:40px; padding-top:18px; border-top:1px solid #ddd; font-size:13px; color:#666}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="brand">Let's&nbsp;Dog</div>
+    <h1>Huidige website vs. de nieuwe site</h1>
+    <p class="lead">Een onderbouwde vergelijking — beide sites getest tegen <em>The Website Specification</em>, een platform-onafhankelijke, standaarden-gebaseerde checklist (WHATWG, W3C, IETF, WCAG) van wat een goede website hoort te doen.</p>
+    <div class="meta">30 mei 2026 · 128 checklist-items · <strong>letsdog.nl</strong> (WordPress) naast de nieuwe Let's&nbsp;Dog-site</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="tldr">
+    <strong>In het kort:</strong> De huidige WordPress-site doet <em>on-page SEO</em> netjes (Yoast regelt dat), maar draagt die op een <strong>4,46&nbsp;MB zware, onbeveiligde en moeilijk te onderhouden basis</strong>. De nieuwe Let's&nbsp;Dog-site is <strong>35× lichter, edge-geserveerd, veilig by-default en gebouwd voor toegankelijkheid</strong> — mét dezelfde SEO-fundamenten plus structured data, een XML-sitemap en agent-readiness. Bij de overstap gaat <strong>geen enkele zoekpositie verloren</strong>. De eigen site bouwen en beheren is over de hele linie de betere keuze.
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="big"><span class="old">4,46&nbsp;MB</span> → 128&nbsp;KB</div><div class="lab">HTML van de homepage (~35× lichter)</div></div>
+    <div class="stat"><div class="big"><span class="old">27</span> → 1</div><div class="lab">Stylesheets (render-blocking CSS)</div></div>
+    <div class="stat"><div class="big"><span class="old">geen</span> → volledig</div><div class="lab">Security-headers</div></div>
+  </div>
+
+  <h2>Hoe beide sites scoren</h2>
+  <p class="muted">✅ goed · ⚠️ deels · ❌ zwak/ontbreekt · ➖ n.v.t.</p>
+  <table>
+    <thead><tr><th>Spec-gebied</th><th>Huidige site (WordPress)</th><th class="new">Nieuwe site (Let's Dog)</th></tr></thead>
+    <tbody>
+      <tr><td class="area">Performance</td><td><span class="b bad">❌</span> 4,46&nbsp;MB HTML, 27 CSS, 41 scripts</td><td class="newcol"><span class="b ok">✅</span> 128&nbsp;KB, 1 CSS, moderne beeldformaten, edge</td></tr>
+      <tr><td class="area">Security</td><td><span class="b bad">❌</span> geen headers + open <code>wp-admin</code>/<code>wp-json</code></td><td class="newcol"><span class="b ok">✅</span> volledige set headers, geen server/DB/admin</td></tr>
+      <tr><td class="area">Toegankelijkheid</td><td><span class="b warn">⚠️</span> Elementor-markup, niet doelgericht</td><td class="newcol"><span class="b ok">✅</span> semantisch, skip-link, ARIA, reduced-motion, contrast/focus</td></tr>
+      <tr><td class="area">Onderhoudbaarheid</td><td><span class="b bad">❌</span> WP + Elementor + plugins, live server + database</td><td class="newcol"><span class="b ok">✅</span> statische files uit versiebeheer, niets om te patchen</td></tr>
+      <tr><td class="area">SEO (on-page)</td><td><span class="b ok">✅</span> Yoast: canonical, OG, JSON-LD, sitemap</td><td class="newcol"><span class="b ok">✅</span> canonical, OG + afbeelding, structured data, sitemap, robots</td></tr>
+      <tr><td class="area">HTML-foundations</td><td><span class="b ok">✅</span></td><td class="newcol"><span class="b ok">✅</span></td></tr>
+      <tr><td class="area">Resilience (404 etc.)</td><td><span class="b ok">✅</span> echte 404</td><td class="newcol"><span class="b ok">✅</span> echte 404 + merk-404 in het Nederlands</td></tr>
+      <tr><td class="area">Agent-readiness</td><td><span class="b bad">❌</span> geen</td><td class="newcol"><span class="b ok">✅</span> llms.txt, link-headers, structured data voor AI</td></tr>
+      <tr><td class="area">Privacy/consent</td><td><span class="b warn">⚠️</span></td><td class="newcol"><span class="b warn">⚠️</span> bewuste keuze: doorlopende analytics</td></tr>
+      <tr><td class="area">Internationalisatie</td><td><span class="b na">➖</span> NL-only</td><td class="newcol"><span class="b na">➖</span> NL-only</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Het sterke punt van de huidige site — en de nieuwe site evenaart het</h2>
+  <p>Eerlijk is eerlijk: de WordPress-site draait <strong>Yoast SEO</strong> en heeft daardoor een solide on-page SEO-laag — canonical per pagina, volledige Open Graph met deel-afbeelding, een JSON-LD structured-data graph, en een correcte <code>robots.txt</code> + sitemap. De nieuwe site heeft <strong>diezelfde fundamenten</strong> (canonical, OG met afbeelding, JSON-LD, XML-sitemap, robots) en breidt ze uit met <strong>structured data voor zowel zoekmachines als AI-agents</strong> en meer landingspagina's. Op SEO doen de sites dus niet voor elkaar onder — en op alles eromheen wint de nieuwe site.</p>
+
+  <h2>Waar de huidige site vastloopt — drie structurele redenen</h2>
+
+  <div class="card bad">
+    <h3>A. Performance — de homepage is enorm</h3>
+    <p>De huidige homepage levert <strong>4.461.449 bytes (4,46&nbsp;MB) aan HTML</strong> — nog vóór één afbeelding, script of stylesheet — opgebouwd uit <strong>41 scripts en 27 stylesheets</strong> (de klassieke WordPress + Elementor-voetafdruk). De nieuwe homepage is <strong>128&nbsp;KB met één stylesheet</strong>, ~35× lichter, geserveerd als statische files vanaf de edge. Dit telt extra zwaar: <strong>Core Web Vitals zijn zowel een vereiste spec-item als een Google-rankingfactor</strong> — een pagina van 4,46&nbsp;MB ondermijnt juist de SEO waar de site verder goed in is.</p>
+  </div>
+
+  <div class="card bad">
+    <h3>B. Security — geen bescherming, breed aanvalsoppervlak</h3>
+    <p>De huidige site stuurt <strong>nul security-headers</strong> (geen HSTS, CSP, X-Frame-Options, X-Content-Type-Options of Referrer-Policy), houdt <strong>WordPress-admin (<code>/wp-admin/</code>) en de REST-API (<code>/wp-json/</code>) publiek open</strong>, en toont de exacte softwareversies (<code>WordPress 7.0</code>, <code>Elementor 4.0.9</code>) in de broncode — een cadeautje voor exploit-scanners. De nieuwe site heeft <strong>geen admin, geen database en geen server-side code</strong> om te misbruiken (statische files), en stuurt de volledige set beschermende headers.</p>
+  </div>
+
+  <div class="card bad">
+    <h3>C. Architectuur & onderhoud — een permanente tredmolen</h3>
+    <p>WordPress + Elementor + plugins betekent <strong>doorlopend security-patchen, plugin-compatibiliteitsrisico en een live PHP-server + database</strong> die moet blijven draaien — plus een page-builder waarvan de output zwaar en moeilijk controleerbaar is. De nieuwe site is <strong>statische files, gegenereerd uit versie-beheerde code</strong>: niets om runtime te patchen, niets dat omvalt, elke wijziging gereviewd en vooraf bekeken. Het verschil tussen <em>een risico huren</em> en <em>een bezit hebben</em>.</p>
+  </div>
+
+  <h2>Wat de nieuwe site levert</h2>
+  <ul>
+    <li><strong>35× lichtere pagina's</strong>, één stylesheet, niet-blokkerende scripts en moderne beeldformaten — vanaf de edge.</li>
+    <li><strong>Volledige security-headers</strong> en geen server/database/admin om te misbruiken.</li>
+    <li><strong>Gebouwd voor toegankelijkheid</strong>: semantische opbouw, skip-to-content, ARIA en respect voor <code>prefers-reduced-motion</code>.</li>
+    <li><strong>Complete on-page SEO</strong>: canonical, Open Graph met afbeelding, JSON-LD structured data, XML-sitemap en robots.txt — plus méér landingspagina's dan de oude site.</li>
+    <li><strong>Agent-readiness</strong>: llms.txt, link-headers en structured data zodat ook AI-assistenten de site goed begrijpen.</li>
+    <li><strong>Eigenaarschap</strong>: de hele site in eigen code en versiebeheer, in plaats van vast te zitten aan een page-builder.</li>
+  </ul>
+
+  <h2>Continuïteit bij de overstap — geen positie verloren</h2>
+  <p>De huidige site heeft <strong>7 geïndexeerde URL's</strong>, en <strong>elk daarvan is op de nieuwe site afgevangen</strong> — óf het bestaat op hetzelfde pad, óf het 301-redirect (bijv. <code>/privacy-policy/</code> → <code>/privacybeleid/</code>). Bij de DNS-overstap volgt Google dus schone redirects en gaat <strong>geen ranking-waarde verloren</strong>. Eén canonical-host (<code>letsdog.nl</code>) wordt aangehouden, zodat varianten niet met elkaar concurreren.</p>
+
+  <div class="reco">
+    <h2>Aanbeveling</h2>
+    <p><strong>Bouw en beheer de eigen site.</strong> Het sterke punt van de huidige site — SEO-meta — wordt op de nieuwe site geëvenaard en uitgebreid; de zwakke punten — performance, security en onderhoudbaarheid — zijn <strong>structureel</strong> en niet op te lossen zonder WordPress/Elementor te verlaten. De nieuwe site wint op alles wat je later niet kunt terugkopen — snelheid, security, toegankelijkheid en eigenaarschap van de code — terwijl elke huidige zoekpositie behouden blijft.</p>
+  </div>
+
+  <footer>
+    Bron: <a href="https://specification.website">The Website Specification</a> (CC BY 4.0). Vergelijking opgesteld op 30 mei 2026.
+  </footer>
+
+</div>
+</body>
+</html>

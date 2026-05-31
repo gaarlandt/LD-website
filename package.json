@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "optimize:images": "node scripts/optimize-images.mjs",
+    "generate:icons": "node scripts/generate-icons.mjs",
+    "generate:og": "node scripts/generate-og-image.mjs",
+    "assets": "npm run optimize:images && npm run generate:icons && npm run generate:og"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -26,6 +30,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -1,15 +1,15 @@
-import type { Metadata } from "next";
-import Image from "next/image";
-import { asset } from "@/lib/utils";
+import { pageMetadata } from "@/lib/seo";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { Calendar, Video, BookOpen, CheckSquare } from "lucide-react";
 import { PuppyPhases } from "@/components/sections/puppy-phases";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Puppyagenda — Let's Dog",
   description:
     "Alles wat je moet doen, lezen en bekijken voor en tijdens de puppyfase. Gestructureerd week voor week.",
-};
+  path: "/puppyagenda/",
+});
 
 const features = [
   { icon: Calendar, text: "Week-voor-week structuur" },
@@ -55,8 +55,8 @@ export default function Puppyagenda() {
       <SectionWrapper className="bg-[#EFE8E4]">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="relative rounded-2xl overflow-hidden aspect-[4/3]">
-            <Image
-              src={asset("/images/beagle.jpeg")}
+            <OptimizedImage
+              src="/images/beagle.jpeg"
               alt="Puppy speelt buiten"
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"

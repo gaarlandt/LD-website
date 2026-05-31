@@ -1,14 +1,19 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
+import Link from "next/link";
 import Image from "next/image";
 import { asset } from "@/lib/utils";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
+import { JsonLd } from "@/components/shared/json-ld";
+import { personLd } from "@/lib/structured-data";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 import { CheckCircle2, Award } from "lucide-react";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Over ons — Let's Dog",
   description:
     "Leer Elien kennen — gecertificeerde hondengedragstherapeut en oprichtster van Let's Dog. Welzijnsgericht, wetenschappelijk onderbouwd.",
-};
+  path: "/over-ons/",
+});
 
 const values = [
   "Geen fysieke correcties — nooit",
@@ -25,6 +30,7 @@ const certs = [
 export default function OverOns() {
   return (
     <>
+      <JsonLd data={personLd()} />
       {/* Hero */}
       <div className="bg-[#75876D] pt-32 pb-14 min-h-[220px] flex items-end px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -39,8 +45,8 @@ export default function OverOns() {
       <SectionWrapper className="bg-white">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           <div className="relative rounded-2xl overflow-hidden aspect-[3/4]">
-            <Image
-              src={asset("/images/elien.jpeg")}
+            <OptimizedImage
+              src="/images/elien.jpeg"
               alt="Elien met een puppy"
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
@@ -113,14 +119,12 @@ export default function OverOns() {
         <p className="text-white/60 text-lg mb-8 max-w-md mx-auto">
           Meld je aan en start vandaag nog met de puppyagenda en videolessen.
         </p>
-        <a
-          href="https://app.letsdog.nl"
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href="/prijzen"
           className="inline-flex items-center px-8 py-4 rounded-full bg-[#FFA580] text-[#141414] text-[16px] font-bold hover:bg-[#ff9060] transition-all duration-200 cursor-pointer"
         >
           Start vandaag
-        </a>
+        </Link>
       </SectionWrapper>
     </>
   );
