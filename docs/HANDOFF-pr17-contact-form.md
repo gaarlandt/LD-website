@@ -21,6 +21,9 @@ Page matches mockup at desktop + mobile · modal opens/closes (X, Escape, backdr
 ### NOT verified yet ⏳ — this is the main "next session" task
 **The real Postmark email send.** Cloudflare `functions/` do **not** run under `next dev`, so `/api/contact` 404s locally (expected). End-to-end delivery can only be tested on the **Cloudflare branch-preview deploy**, and only after the owner does the two setup steps below.
 
+> **2026-05-31 diagnosis of the "Er ging iets mis" error Jur saw:** the form error was NOT a code or Postmark bug — it was a **404 from the form's `fetch`** because **no Cloudflare deployment with the function exists yet**. Verified: PR #17 has **no checks / no Cloudflare deployment**; both branch-alias URLs 404 (`Deployment Not Found`); production `/api/contact` 404s (function not merged). The redesign/modal are client-side React so they render anywhere (the test was almost certainly localhost), but the function only runs on a real Cloudflare build. **The Postmark secret is set correctly but is inert until a build serves the function.**
+> **To get a deployment:** either (a) **merge PR #17 to `main`** → production auto-builds the function, or (b) enable branch auto-builds (CF → Settings → Build → Branch control) / reconnect the stale GitHub↔Cloudflare OAuth (known gotcha) so the branch deploys. **After** there's a deployment, the next gate to watch is the **Postmark sender**: if `CONTACT_FROM` (`noreply@letsdog.nl`) isn't verified, the function returns 502 and the same generic error shows — verify the sender in Postmark.
+
 ---
 
 ## Owner setup required before testing (Jur — these are dashboard/DNS tasks, can't be done from code)
