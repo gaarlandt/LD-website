@@ -1,4 +1,5 @@
 import { pageMetadata } from "@/lib/seo";
+import Link from "next/link";
 import Image from "next/image";
 import { asset } from "@/lib/utils";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
@@ -118,14 +119,12 @@ export default function OverOns() {
         <p className="text-white/60 text-lg mb-8 max-w-md mx-auto">
           Meld je aan en start vandaag nog met de puppyagenda en videolessen.
         </p>
-        <a
-          href="https://app.letsdog.nl"
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href="/prijzen"
           className="inline-flex items-center px-8 py-4 rounded-full bg-[#FFA580] text-[#141414] text-[16px] font-bold hover:bg-[#ff9060] transition-all duration-200 cursor-pointer"
         >
           Start vandaag
-        </a>
+        </Link>
       </SectionWrapper>
     </>
   );

@@ -89,14 +89,12 @@ export function Hope() {
           </div>
 
           <div className="mt-10">
-            <a
-              href="https://app.letsdog.nl"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/prijzen"
               className="inline-flex items-center px-7 py-3.5 rounded-full bg-[#75876D] text-white text-[16px] font-semibold hover:bg-[#65775D] transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
             >
               Start vandaag
-            </a>
+            </Link>
           </div>
         </div>
       </div>

@@ -1,7 +1,8 @@
 import { pageMetadata } from "@/lib/seo";
+import Link from "next/link";
 import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export const metadata = pageMetadata({
   title: "Rassenkeuze hulp — Welk ras past bij jou? | Let's Dog",
@@ -90,15 +91,13 @@ export default function Rassenkeuze() {
         <p className="text-white/60 text-lg mb-8 max-w-md mx-auto">
           Meld je aan en begin met je puppytraining — inclusief dagelijkse agenda en videolessen.
         </p>
-        <a
-          href="https://app.letsdog.nl"
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href="/prijzen"
           className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-[#FFA580] text-[#141414] text-[16px] font-bold hover:bg-[#ff9060] transition-all duration-200 cursor-pointer"
         >
           Start vandaag
-          <ExternalLink size={16} strokeWidth={2} />
-        </a>
+          <ArrowRight size={16} strokeWidth={2} />
+        </Link>
       </SectionWrapper>
     </>
   );
