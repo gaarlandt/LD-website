@@ -104,24 +104,12 @@ export function HowItWorks() {
 
       {/* App Store badges */}
       <div className="flex items-center justify-center gap-3 mt-8 relative">
-        <button
-          onClick={() => setShowToast(true)}
-          className="opacity-70 hover:opacity-100 transition-opacity duration-200 cursor-pointer"
-          aria-label="Download in de App Store (binnenkort beschikbaar)"
-        >
-          <Image
-            src={asset("/images/app-store-badge.svg")}
-            alt="Download on the App Store"
-            width={140}
-            height={42}
-            className="h-[42px] w-auto"
-          />
-        </button>
+        {/* Android (Google Play) — left, live */}
         <a
           href="https://play.google.com/store/apps/details?id=nl.letsdog.app"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:opacity-80 transition-opacity duration-200 cursor-pointer"
+          className="opacity-90 hover:opacity-100 transition-opacity duration-200 cursor-pointer"
           aria-label="Download de Let's Dog app in Google Play"
         >
           <Image
@@ -129,9 +117,23 @@ export function HowItWorks() {
             alt="Get it on Google Play"
             width={156}
             height={46}
-            className="h-[42px] w-auto"
+            className="h-[44px] w-auto"
           />
         </a>
+        {/* iOS (App Store) — right, not yet released → toast */}
+        <button
+          onClick={() => setShowToast(true)}
+          className="opacity-90 hover:opacity-100 transition-opacity duration-200 cursor-pointer"
+          aria-label="Download in de App Store (binnenkort beschikbaar)"
+        >
+          <Image
+            src={asset("/images/app-store-badge.svg")}
+            alt="Download on the App Store"
+            width={140}
+            height={42}
+            className="h-[44px] w-auto"
+          />
+        </button>
 
         {/* Toast */}
         <div
