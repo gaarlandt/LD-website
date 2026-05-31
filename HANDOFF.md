@@ -12,7 +12,7 @@ Marketing site built with Next.js 16 static export, deployed on Cloudflare Pages
 
 The 5 legal pages now read their copy from `content/<slug>.md` (gray-matter + react-markdown + remark-gfm) — Jur can edit prose without touching TSX. Marketing/homepage stays TSX; re-evaluate after a month.
 
-Next priority: **the post-merge open items** — privacy email → `.nl`, National2→WOFF2, a 512px image variant, optional `*.pages.dev` noindex (see "⚡ Next session — open items" below). The big spec-compliance build (PR #15) is **done + merged**.
+Next priority: **the remaining post-merge open item** — National2→WOFF2 (waiting on owner-supplied subsetted files). Done this session (contact-redesign PR): privacy email → `.nl` ✅ and the 512px image variant ✅; `*.pages.dev` noindex was **skipped** (owner decision). The big spec-compliance build (PR #15) is **done + merged**.
 
 ## What was accomplished (2026-05-31, later — website fixes bundle, PR #16 MERGED)
 
@@ -34,13 +34,13 @@ Branch `feature/website-fixes-bundle` → **PR #16**, atomic commit per item, me
 
 PR #15 is merged + deployed. **None of the below were touched this session** (owner: "we'll do that next session"). Owner answers are baked in — just execute. Use `/new-feature` for the code ones.
 
-1. **Privacy contact email → `.nl`** *(owner confirmed)*. In `content/privacybeleid.md`, section "11. Contact en klachten", change `privacy@letsdog.com` → **`privacy@letsdog.nl`** (both the link text and the `mailto:`). It was copied verbatim from the live site, which has the `.com` typo. Pure-content edit.
+1. ✅ **DONE 2026-05-31 (contact-redesign PR).** **Privacy contact email → `.nl`** *(owner confirmed)*. In `content/privacybeleid.md`, section "11. Contact en klachten", change `privacy@letsdog.com` → **`privacy@letsdog.nl`** (both the link text and the `mailto:`). It was copied verbatim from the live site, which has the `.com` typo. Pure-content edit.
 
 2. **National2 → WOFF2** *(GO — owner is supplying subsetted files)*. Today National2 ships as two **unsubsetted OTFs** (`public/fonts/National2-Bold.otf`, `-Medium.otf`); the Bold (~66 KB) sits in the LCP critical chain. When the WOFF2 files arrive: drop them in `public/fonts/`, change the two `@font-face` `src:` rules in `app/globals.css` from `…format("opentype")` to the `.woff2 …format("woff2")` (keep `font-display: swap`), rebuild, and confirm via Lighthouse that the font no longer dominates the network-dependency chain.
 
-3. **512 px image variant** *(Claude does this — no owner action; it is NOT an SVG)*. Lighthouse flagged ~28 KB of mobile over-delivery because the smallest hero variant (384 px) is below the ~412 px mobile viewport, so the browser jumps to 768 px. Fix = **one line in `scripts/optimize-images.mjs`**: add `512` to `VARIANT_WIDTHS` (→ `[384, 512, 768, 1280]`), run `npm run optimize:images`, commit the new `*-512.avif/.webp`. The `<picture>` srcset picks it up automatically. **No new source files needed** — variants are generated from the existing `public/images/*.jpeg`.
+3. ✅ **DONE 2026-05-31 (contact-redesign PR)** — added `512` to `WIDTHS` in `scripts/optimize-images.mjs`, regenerated + committed the `*-512.avif/.webp` variants. **512 px image variant** *(no owner action; it is NOT an SVG)*. Lighthouse flagged ~28 KB of mobile over-delivery because the smallest hero variant (384 px) is below the ~412 px mobile viewport, so the browser jumps to 768 px. Fix = **one line in `scripts/optimize-images.mjs`**: add `512` to `VARIANT_WIDTHS` (→ `[384, 512, 768, 1280]`), run `npm run optimize:images`, commit the new `*-512.avif/.webp`. The `<picture>` srcset picks it up automatically. **No new source files needed** — variants are generated from the existing `public/images/*.jpeg`.
 
-4. **`*.pages.dev` noindex — corrected guidance.** Earlier "dashboard Transform Rule" advice was **wrong**: Transform Rules are zone-scoped and can't be added to Cloudflare's `pages.dev` zone. **Mostly already handled:** every page has a self-referential `<link rel="canonical" href="https://letsdog.nl/…">`, so Google won't index the `website-letsdog.pages.dev` duplicate (it honours canonical). For explicit belt-and-suspenders noindex, the in-repo way is a tiny **Pages Function** (host-aware, cutover-safe — `letsdog.nl` never matches `.pages.dev`, so nothing to remove later). **Low priority.** Code — create `functions/_middleware.js`:
+4. ⏭️ **SKIPPED — owner decision 2026-05-31 (do not implement).** **`*.pages.dev` noindex — corrected guidance.** Earlier "dashboard Transform Rule" advice was **wrong**: Transform Rules are zone-scoped and can't be added to Cloudflare's `pages.dev` zone. **Mostly already handled:** every page has a self-referential `<link rel="canonical" href="https://letsdog.nl/…">`, so Google won't index the `website-letsdog.pages.dev` duplicate (it honours canonical). For explicit belt-and-suspenders noindex, the in-repo way is a tiny **Pages Function** (host-aware, cutover-safe — `letsdog.nl` never matches `.pages.dev`, so nothing to remove later). **Low priority.** Code — create `functions/_middleware.js`:
    ```js
    export async function onRequest(context) {
      const response = await context.next();
@@ -123,6 +123,8 @@ Then **Phase B** (robots.ts, sitemap.ts, JSON-LD, og:image), **Phase C** (all se
 - **U13** `docs/CUTOVER.md` "Spec compliance — post-cutover" section + 2 `CLAUDE.md` conventions + this handover.
 
 **Security model:** unchanged from prior — static export, client-only, no auth-adjacent data; the new code is presentational metadata/markup + build-time asset generation + Cloudflare header config. No server logic, no secrets. Verification = `npm run build` + `out/`/`curl` checks + dev-server preview + (pending) Cloudflare preview header curl.
+
+**Session log:** 2026-05-31 — contact page redesign + working contact form — security model: first server-side code in the repo, a Cloudflare Pages Function (`functions/api/contact.ts`) relays the form to Postmark; token in `POSTMARK_SERVER_TOKEN` (Function env, never client-exposed); honeypot + length-capped validation; no auth-adjacent data. Bundled: privacy email →`.nl`, 512px responsive image variant. `*.pages.dev` noindex deliberately skipped.
 
 **Session log:** 2026-05-31 — spec-compliance verified (Lighthouse: Perf ~89, CWV green) + review follow-ups (real Algemene Voorwaarden page, privacy/AI verbatim from live, icon recolor to black-on-white, all "Start vandaag" → /prijzen, maintenance docs, a11y label-in-name fix) + **PR #15 merged via merge commit** + obsolete Firebase CI failures purged — security model unchanged (static export, client-only, no auth-adjacent data).
 

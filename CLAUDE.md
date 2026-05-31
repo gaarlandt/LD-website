@@ -98,6 +98,7 @@ Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/lay
   - `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-0FCGXJHMMY`
   - `NEXT_PUBLIC_COOKIEBOT_CBID=<Domain Group ID from Cookiebot dashboard>`
   - `NODE_VERSION=20`
+  - `POSTMARK_SERVER_TOKEN=<Postmark Server API token>` — **secret** (NOT `NEXT_PUBLIC`); powers the contact form via `functions/api/contact.ts`. Optional: `CONTACT_TO` (default `support@letsdog.nl`), `CONTACT_FROM` (default `noreply@letsdog.nl`, must be a Postmark-verified sender).
 
 ## Analytics & Consent
 - **GA4**: measurement ID `G-0FCGXJHMMY` (shared across all Let's Dog domains — `www`, `keuzehulp`, `agenda`, `app`). See the GA4 doc in Google Drive (`Tech/GA4 LD/`) for cross-domain config, custom dimensions, key events, Google Ads conversion mapping.
@@ -159,7 +160,7 @@ This project uses the **compound-engineering** harness (`harness: compound-engin
 **Bootstrap**: if `.compound-engineering/config.local.yaml` doesn't exist in this repo yet, run `/ce-setup` once. It checks CE tool availability and creates the local config (gitignored).
 
 ## Important Notes
-- Static export: no server-side features (no API routes, no SSR). Metadata routes (`app/robots.ts`, `app/sitemap.ts`, `app/manifest.ts`) need `export const dynamic = "force-static"`.
+- Static export: no Next.js server features (no API routes, no SSR). **One exception:** the contact form POSTs to a Cloudflare Pages Function at `functions/api/contact.ts` (relays to Postmark; token in `POSTMARK_SERVER_TOKEN`). Cloudflare runs `functions/` alongside the static `out/`, so the build stays a plain `next build` (the Function is web-standard `Request`/`Response`/`fetch` only — no Node APIs, no npm deps; typed locally so `next build`'s `**/*.ts` typecheck passes). Note: `functions/` does **not** run under `next dev` — verify the form on the Cloudflare preview. Metadata routes (`app/robots.ts`, `app/sitemap.ts`, `app/manifest.ts`) need `export const dynamic = "force-static"`.
 - Next's image optimizer is off (`images.unoptimized: true`, required for static export) — modern formats come from the `OptimizedImage` `<picture>` component + committed `sharp` variants instead (see the spec-compliance section).
 - The `asset()` helper in `lib/utils.ts` prepends the base path to image URLs. Logos/badges still use it via `next/image`; `OptimizedImage` takes a raw path and applies `asset()` internally.
 - Rassenkeuze hulp page embeds an iframe from `keuzehulp.letsdog.nl` (renamed from "Hondenkeuze" 2026-05-29; old `/hondenkeuze/` URL 301-redirects via `public/_redirects`)
