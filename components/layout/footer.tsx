@@ -87,14 +87,12 @@ export function Footer() {
             >
               Privacybeleid
             </Link>
-            <a
-              href="https://app.letsdog.nl/algemene-voorwaarden/"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/algemene-voorwaarden"
               className="inline-block py-1.5 text-xs text-white/60 hover:text-white transition-colors duration-200"
             >
               Algemene voorwaarden
-            </a>
+            </Link>
             <Link
               href="/ai-gebruiksvoorwaarden"
               className="inline-block py-1.5 text-xs text-white/60 hover:text-white transition-colors duration-200"

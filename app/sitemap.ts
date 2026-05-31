@@ -18,6 +18,7 @@ const ROUTES = [
   "/over-ons/",
   "/veelgestelde-vragen/",
   "/contact/",
+  "/algemene-voorwaarden/",
   "/privacybeleid/",
   "/ai-gebruiksvoorwaarden/",
   "/cookieverklaring/",

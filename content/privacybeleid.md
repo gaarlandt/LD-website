@@ -3,71 +3,53 @@ title: Privacyverklaring
 description: Hoe Let's Dog omgaat met je persoonsgegevens, je rechten en onze beveiligingsmaatregelen.
 ---
 
-## Wie zijn wij?
+## 1. Wie zijn wij?
 
-Let's Dog B.V. is verantwoordelijk voor de verwerking van persoonsgegevens zoals weergegeven in deze privacyverklaring. Wij bieden een online platform voor puppytraining, inclusief een puppyagenda, videolessen en een AI-gedragstrainer.
+Let's Dog B.V. is verantwoordelijk voor de verwerking van persoonsgegevens zoals weergegeven in deze privacyverklaring.
 
-## Welke gegevens verwerken wij?
+## 2. Welke gegevens verwerken wij?
 
-Wij verwerken de volgende categorieën persoonsgegevens:
+- Naam, e-mailadres, adres
+- Betalingsgegevens
+- Hondgegevens (ras, leeftijd, gedrag)
+- IP-adres, apparaatgegevens, locatie
 
-- Naam en contactgegevens (e-mailadres, telefoonnummer)
-- Accountgegevens en betalingsinformatie
-- Gegevens over je hond (ras, leeftijd, gedrag)
-- Technische gegevens (IP-adres, apparaatinformatie, browsertype)
-- Locatiegegevens (alleen met jouw toestemming)
+## 3. Waarom verwerken wij gegevens?
 
-## Waarom verwerken wij gegevens?
+- Voor het leveren van diensten en producten
+- Persoonlijk advies op basis van AI
+- Marketing en gepersonaliseerde aanbiedingen
 
-Wij verwerken persoonsgegevens voor de volgende doeleinden:
+## 4. Hoe lang bewaren wij data?
 
-- Het leveren van onze diensten (puppyagenda, videolessen, community)
-- Het bieden van gepersonaliseerd advies via onze AI-gedragstrainer
-- Communicatie over je account en onze diensten
-- Verbetering van ons platform en onze content
-- Marketing (alleen met jouw toestemming)
+We bewaren persoonsgegevens niet langer dan strikt nodig is om de doelen te realiseren waarvoor de gegevens worden verzameld.
 
-## Hoe lang bewaren wij data?
+## 5. Delen van gegevens met derden
 
-Wij bewaren je persoonsgegevens niet langer dan strikt noodzakelijk is voor de doeleinden waarvoor ze zijn verzameld. Na beëindiging van je account worden je gegevens binnen een redelijke termijn verwijderd, tenzij wettelijke bewaarplichten van toepassing zijn.
+Wij delen gegevens alleen met partners die essentieel zijn voor de uitvoering van onze diensten, met verwerkersovereenkomst.
 
-## Delen van gegevens met derden
+## 6. Cookies en tracking
 
-Wij delen je gegevens alleen met derden die strikt noodzakelijk zijn voor onze dienstverlening, zoals hostingproviders en betalingsverwerkers. Met deze partijen hebben wij verwerkersovereenkomsten gesloten. Wij verkopen je gegevens nooit aan derden.
-
-## Cookies en tracking
-
-Wij gebruiken cookies op onze website. Meer informatie hierover vind je in onze cookieverklaring.
+We gebruiken functionele, analytische en trackingcookies. Zie onze cookieverklaring voor meer info.
 
 [Lees onze cookieverklaring](/cookieverklaring)
 
-## Jouw rechten
+## 7. Jouw rechten
 
-Je hebt de volgende rechten met betrekking tot je persoonsgegevens:
+Je hebt het recht op inzage, correctie, verwijdering, dataportabiliteit en het intrekken van toestemming.
 
-- Recht op inzage in je gegevens
-- Recht op correctie van onjuiste gegevens
-- Recht op verwijdering van je gegevens
-- Recht op overdraagbaarheid van je gegevens
-- Recht om je toestemming in te trekken
-- Recht om een klacht in te dienen bij de Autoriteit Persoonsgegevens
+## 8. Beveiliging
 
-## Beveiliging
+Wij nemen passende maatregelen om jouw gegevens te beschermen tegen misbruik, verlies of onbevoegde toegang.
 
-Wij nemen passende technische en organisatorische maatregelen om je persoonsgegevens te beschermen tegen ongeoorloofde toegang, verlies of misbruik. Onze systemen worden regelmatig gecontroleerd en bijgewerkt.
+## 9. Internationale gegevensoverdracht
 
-## Internationale gegevensoverdracht
+Bij internationale uitbreiding kunnen persoonsgegevens worden overgedragen buiten de Europese Economische Ruimte (EER). In dat geval nemen wij aanvullende beveiligingsmaatregelen, zoals modelcontractbepalingen.
 
-In sommige gevallen kunnen je gegevens worden verwerkt buiten de Europese Economische Ruimte (EER). In dat geval zorgen wij voor passende waarborgen, zoals modelcontractbepalingen, om je gegevens te beschermen.
+## 10. Profilering en geautomatiseerde besluitvorming
 
-## Profilering en geautomatiseerde besluitvorming
+Let's Dog gebruikt data om gebruikersprofielen op te stellen en gepersonaliseerde AI-adviezen te genereren. Besluiten met juridische gevolgen worden nooit volledig automatisch genomen.
 
-Wij gebruiken profilering om je gepersonaliseerd trainingsadvies te bieden via onze AI-gedragstrainer. Dit is gebaseerd op de gegevens die je over je hond invoert. Er worden geen volledig geautomatiseerde besluiten genomen die rechtsgevolgen voor je hebben.
+## 11. Contact en klachten
 
-## Contact en klachten
-
-Heb je vragen over deze privacyverklaring of wil je gebruik maken van je rechten? Neem dan contact met ons op.
-
-- E-mail: [mail@letsdog.nl](mailto:mail@letsdog.nl)
-- Privacy: [privacy@letsdog.com](mailto:privacy@letsdog.com)
-- Telefoon: [085 744 4161](tel:0857444161)
+Voor vragen of klachten over gegevensbescherming kun je mailen naar [privacy@letsdog.com](mailto:privacy@letsdog.com) of contact opnemen met de Autoriteit Persoonsgegevens.
