@@ -37,7 +37,7 @@ export function Hope() {
         {/* Left: image — clickable link to puppyagenda page */}
         <Link
           href="/puppyagenda"
-          aria-label="Bekijk de puppyagenda voor elke week"
+          aria-label="Puppyagenda voor elke week"
           className="relative order-2 lg:order-1 block group cursor-pointer"
         >
           <div className="relative rounded-2xl overflow-hidden aspect-[4/5] transition-transform duration-300 group-hover:scale-[1.01]">
