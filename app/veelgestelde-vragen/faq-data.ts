@@ -3,11 +3,12 @@
 // FAQ structured data that doesn't mirror the visible Q/A text.
 
 export type FaqEntry = { q: string; a: string };
-export type FaqCategory = { name: string; faqs: FaqEntry[] };
+export type FaqCategory = { name: string; slug: string; faqs: FaqEntry[] };
 
 export const faqCategories: FaqCategory[] = [
   {
     name: "Over de app",
+    slug: "over-de-app",
     faqs: [
       {
         q: "Wat is Let's Dog precies?",
@@ -25,6 +26,7 @@ export const faqCategories: FaqCategory[] = [
   },
   {
     name: "Training",
+    slug: "training",
     faqs: [
       {
         q: "Werkt de methode voor elk ras?",
@@ -42,6 +44,7 @@ export const faqCategories: FaqCategory[] = [
   },
   {
     name: "Abonnement & betaling",
+    slug: "abonnement-betaling",
     faqs: [
       {
         q: "Wat kost het abonnement?",
@@ -63,6 +66,7 @@ export const faqCategories: FaqCategory[] = [
   },
   {
     name: "Technisch",
+    slug: "technisch",
     faqs: [
       {
         q: "Werkt de app ook offline?",
