@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { SITE_URL, OG_IMAGE } from "@/lib/seo";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
+import "./ld-tokens.css";
+import "./ld-components.css";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { WhatsAppButton } from "@/components/shared/whatsapp-button";
