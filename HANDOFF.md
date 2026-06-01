@@ -6,16 +6,11 @@
 
 ---
 
-## ⚡ NEXT SESSION — Build the over-ons + FAQ redesign (plan approved, build pending)
+## ⚡ NEXT SESSION — open items + owner actions
 
-**This is the next thing to build.** Brainstorm → plan → Proof review were all done 2026-05-31; the plan is **owner-approved**. No code written yet.
+**Over-ons + FAQ redesign is DONE — PR #18 merged 2026-06-01**, tag `release/over-ons-faq-redesign-20260601-083944`. Both pages are live on Cloudflare Pages. See open items table below for the one pending owner action (OA1 — consult product URL).
 
-- **Plan (source of truth):** [`docs/plans/2026-05-31-003-feat-over-ons-faq-redesign-plan.md`](docs/plans/2026-05-31-003-feat-over-ons-faq-redesign-plan.md). Origin requirements: [`docs/brainstorms/2026-05-31-over-ons-faq-redesign-requirements.md`](docs/brainstorms/2026-05-31-over-ons-faq-redesign-requirements.md). (Proof review came back clean — no editor edits, no comments.)
-- **How to build:** use **`/new-feature`** (NOT `/ce-work`) — it owns the branch → build-validate → preview → PR → merge-commit lifecycle this site requires, and the planning/thinking `/ce-work` would add is already banked in the approved plan. Point it at the plan path. Branch `feat/over-ons-faq-redesign` (kept ≤28 chars for the preview-alias limit).
-- **Model:** run **`/model sonnet`** first — U1–U5 are pattern-following implementation against a finalized design; Opus-level planning/review is done. Back to Opus only if something genuinely non-obvious surfaces.
-- **5 units, dependency-ordered:** U1 global `scroll-padding-top: 6rem` in `app/globals.css` → U2 add a `slug` field to `FaqCategory` in `app/veelgestelde-vragen/faq-data.ts` → U3 rewrite `app/over-ons/page.tsx` (beige split hero + "Mijn verhaal" pull-quote + new "Onze methode" 4-card grid + horizontal cert cards + 2-button closing CTA, ends light) → U4 rewrite `app/veelgestelde-vragen/faq-content.tsx` (beige hero + clickable category-overview card + continuous 01–12 numbered accordion + a11y upgrade) → U5 docs. All mirror the existing beige-hero pattern (`app/contact/contact-content.tsx`, `app/rassenkeuze/page.tsx`); brand hex inline; Dutch copy.
-- **⚠ Owner action (OA1) — needs Jur:** the "Plan een consult" CTA on over-ons ships wired to the interim `https://app.letsdog.nl/consult/`. **Create/confirm the real purchasable consult product URL** (a WooCommerce checkout like the pricing tiers — see the "Pricing CTAs … wire each tier to its own WooCommerce product when Jur supplies the SKU" open item below) and supply it for a one-line swap.
-- **Verify (no test suite):** `npm run build` + Cloudflare branch-preview. The plan's Verification Strategy lists the cases manual click-testing misses — cold-load deep-links (`/veelgestelde-vragen/#training`, `/over-ons/#verhaal`), reduced-motion, both pages ending light, derived counts/numbering, JSON-LD intact. Merge via merge commit; preview-first before merge.
+No planned code work queued. Next session pick from the open items table or start a new `/ce-brainstorm`.
 
 ---
 
