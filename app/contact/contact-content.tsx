@@ -4,7 +4,15 @@ import { useState } from "react";
 import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { ContactFormModal } from "./contact-form-modal";
-import { Send, Mail, Phone, ExternalLink, Sparkles, Heart } from "lucide-react";
+import { Button, Card, Badge, Eyebrow } from "@/components/ui";
+import {
+  PaperPlaneTilt,
+  Envelope,
+  Phone,
+  ArrowSquareOut,
+  Sparkle,
+  Heart,
+} from "@phosphor-icons/react/dist/ssr";
 
 const WHATSAPP_HREF = `https://wa.me/31648362054?text=${encodeURIComponent(
   "Hoi! Ik heb een vraag over Let's Dog.",
@@ -24,13 +32,13 @@ export function ContactContent() {
   return (
     <>
       {/* Hero — beige split */}
-      <section className="bg-[#EFE8E4] pt-32 pb-16 md:pt-40 md:pb-24 px-6 lg:px-8 overflow-hidden">
+      <section className="bg-[var(--ld-beige)] pt-32 pb-16 md:pt-40 md:pb-24 px-6 lg:px-8 overflow-hidden">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <div>
-            <h1 className="font-heading font-bold text-4xl md:text-5xl lg:text-6xl text-[#141414] leading-[1.05] mb-6">
-              Neem <span className="text-[#FFA580]">contact</span> op
+            <h1 className="font-heading font-bold text-4xl md:text-5xl lg:text-6xl text-[var(--ld-text)] leading-[1.05] mb-6">
+              Neem <span className="text-[var(--ld-peach)]">contact</span> op
             </h1>
-            <p className="text-lg md:text-xl text-[#141414]/70 leading-relaxed mb-8 max-w-xl">
+            <p className="text-lg md:text-xl text-[var(--ld-text-muted)] leading-relaxed mb-8 max-w-xl">
               Vragen over puppytraining, je lidmaatschap of welk ras bij je past?
               Stel ze gerust — onze gecertificeerde gedragstherapeuten denken graag
               met je mee.
@@ -38,42 +46,35 @@ export function ContactContent() {
 
             {/* Status pills */}
             <div className="flex flex-wrap gap-3 mb-8">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-semibold text-[#162A0E]">
-                <span className="w-2 h-2 rounded-full bg-[#75876D]" aria-hidden="true" />
+              <Badge>
+                <span className="w-2 h-2 rounded-full bg-[var(--ld-green)] flex-shrink-0" aria-hidden="true" />
                 Antwoord binnen 1 werkdag
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-semibold text-[#162A0E]">
-                <span className="w-2 h-2 rounded-full bg-[#FFA580]" aria-hidden="true" />
+              </Badge>
+              <Badge>
+                <span className="w-2 h-2 rounded-full bg-[var(--ld-peach)] flex-shrink-0" aria-hidden="true" />
                 Persoonlijk contact
-              </span>
+              </Badge>
             </div>
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                type="button"
-                onClick={() => setModalOpen(true)}
-                className="inline-flex items-center justify-center gap-2.5 rounded-full bg-[#75876D] px-7 py-3.5 text-white font-semibold hover:bg-[#647558] transition-colors cursor-pointer"
-              >
-                <Send size={18} strokeWidth={2} />
+              <Button variant="brand" pill onClick={() => setModalOpen(true)}>
+                <PaperPlaneTilt size={18} />
                 Stuur een bericht
-              </button>
-              <a
-                href={WHATSAPP_HREF}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2.5 rounded-full border border-[#75876D] px-7 py-3.5 text-[#162A0E] font-semibold hover:bg-[#75876D]/10 transition-colors"
-              >
-                <WhatsAppIcon />
-                App via WhatsApp
-              </a>
+              </Button>
+              <Button variant="ghost" pill asChild>
+                <a href={WHATSAPP_HREF} target="_blank" rel="noopener noreferrer">
+                  <WhatsAppIcon />
+                  App via WhatsApp
+                </a>
+              </Button>
             </div>
           </div>
 
           {/* Hero image — swappable placeholder; drop the mockup photo into
               public/images/ and update the src + run npm run optimize:images */}
           <div className="relative">
-            <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-sm">
+            <div className="relative aspect-[4/3] rounded-[var(--ld-r-xl)] overflow-hidden shadow-[var(--ld-sh-1)]">
               <OptimizedImage
                 src="/images/training.jpeg"
                 alt="Hondeneigenaar met pup buiten in het gras"
@@ -83,42 +84,45 @@ export function ContactContent() {
                 className="object-cover"
               />
             </div>
-            <div className="absolute bottom-4 left-4 inline-flex items-center gap-2 rounded-full bg-[#FFA580] px-4 py-2 text-sm font-semibold text-[#141414] shadow-lg">
-              <Heart size={15} strokeWidth={2.5} />
-              We helpen je graag verder
+            <div className="absolute bottom-4 left-4">
+              <Badge tone="peach" className="font-semibold shadow-[var(--ld-sh-3)]">
+                <Heart size={15} weight="fill" />
+                We helpen je graag verder
+              </Badge>
             </div>
           </div>
         </div>
       </section>
 
       {/* Trainer consultation card */}
-      <SectionWrapper className="bg-[#EFE8E4]">
-        <div className="max-w-5xl mx-auto bg-white rounded-3xl overflow-hidden shadow-sm grid lg:grid-cols-2">
+      <SectionWrapper className="bg-[var(--ld-beige)]">
+        <div className="max-w-5xl mx-auto bg-white rounded-[var(--ld-r-xl)] overflow-hidden shadow-[var(--ld-sh-1)] grid lg:grid-cols-2">
           <div className="p-8 lg:p-12 flex flex-col justify-center">
-            <span className="inline-flex items-center gap-2 self-start rounded-full bg-[#EFE8E4] px-4 py-1.5 mb-5 text-xs font-semibold uppercase tracking-widest text-[#75876D]">
-              <Sparkles size={14} strokeWidth={2} />
-              Persoonlijk advies
-            </span>
-            <h2 className="font-heading font-bold text-3xl text-[#141414] mb-4 leading-tight">
+            <div className="inline-flex items-center gap-2 self-start mb-5">
+              <Sparkle size={14} className="text-[var(--ld-green)]" />
+              <Eyebrow tone="brand">Persoonlijk advies</Eyebrow>
+            </div>
+            <h2 className="font-heading font-bold text-3xl text-[var(--ld-text)] mb-4 leading-tight">
               Consult met een gecertificeerde trainer
             </h2>
-            <p className="text-[#141414]/70 text-[16px] leading-relaxed mb-4">
+            <p className="text-[var(--ld-text-muted)] text-[16px] leading-relaxed mb-4">
               Boek een persoonlijk videogesprek met onze gedragstherapeut. Bespreek
               het gedrag van je hond en krijg een concreet plan van aanpak.
             </p>
-            <p className="text-[#141414] font-bold text-2xl mb-6">
+            <p className="text-[var(--ld-text)] font-bold text-2xl mb-6">
               €39,50{" "}
-              <span className="text-sm font-normal text-[#141414]/50">incl. BTW</span>
+              <span className="text-sm font-normal text-[var(--ld-text-subtle)]">incl. BTW</span>
             </p>
-            <a
-              href="https://app.letsdog.nl/consult/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 self-start px-7 py-3.5 rounded-full bg-[#75876D] text-white font-semibold text-[16px] hover:bg-[#647558] transition-colors cursor-pointer"
-            >
-              Boek een consult
-              <ExternalLink size={16} strokeWidth={2} />
-            </a>
+            <Button variant="brand" pill asChild className="self-start">
+              <a
+                href="https://app.letsdog.nl/consult/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Boek een consult
+                <ArrowSquareOut size={16} />
+              </a>
+            </Button>
           </div>
 
           <div className="relative min-h-[260px] lg:min-h-0">
@@ -137,45 +141,43 @@ export function ContactContent() {
       <SectionWrapper className="bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="font-heading font-bold text-3xl text-[#141414] mb-3">
+            <h2 className="font-heading font-bold text-3xl text-[var(--ld-text)] mb-3">
               Direct bereikbaar
             </h2>
-            <p className="text-[#141414]/60 text-[16px]">
+            <p className="text-[var(--ld-text-muted)] text-[16px]">
               Liever direct contact? Stuur een mailtje, bel ons of app via WhatsApp.
             </p>
           </div>
 
           <div className="grid sm:grid-cols-3 gap-5">
             {/* Email */}
-            <a
-              href="mailto:mail@letsdog.nl"
-              className="flex items-start gap-4 bg-white rounded-2xl p-6 border border-[#141414]/8 shadow-[0_4px_16px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.09)] hover:-translate-y-0.5 transition-all duration-300"
-            >
-              <div className="flex-shrink-0 w-11 h-11 rounded-full bg-[#DFF0C3] flex items-center justify-center">
-                <Mail size={19} className="text-[#75876D]" strokeWidth={2} />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-[#141414]/50 uppercase tracking-widest mb-1">
-                  E-mail
-                </p>
-                <p className="text-[#141414] font-semibold text-[15px]">mail@letsdog.nl</p>
-              </div>
+            <a href="mailto:mail@letsdog.nl" className="group block h-full">
+              <Card hover className="flex items-start gap-4 h-full">
+                <div className="flex-shrink-0 w-11 h-11 rounded-full bg-[var(--ld-lime)] flex items-center justify-center">
+                  <Envelope size={19} className="text-[var(--ld-green)]" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-[var(--ld-text-subtle)] uppercase tracking-widest mb-1">
+                    E-mail
+                  </p>
+                  <p className="text-[var(--ld-text)] font-semibold text-[15px]">mail@letsdog.nl</p>
+                </div>
+              </Card>
             </a>
 
             {/* Phone */}
-            <a
-              href="tel:0857444161"
-              className="flex items-start gap-4 bg-white rounded-2xl p-6 border border-[#141414]/8 shadow-[0_4px_16px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.09)] hover:-translate-y-0.5 transition-all duration-300"
-            >
-              <div className="flex-shrink-0 w-11 h-11 rounded-full bg-[#DFF0C3] flex items-center justify-center">
-                <Phone size={19} className="text-[#75876D]" strokeWidth={2} />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-[#141414]/50 uppercase tracking-widest mb-1">
-                  Telefoon
-                </p>
-                <p className="text-[#141414] font-semibold text-[15px]">085 744 4161</p>
-              </div>
+            <a href="tel:0857444161" className="group block h-full">
+              <Card hover className="flex items-start gap-4 h-full">
+                <div className="flex-shrink-0 w-11 h-11 rounded-full bg-[var(--ld-lime)] flex items-center justify-center">
+                  <Phone size={19} className="text-[var(--ld-green)]" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-[var(--ld-text-subtle)] uppercase tracking-widest mb-1">
+                    Telefoon
+                  </p>
+                  <p className="text-[var(--ld-text)] font-semibold text-[15px]">085 744 4161</p>
+                </div>
+              </Card>
             </a>
 
             {/* WhatsApp */}
@@ -183,19 +185,21 @@ export function ContactContent() {
               href={WHATSAPP_HREF}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-start gap-4 bg-white rounded-2xl p-6 border border-[#141414]/8 shadow-[0_4px_16px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.09)] hover:-translate-y-0.5 transition-all duration-300"
+              className="group block h-full"
             >
-              <div className="flex-shrink-0 w-11 h-11 rounded-full bg-[#DFF0C3] flex items-center justify-center">
-                <WhatsAppIcon className="w-[19px] h-[19px] text-[#75876D]" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-[#141414]/50 uppercase tracking-widest mb-1">
-                  WhatsApp
-                </p>
-                <p className="text-[#141414] font-semibold text-[15px]">
-                  Start een chat — direct antwoord
-                </p>
-              </div>
+              <Card hover className="flex items-start gap-4 h-full">
+                <div className="flex-shrink-0 w-11 h-11 rounded-full bg-[var(--ld-lime)] flex items-center justify-center">
+                  <WhatsAppIcon className="w-[19px] h-[19px] text-[var(--ld-green)]" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-[var(--ld-text-subtle)] uppercase tracking-widest mb-1">
+                    WhatsApp
+                  </p>
+                  <p className="text-[var(--ld-text)] font-semibold text-[15px]">
+                    Start een chat — direct antwoord
+                  </p>
+                </div>
+              </Card>
             </a>
           </div>
         </div>
