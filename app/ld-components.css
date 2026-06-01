@@ -180,6 +180,9 @@
 .ld-card__title  { font-family: var(--ld-font-display); font-weight: 700; font-size: var(--ld-fs-24); letter-spacing: var(--ld-tracking-tight); color: var(--ld-text); }
 .ld-card__body   { color: var(--ld-text-muted); }
 .ld-card__footer { margin-top: var(--ld-s-5); padding-top: var(--ld-s-4); border-top: 1px solid var(--ld-border); }
+/* Reduced-motion: suppress the card hover lift/shadow transition. DS-level guard so the
+   component is self-sufficient (the app's globals.css also blanket-zeroes durations). */
+@media (prefers-reduced-motion: reduce) { .ld-card { transition: none; } }
 
 /* Accent CTA — the one high-emphasis conversion button per screen (ink text for AA).
    Use sparingly: a single featured action, never routine buttons. */
@@ -267,6 +270,9 @@
   text-transform: uppercase;
   color: var(--ld-text-muted);
 }
+/* Eyebrow tones — green on light surfaces, white on green/forest. Default stays muted. */
+.ld-eyebrow--brand    { color: var(--ld-green); }
+.ld-eyebrow--on-green { color: var(--ld-on-green); }
 .ld-muted { color: var(--ld-text-muted); }
 .ld-divider { height: 1px; background: var(--ld-border); border: 0; margin: var(--ld-s-5) 0; }
 

@@ -6,7 +6,8 @@ import { cn } from '@/lib/utils';
 /**
  * Button — built on the .ld-btn token classes (components.css).
  * Primary is INK, never green. On a green surface use variant="onGreen".
- * Never use an accent as a button background.
+ * Accent-as-background (variant="peach", ink text) is allowed for the single
+ * highest-emphasis CTA per screen — use sparingly, never for routine buttons.
  */
 const buttonVariants = cva('ld-btn', {
   variants: {
