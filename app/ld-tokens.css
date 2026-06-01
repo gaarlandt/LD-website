@@ -12,31 +12,16 @@
    3. The auto prefers-color-scheme dark block is OMITTED — this marketing
       site is light-only (viewport colorScheme: "light"). The manual
       [data-theme="dark"] hook is kept for parity / future use.
+   4. --ld-font-display binds to the "National2" family the app already
+      registers in globals.css (OTF), NOT the bundle's bare 'National 2'.
+      Same rationale as #1: bind DS type tokens to the faces this app
+      actually loads, so DS headings and app headings share one registration.
    ============================================================ */
 
-/* National 2 — display/headings face, registered under the brand's
-   canonical family name 'National 2' (with the space). */
-@font-face {
-  font-family: 'National 2';
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-  src: url('../public/fonts/National2-Regular.ttf') format('truetype');
-}
-@font-face {
-  font-family: 'National 2';
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-  src: url('../public/fonts/National2-Medium.ttf') format('truetype');
-}
-@font-face {
-  font-family: 'National 2';
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-  src: url('../public/fonts/National2-Bold.ttf') format('truetype');
-}
+/* National 2 (display/headings) is registered once — as the "National2" @font-face
+   family in app/globals.css (OTF, weights 500/700). --ld-font-display binds to that
+   family (see adaptation #4 above), so DS components and the app's own headings resolve
+   to the exact same loaded face with no duplicate registration. */
 
 :root {
   /* Primary */
@@ -95,7 +80,7 @@
   --ld-on-forest:        #FFFFFF;
 
   /* Type — National 2 headings, DM Sans body (bound to next/font var) */
-  --ld-font-display: 'National 2', system-ui, -apple-system, sans-serif;
+  --ld-font-display: "National2", system-ui, -apple-system, sans-serif;
   --ld-font-body:    var(--font-dm-sans), 'DM Sans', system-ui, -apple-system, sans-serif;
 
   --ld-fs-12: 0.75rem;  --ld-fs-13: 0.8125rem; --ld-fs-14: 0.875rem;

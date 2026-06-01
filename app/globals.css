@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Don't scan Markdown for utility candidates. Prose in our plan/handoff docs
+   (e.g. the literal `bg-[var(--ld-*)]` in a migration plan) would otherwise be
+   turned into a malformed utility that Turbopack's CSS parser rejects outright
+   — a fatal 500 in `next dev`, a non-fatal warning in `next build`. Our Tailwind
+   classes only ever live in .tsx/.ts, never in Markdown. */
+@source not "../**/*.md";
+
 @theme inline {
   /* Brand Colors */
   --color-brand-green: #75876D;

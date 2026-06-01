@@ -1,7 +1,9 @@
 # Handoff — Brand-guide v2 site migration
 
 **Created:** 2026-06-01
-**Status:** Planned · owner-approved · **not started**.
+**Status:** Phase 0 (DS foundations) **implemented** — PR open on `feat/ds-foundations`. Phases 1–5 not started.
+
+**Phase 0 done (2026-06-01):** U1 Eyebrow `tone` (`brand`/`onGreen`) · U2 vendored 5 form components (`field`/`input`/`textarea`/`label`/`dialog`) + `@radix-ui/react-dialog`/`react-label` (**12 of 23** vendored) · U3 button JSDoc + `.ld-card` reduced-motion + National 2 font reconcile · U4 `GreenHeroBand`. Plus a pre-existing dev-blocker fix: Tailwind v4 scanned the plan doc's literal `bg-[var(--ld-*)]` and broke `next dev` (fatal CSS parse) — `app/globals.css` now carries `@source not "../**/*.md"`.
 **Plan (source of truth):** [`docs/plans/2026-06-01-001-feat-brand-guide-v2-site-migration-plan.md`](plans/2026-06-01-001-feat-brand-guide-v2-site-migration-plan.md) — read it first.
 **How to execute:** `/new-feature`, **one PR per phase**, **Phase 0 first**. (`/ce-work` is the alternative for driving a phase unit-by-unit.)
 
