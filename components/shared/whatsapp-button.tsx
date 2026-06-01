@@ -1,13 +1,15 @@
-"use client";
-
+// No "use client": this is a static link with no hooks or handlers — keep it a
+// server component so no JS ships for it.
 export function WhatsAppButton() {
+  // #25D366 / #1ebe5d are the official WhatsApp brand greens — intentionally literal
+  // hex, not DS tokens (they must match the WhatsApp brand and aren't in the LD palette).
   return (
     <a
       href="https://api.whatsapp.com/send/?phone=31857444161&text=Hallo%20Let's%20Dog!%20Ik%20heb%20een%20vraag%20over%20de%20opvoeding%20van%20mijn%20hond%20en%20zou%20graag%20advies%20willen%20van%20de%20gecertificeerde%20trainer.&type=phone_number&app_absent=0"
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat met ons op WhatsApp"
-      className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg hover:bg-[#1ebe5d] transition-colors duration-200 cursor-pointer md:w-16 md:h-16"
+      className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-[var(--ld-sh-3)] hover:bg-[#1ebe5d] transition-colors duration-200 cursor-pointer md:w-16 md:h-16"
     >
       <svg
         viewBox="0 0 24 24"
