@@ -20,8 +20,8 @@ export const metadata = pageMetadata({
 });
 
 const heroPills = [
-  "Welzijnsgericht",
-  "Maandelijks opzegbaar",
+  { dotClass: "bg-[var(--ld-green)]", label: "Welzijnsgericht" },
+  { dotClass: "bg-[var(--ld-peach)]", label: "Maandelijks opzegbaar" },
 ];
 
 const faqs = [
@@ -63,9 +63,13 @@ export default function Prijzen() {
 
             {/* Pills */}
             <div className="flex flex-wrap gap-3">
-              {heroPills.map((pill) => (
-                <Badge key={pill} dot className="font-semibold">
-                  {pill}
+              {heroPills.map(({ dotClass, label }) => (
+                <Badge key={label} className="font-semibold">
+                  <span
+                    className={`w-2 h-2 rounded-full flex-shrink-0 ${dotClass}`}
+                    aria-hidden="true"
+                  />
+                  {label}
                 </Badge>
               ))}
             </div>

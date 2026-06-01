@@ -57,7 +57,6 @@ const certs = [
 const heroBadges = [
   { dotClass: "bg-[var(--ld-green)]", label: "Gecertificeerd gedragstherapeut" },
   { dotClass: "bg-[var(--ld-peach)]", label: "NVGH-erkend" },
-  { dotClass: "bg-[var(--ld-green)]", label: "Geen dwang — nooit" },
 ];
 
 export default function OverOns() {
@@ -80,16 +79,6 @@ export default function OverOns() {
               bouwde ze een methode die aansluit bij hoe honden écht leren —
               zonder dwang, zonder schuldgevoel.
             </p>
-
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <Button variant="brand" pill asChild>
-                <Link href="/prijzen">Start vandaag</Link>
-              </Button>
-              <Button variant="ghost" pill asChild>
-                <a href="#verhaal">Lees haar verhaal</a>
-              </Button>
-            </div>
 
             {/* Cert badges */}
             <div className="flex flex-wrap gap-3">
