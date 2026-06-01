@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { OptimizedImage } from "@/components/shared/optimized-image";
-import { CheckSquare } from "lucide-react";
+import { CheckSquare } from "@phosphor-icons/react/dist/ssr";
 
 const phases = [
   {
@@ -97,7 +97,6 @@ export function PuppyPhases() {
                     <CheckSquare
                       size={16}
                       className="text-[#75876D] flex-shrink-0 mt-0.5"
-                      strokeWidth={2}
                     />
                     <span className="text-[15px] text-[#141414]/70">
                       {item}

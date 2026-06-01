@@ -2,7 +2,7 @@ import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
-import { Calendar, Video, BookOpen, CheckSquare } from "lucide-react";
+import { Calendar, VideoCamera, BookOpen, CheckSquare } from "@phosphor-icons/react/dist/ssr";
 import { PuppyPhases } from "@/components/sections/puppy-phases";
 
 export const metadata = pageMetadata({
@@ -14,7 +14,7 @@ export const metadata = pageMetadata({
 
 const features = [
   { icon: Calendar, text: "Week-voor-week structuur" },
-  { icon: Video, text: "Videolessen per fase" },
+  { icon: VideoCamera, text: "Videolessen per fase" },
   { icon: BookOpen, text: "Leesmateriaal op maat" },
   { icon: CheckSquare, text: "Checklists die je bijhoudt" },
 ];
@@ -41,7 +41,7 @@ export default function Puppyagenda() {
           {features.map(({ icon: Icon, text }) => (
             <div key={text} className="flex flex-col items-center text-center gap-3 p-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/80 shadow-[0_4px_16px_rgba(0,0,0,0.06)] hover:bg-white/80 hover:shadow-[0_6px_24px_rgba(0,0,0,0.1)] transition-all duration-300">
               <div className="w-12 h-12 rounded-xl bg-[#75876D] flex items-center justify-center">
-                <Icon size={20} className="text-white" strokeWidth={1.75} />
+                <Icon size={20} className="text-white" />
               </div>
               <span className="text-[15px] font-medium text-[#141414]">{text}</span>
             </div>
