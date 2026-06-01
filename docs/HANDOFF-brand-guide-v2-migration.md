@@ -1,7 +1,7 @@
 # Handoff — Brand-guide v2 site migration
 
-**Created:** 2026-06-01 · **Last updated:** 2026-06-01 (end of session 1)
-**Status:** Phases **0, 1, 2 merged to `main`**. **Phase 3 (marketing pages) is next.** Phases 4–5 not started.
+**Created:** 2026-06-01 · **Last updated:** 2026-06-01 (end of session 2)
+**Status:** ✅ **COMPLETE — all phases (0–5) merged to `main`.** The whole in-scope site (everything except `puppyagenda`) is on brand-guide v2; `lucide-react` is fully removed.
 **Plan (source of truth):** [`docs/plans/2026-06-01-001-feat-brand-guide-v2-site-migration-plan.md`](plans/2026-06-01-001-feat-brand-guide-v2-site-migration-plan.md) — read it, but note the **plan corrections** below (puppy-phases, Lucide removal).
 **How to execute:** `/new-feature`, **one PR per phase, one commit per unit**, **merge with a merge-commit (not squash)** so per-unit commits survive for rollback.
 
@@ -12,15 +12,20 @@ Migrate the whole Let's Dog marketing site (**except `puppyagenda`**) onto the b
 
 ---
 
-## ✅ Progress log (session 1 — 2026-06-01)
+## ✅ Progress log (sessions 1–2 — 2026-06-01)
 
 | Phase | Units | PR | Tag | Notes |
 |---|---|---|---|---|
 | **0 — DS foundations** | U1–U4 | [#20](https://github.com/gaarlandt/LD-website/pull/20) merged | `release/ds-foundations-*` | Eyebrow tones · vendored 5 form components + `@radix-ui/react-dialog`/`react-label` · button JSDoc + `.ld-card` reduced-motion + National 2 font reconcile · `GreenHeroBand`. **+ fixed a pre-existing dev blocker** (see Discoveries). |
 | **1 — global chrome** | U5–U7 | [#21](https://github.com/gaarlandt/LD-website/pull/21) merged | `release/ds-chrome-*` | navbar (focus-trapped mobile menu, 44px hamburger) · footer (forest tokens, onGreen eyebrows) · whatsapp (token shadow, dropped `"use client"`). |
 | **2 — homepage** | U8–U11, U13–U16 | [#22](https://github.com/gaarlandt/LD-website/pull/22) merged | `release/ds-homepage-*` | hero · problem · hope · how-it-works · trust · breed-selector · final-cta · pricing cleanup. **U12 puppy-phases EXCLUDED** (see Discoveries). |
+| **3 — marketing** | U17–U20 | [#23](https://github.com/gaarlandt/LD-website/pull/23) merged | `release/ds-phases-3-5-*` | over-ons · rassenkeuze · contact (Radix `Dialog`) · FAQ (Radix `Accordion`, dropped `"use client"`). |
+| **4 — legal & 404** | U21–U23 | [#23](https://github.com/gaarlandt/LD-website/pull/23) merged | `release/ds-phases-3-5-*` | legal-page-layout (`GreenHeroBand` — eyebrow 2.1→4.7:1, National 2 h3) · signature-form · 404. |
+| **5 — cleanup** | U24 | [#23](https://github.com/gaarlandt/LD-website/pull/23) merged | `release/ds-phases-3-5-*` | puppyagenda + puppy-phases icons→Phosphor (icons only); **`lucide-react` removed**. |
 
-`components/ui/`: **12 of 23** DS components vendored (added field/input/textarea/label/dialog in Phase 0). `lucide-react` still installed (removed in Phase 5 — but see blocker).
+> Sessions 1–2 both 2026-06-01. Phases 3–5 shipped as **one combined PR** (#23, owner decision) with one commit per unit + a merge-commit, not the original "one PR per phase".
+
+`components/ui/`: **12 of 23** DS components vendored (field/input/textarea/label/dialog added in Phase 0). ✅ `lucide-react` **removed** (U24) — the whole in-scope site is on Phosphor.
 
 ---
 
@@ -34,23 +39,18 @@ Migrate the whole Let's Dog marketing site (**except `puppyagenda`**) onto the b
 
 ---
 
-## ▶️ Start here next session — Phase 3 (marketing pages)
+## ✅ Migration complete (session 2 — 2026-06-01)
 
-1. Open a **new `/new-feature` session in its own git worktree** (one-worktree-per-session). Branch e.g. `feat/ds-marketing` (≤28 chars for the CF preview slug). `npm install` first — **worktrees don't get `node_modules`** (gitignored); the install also restores the Radix deps.
-2. Build on **Node v20** (`/Users/jurriaan/.nvm/versions/node/v20.19.5/bin` on PATH) to match Cloudflare. `npm run build` is the source of truth; verify each surface on the **Cloudflare branch preview**.
-3. Convert the four marketing pages — one commit per unit:
-   - **U17 `app/over-ons/page.tsx`** — 4 CTAs→Button, 4 eyebrows→Eyebrow, cert chips/tag→Badge, method+cert+CTA cards→Card, tokens, Phosphor. Preserve the 3 badges, `#verhaal` anchor, the 4-card grid, `next/image` NVGH logo, two-button closing CTA, `personLd` JSON-LD.
-   - **U18 `app/rassenkeuze/page.tsx`** — hero CTA→Button, pills/tag→Badge, eyebrows→Eyebrow, 6 cards→Card, keep the lime section + peach badge (tokenize), Phosphor. Leave the iframe `loading`/`allow` attrs untouched.
-   - **⚠️ U19 `app/contact/contact-content.tsx` + `contact-form-modal.tsx` — HIGHEST-RISK unit.** Swap the hand-rolled `motion.div` modal for the vendored Radix **`Dialog`** (focus trap + scroll-lock + Esc + focus-restore for free); move the 3 fields onto `Field`/`Input`/`Textarea`/`Label`; focus ring via `--ld-sh-focus`; errors via `--ld-danger` (`Field error`). **Preserve** the honeypot, `aria-required`/`aria-describedby`, `trackEvent`, the `open`/`onClose` interface, and the **Postmark POST** (`functions/api/contact.ts`). **The real submit only runs on the Cloudflare preview — `functions/` don't run under `next dev`.** See `docs/solutions/ui-bugs/framer-motion-animatepresence-stable-key.md`. Vendored `Dialog` usage: `<Dialog><DialogContent>…</DialogContent></Dialog>` (Portal + Overlay baked in); **must contain a `<DialogTitle>`** (Radix a11y — the component is documented for it).
-   - **U20 `app/veelgestelde-vragen/faq-content.tsx`** — replace the custom `FaqItem`/`useState` accordion with the vendored DS **`Accordion`**; category chips→Badge, CTAs→Button, "Categorieën"→Eyebrow; `ChevronDown` auto-removed by the Accordion. **Preserve** the gapless 01–12 numbering, per-category counts, slug ids + overview-card hrefs, empty-category filtering, the `{" "}` SWC whitespace guards, and the `FAQPage` JSON-LD sync (`faq-data.ts` stays the single source). If no other client state remains, drop `"use client"`.
+Phases 3–5 (U17–U24) shipped in **[PR #23](https://github.com/gaarlandt/LD-website/pull/23)** — one commit per unit, merged with a merge-commit:
+- **U17 over-ons · U18 rassenkeuze** — CTAs→Button, eyebrows→Eyebrow, chips/tags→Badge, cards→Card, tokens, Phosphor. Lime/peach accents kept (KTD4); keuzehulp iframe attrs untouched; `#verhaal` anchor, NVGH logo, `personLd` preserved.
+- **U19 contact** — hand-rolled `motion.div` modal → vendored Radix **`Dialog`** (focus-trap/scroll-lock/Esc/focus-restore from Radix); fields → `Field`/`Input`/`Textarea` with `--ld-danger` errors + `aria-invalid`. Honeypot, aria, `trackEvent`, `open`/`onClose`, and the **Postmark POST** all preserved.
+- **U20 FAQ** — custom accordion → Radix **`Accordion`** (one per category); dropped `"use client"`. Gapless 01–12 numbering, counts, slug ids, empty-category filtering, and FAQPage JSON-LD all preserved.
+- **U21 legal-page-layout** (all 6 pages) — adopted **`GreenHeroBand`** (eyebrow contrast 2.1→4.7:1), tokenized markdown overrides, National 2 h3, remark-gfm tables kept. **U22 signature-form** (tokens + 16px). **U23 404** — GreenHeroBand, secondary pills, brand CTA.
+- **U24** — converted puppyagenda + puppy-phases **icons only** to Phosphor (no reskin) and **removed `lucide-react`**.
 
-## Then Phase 4 — legal + 404
-- **U21 `components/shared/legal-page-layout.tsx`** (skins all 6 legal pages) — adopt the **`GreenHeroBand`** built in Phase 0 (`components/shared/green-hero-band.tsx`, props `eyebrow`/`title`/`lead?`/`titleClassName?`); it fixes the ~2.1:1 eyebrow-on-green AA failure. Tokenize the `react-markdown` overrides; **add `font-heading` to the `h3` override**. Keep the `remarkPlugins={[remarkGfm]}` wiring (GFM tables — verify `/cookieverklaring`).
-- **U22 `signature-form.tsx`** (tokens + min 16px font) · **U23 `app/not-found.tsx`** (adopt `GreenHeroBand`, CTA→Button).
+Verified: `npm run build` (Node 20) green + full browser pass (Dialog & Accordion open→close→reopen, validation, GreenHeroBand contrast, GFM tables, mobile, zero console errors).
 
-## Then Phase 5 — cleanup & verification (U24)
-- Remove `lucide-react` + whole-site a11y/motion/invariant sweep + full CF preview click-through.
-- **⚠️ BLOCKER:** `/puppyagenda` (excluded) **still imports `lucide-react`** (`Calendar, Video, BookOpen, CheckSquare`), as does `components/sections/puppy-phases.tsx`. `lucide-react` **cannot be fully removed** while puppyagenda stays out of scope. **Decision needed:** keep the dep, or fold puppyagenda's icons (only) into the migration.
+**Blocker (Phase 5 Lucide removal) — RESOLVED.** puppyagenda was the last `lucide-react` consumer; per owner decision its icons (and `puppy-phases.tsx`) were swapped to Phosphor **icons-only** — puppyagenda stays out of the reskin, but the dep is now fully gone. The contact-form **submit** posts to the unchanged Postmark function; verify on production once live if not done on a preview.
 
 ---
 
