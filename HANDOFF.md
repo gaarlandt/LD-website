@@ -10,7 +10,9 @@
 
 **Over-ons + FAQ redesign is DONE — PR #18 merged 2026-06-01**, tag `release/over-ons-faq-redesign-20260601-083944`. Both pages are live on Cloudflare Pages. See open items table below for the one pending owner action (OA1 — consult product URL).
 
-No planned code work queued. Next session pick from the open items table or start a new `/ce-brainstorm`.
+**▶ QUEUED: Brand-guide v2 site migration** (planned 2026-06-01, owner-approved, **not started**). Migrate the whole site (except `puppyagenda`) onto the DS v2 — full component adoption + tokens + v2 brand rules. Plan: [`docs/plans/2026-06-01-001-feat-brand-guide-v2-site-migration-plan.md`](docs/plans/2026-06-01-001-feat-brand-guide-v2-site-migration-plan.md). **Start here:** [`docs/HANDOFF-brand-guide-v2-migration.md`](docs/HANDOFF-brand-guide-v2-migration.md). Execute via `/new-feature`, **one PR per phase, Phase 0 first**. Locked decisions: multiple accent colors per page now allowed (v2 one-accent rule reversed — brand skill updated to match); eyebrows stay brand-green on light (`tone="brand"`); keep `BeigeSplitHero` inline; keep star-gold as documented exception. Only `/prijzen` is converted today.
+
+(Other open items below remain: OA1 consult product URL, contact-hero placeholder photo swap, National2→WOFF2.)
 
 ---
 
