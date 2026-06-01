@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
-import { ArrowRight } from "lucide-react";
+import { Button, Eyebrow } from "@/components/ui";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 
 export function BreedSelector() {
   return (
@@ -9,25 +10,24 @@ export function BreedSelector() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
         {/* Text */}
         <div>
-          <p className="text-sm font-semibold text-[#75876D] uppercase tracking-widest mb-4">
+          <Eyebrow tone="brand" className="block mb-4">
             Rassenkeuze hulp
-          </p>
-          <h2 className="font-heading font-bold text-3xl md:text-4xl text-[#141414] mb-6 leading-tight">
+          </Eyebrow>
+          <h2 className="font-heading font-bold text-3xl md:text-4xl text-[var(--ld-text)] mb-6 leading-tight">
             Welk ras past bij jou?
           </h2>
-          <p className="text-[#141414]/70 text-[16px] leading-relaxed mb-4">
+          <p className="text-[var(--ld-text-muted)] text-[16px] leading-relaxed mb-4">
             Niet elk ras past bij elke eigenaar. Onze gratis rassenkeuze hulp stelt je 10 korte vragen over je levensstijl, woonruimte en ervaring — en geeft je een persoonlijk rasadvies.
           </p>
-          <p className="text-[#141414]/70 text-[16px] leading-relaxed mb-8">
+          <p className="text-[var(--ld-text-muted)] text-[16px] leading-relaxed mb-8">
             Wetenschappelijk onderbouwd en ontwikkeld met gecertificeerde gedragstherapeuten.
           </p>
-          <Link
-            href="/rassenkeuze"
-            className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-[#75876D] text-white font-semibold text-[16px] hover:bg-[#65775D] transition-all duration-200"
-          >
-            Doe de gratis test
-            <ArrowRight size={16} strokeWidth={2} />
-          </Link>
+          <Button variant="brand" pill asChild>
+            <Link href="/rassenkeuze">
+              Doe de gratis test
+              <ArrowRight size={16} />
+            </Link>
+          </Button>
         </div>
 
         {/* Image */}

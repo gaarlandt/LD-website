@@ -5,7 +5,8 @@ import Image from "next/image";
 import { asset } from "@/lib/utils";
 import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
-import { UserPlus, Play, Users } from "lucide-react";
+import { Card, Eyebrow } from "@/components/ui";
+import { UserPlus, Play, Users } from "@phosphor-icons/react/dist/ssr";
 
 const steps = [
   {
@@ -44,13 +45,13 @@ export function HowItWorks() {
   return (
     <SectionWrapper className="bg-white" id="hoe-het-werkt">
       <div className="text-center mb-16">
-        <p className="text-sm font-semibold text-[#75876D] uppercase tracking-widest mb-4">
+        <Eyebrow tone="brand" className="block mb-4">
           Zo begin je
-        </p>
-        <h2 className="font-heading font-bold text-3xl md:text-4xl text-[#141414] leading-tight mb-4">
+        </Eyebrow>
+        <h2 className="font-heading font-bold text-3xl md:text-4xl text-[var(--ld-text)] leading-tight mb-4">
           In drie stappen aan de slag.
         </h2>
-        <p className="text-[#141414]/60 text-lg max-w-md mx-auto">
+        <p className="text-[var(--ld-text-muted)] text-lg max-w-md mx-auto">
           Geen gedoe. Geen installatie. Gewoon beginnen.
         </p>
       </div>
@@ -59,24 +60,24 @@ export function HowItWorks() {
         {steps.map(({ number, icon: Icon, title, description }, i) => (
           <div key={title} className="relative flex flex-col">
             {i < steps.length - 1 && (
-              <div className="hidden md:block absolute top-8 left-[calc(50%+2rem)] right-[-50%] h-px bg-[#141414]/10" />
+              <div className="hidden md:block absolute top-8 left-[calc(50%+2rem)] right-[-50%] h-px bg-[var(--ld-border)]" />
             )}
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 border border-white/80 shadow-[0_4px_16px_rgba(0,0,0,0.06)] hover:bg-white/80 hover:shadow-[0_6px_24px_rgba(0,0,0,0.1)] transition-all duration-300 flex flex-col h-full">
+            <Card className="flex flex-col h-full">
               <div className="flex items-center gap-4 mb-5">
-                <div className="w-12 h-12 rounded-xl bg-[#75876D] flex items-center justify-center flex-shrink-0">
-                  <Icon size={20} className="text-white" strokeWidth={1.75} />
+                <div className="w-12 h-12 rounded-xl bg-[var(--ld-green)] flex items-center justify-center flex-shrink-0">
+                  <Icon size={20} className="text-[var(--ld-on-green)]" />
                 </div>
-                <span className="font-heading font-bold text-4xl text-[#141414]/15">
+                <span className="font-heading font-bold text-4xl text-[var(--ld-text)]/15">
                   {number}
                 </span>
               </div>
-              <h3 className="font-heading font-bold text-xl text-[#141414] mb-3">
+              <h3 className="font-heading font-bold text-xl text-[var(--ld-text)] mb-3">
                 {title}
               </h3>
-              <p className="text-[#141414]/60 text-[15px] leading-relaxed flex-grow">
+              <p className="text-[var(--ld-text-muted)] text-[15px] leading-relaxed flex-grow">
                 {description}
               </p>
-            </div>
+            </Card>
           </div>
         ))}
       </div>
@@ -90,7 +91,7 @@ export function HowItWorks() {
           sizes="100vw"
           className="object-cover object-top"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#141414]/70 md:from-[#141414]/50 to-transparent flex items-end md:items-center p-6 md:px-10">
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--ld-ink)]/70 md:from-[var(--ld-ink)]/50 to-transparent flex items-end md:items-center p-6 md:px-10">
           <div className="max-w-sm">
             <p className="font-heading font-bold text-xl md:text-2xl text-white mb-2 md:mb-4 leading-snug">
               De mobile app is er voor onderweg.
@@ -137,7 +138,7 @@ export function HowItWorks() {
 
         {/* Toast */}
         <div
-          className={`absolute -top-12 left-1/2 -translate-x-1/2 px-5 py-2.5 bg-[#141414] text-white text-sm font-medium rounded-full shadow-lg transition-all duration-300 whitespace-nowrap ${
+          className={`absolute -top-12 left-1/2 -translate-x-1/2 px-5 py-2.5 bg-[var(--ld-ink)] text-white text-sm font-medium rounded-full shadow-[var(--ld-sh-3)] transition-all duration-300 motion-reduce:transition-none whitespace-nowrap ${
             showToast
               ? "opacity-100 translate-y-0"
               : "opacity-0 translate-y-2 pointer-events-none"

@@ -1,17 +1,18 @@
 import Link from "next/link";
 import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
-import { CheckCircle2, Video, BookOpen, Headphones, Users } from "lucide-react";
+import { Button, Eyebrow } from "@/components/ui";
+import { CheckCircle, VideoCamera, BookOpen, Headphones, Users } from "@phosphor-icons/react/dist/ssr";
 
 const outcomes = [
   {
-    icon: CheckCircle2,
+    icon: CheckCircle,
     title: "Jij weet elke dag wat je doet.",
     description:
       "De puppyagenda vertelt je precies wat je moet doen, lezen en bekijken — voor en tijdens de puppyfase.",
   },
   {
-    icon: Video,
+    icon: VideoCamera,
     title: "Videolessen die je écht verder helpen.",
     description:
       "Gecertificeerde trainers leggen uit waarom gedrag gebeurt en hoe je het aanpakt. Geen quickfixes, wel echte resultaten.",
@@ -40,7 +41,7 @@ export function Hope() {
           aria-label="Puppyagenda voor elke week"
           className="relative order-2 lg:order-1 block group cursor-pointer"
         >
-          <div className="relative rounded-2xl overflow-hidden aspect-[4/5] transition-transform duration-300 group-hover:scale-[1.01]">
+          <div className="relative rounded-2xl overflow-hidden aspect-[4/5] transition-transform duration-300 motion-safe:group-hover:scale-[1.01]">
             <OptimizedImage
               src="/images/hope.jpeg"
               alt="Hondeneigenaar geniet thuis met zijn hond"
@@ -49,10 +50,13 @@ export function Hope() {
               className="object-cover"
             />
           </div>
-          {/* Floating badge */}
-          <div className="absolute -bottom-5 right-4 lg:-right-5 bg-[#DFF0C3] rounded-2xl p-4 lg:p-5 shadow-lg max-w-[180px] lg:max-w-[200px] transition-shadow duration-300 group-hover:shadow-xl">
-            <BookOpen size={20} className="text-[#75876D] mb-2" strokeWidth={1.75} />
-            <p className="text-sm font-semibold text-[#141414] leading-snug">
+          {/* Floating callout — repeats the link's aria-label, so hide it from AT */}
+          <div
+            className="absolute -bottom-5 right-4 lg:-right-5 bg-[var(--ld-lime)] rounded-2xl p-4 lg:p-5 shadow-[var(--ld-sh-3)] max-w-[180px] lg:max-w-[200px]"
+            aria-hidden="true"
+          >
+            <BookOpen size={20} className="text-[var(--ld-green)] mb-2" />
+            <p className="text-sm font-semibold text-[var(--ld-text)] leading-snug">
               Puppyagenda voor elke week
             </p>
           </div>
@@ -60,27 +64,27 @@ export function Hope() {
 
         {/* Right: outcomes */}
         <div className="order-1 lg:order-2">
-          <p className="text-sm font-semibold text-[#75876D] uppercase tracking-widest mb-4">
+          <Eyebrow tone="brand" className="block mb-4">
             Wat je krijgt
-          </p>
-          <h2 className="font-heading font-bold text-3xl md:text-4xl text-[#141414] leading-tight mb-5">
+          </Eyebrow>
+          <h2 className="font-heading font-bold text-3xl md:text-4xl text-[var(--ld-text)] leading-tight mb-5">
             Zo ziet je leven eruit
             <br />
             met Let&apos;s Dog.
           </h2>
-          <p className="text-[#141414]/60 text-lg mb-10 leading-relaxed">
+          <p className="text-[var(--ld-text-muted)] text-lg mb-10 leading-relaxed">
             Geen tegenstrijdige adviezen meer. Eén welzijnsgerichte aanpak, stap voor stap, op jouw tempo.
           </p>
 
           <div className="space-y-7">
             {outcomes.map(({ icon: Icon, title, description }) => (
               <div key={title} className="flex gap-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-[#EFE8E4] flex items-center justify-center mt-0.5">
-                  <Icon size={18} className="text-[#75876D]" strokeWidth={1.75} />
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-[var(--ld-beige)] flex items-center justify-center mt-0.5">
+                  <Icon size={18} className="text-[var(--ld-green)]" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-[#141414] mb-1">{title}</h3>
-                  <p className="text-[#141414]/60 text-[15px] leading-relaxed">
+                  <h3 className="font-semibold text-[var(--ld-text)] mb-1">{title}</h3>
+                  <p className="text-[var(--ld-text-muted)] text-[15px] leading-relaxed">
                     {description}
                   </p>
                 </div>
@@ -89,12 +93,9 @@ export function Hope() {
           </div>
 
           <div className="mt-10">
-            <Link
-              href="/prijzen"
-              className="inline-flex items-center px-7 py-3.5 rounded-full bg-[#75876D] text-white text-[16px] font-semibold hover:bg-[#65775D] transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
-            >
-              Start vandaag
-            </Link>
+            <Button variant="brand" pill asChild>
+              <Link href="/prijzen">Start vandaag</Link>
+            </Button>
           </div>
         </div>
       </div>

@@ -87,9 +87,9 @@ const trustItems = [
 ];
 
 function PricingCard({ tier }: { tier: Tier }) {
-  const checkWrap = tier.highlighted ? "bg-[#FFA580]/20" : "bg-[#75876D]/15";
-  const checkColor = tier.highlighted ? "text-[#FFA580]" : "text-[#75876D]";
-  const priceColor = tier.highlighted ? "text-[#FFA580]" : "text-[#141414]";
+  const checkWrap = tier.highlighted ? "bg-[var(--ld-peach)]/20" : "bg-[var(--ld-green)]/15";
+  const checkColor = tier.highlighted ? "text-[var(--ld-peach)]" : "text-[var(--ld-green)]";
+  const priceColor = tier.highlighted ? "text-[var(--ld-peach)]" : "text-[var(--ld-text)]";
 
   return (
     <Card featured={tier.highlighted} className="relative flex flex-col">
@@ -104,10 +104,10 @@ function PricingCard({ tier }: { tier: Tier }) {
       {/* Header: name + corner badge */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <CardTitle>{tier.name}</CardTitle>
-        <Eyebrow className="text-[#141414]/45 mt-1">{tier.cornerBadge}</Eyebrow>
+        <Eyebrow className="text-[var(--ld-text-subtle)] mt-1">{tier.cornerBadge}</Eyebrow>
       </div>
 
-      <p className="text-[#141414]/60 text-[15px] leading-relaxed mb-7 min-h-[3.5rem]">
+      <p className="text-[var(--ld-text-muted)] text-[15px] leading-relaxed mb-7 min-h-[3.5rem]">
         {tier.description}
       </p>
 
@@ -117,10 +117,10 @@ function PricingCard({ tier }: { tier: Tier }) {
           <span className={`font-heading font-bold text-[3.25rem] leading-none ${priceColor}`}>
             {tier.priceMain}
           </span>
-          <span className="text-[#141414]/60 text-[15px] mb-2">{tier.priceUnit}</span>
+          <span className="text-[var(--ld-text-muted)] text-[15px] mb-2">{tier.priceUnit}</span>
         </div>
       </div>
-      <p className="text-[#141414]/55 text-sm mb-7 min-h-[1.25rem]">{tier.priceSub}</p>
+      <p className="text-[var(--ld-text-muted)] text-sm mb-7 min-h-[1.25rem]">{tier.priceSub}</p>
 
       {/* Features */}
       <ul className="space-y-3 mb-8 flex-grow">
@@ -131,7 +131,7 @@ function PricingCard({ tier }: { tier: Tier }) {
             >
               <Check size={12} weight="bold" className={checkColor} />
             </span>
-            <span className="text-[15px] text-[#141414]/85">{feature}</span>
+            <span className="text-[15px] text-[var(--ld-text)]/85">{feature}</span>
           </li>
         ))}
       </ul>
@@ -145,7 +145,7 @@ function PricingCard({ tier }: { tier: Tier }) {
         </a>
       </Button>
 
-      <CardFooter className="text-center text-[11px] font-bold uppercase tracking-widest text-[#141414]/40">
+      <CardFooter className="text-center text-[11px] font-bold uppercase tracking-widest text-[var(--ld-text-subtle)]">
         {tier.footerNote}
       </CardFooter>
     </Card>
@@ -155,23 +155,23 @@ function PricingCard({ tier }: { tier: Tier }) {
 export function Pricing() {
   return (
     <section
-      className="relative bg-[#75876D] py-24 lg:py-32 px-6 lg:px-8 overflow-hidden"
+      className="relative bg-[var(--ld-green)] py-24 lg:py-32 px-6 lg:px-8 overflow-hidden"
       id="prijzen"
       aria-label="Prijzen"
     >
-      {/* Subtle radial gradient highlight */}
+      {/* Subtle radial gradient highlight (decorative lighter-green wash — intentional one-off) */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,#85977D_0%,transparent_60%)] pointer-events-none" />
 
       <div className="relative z-10 max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16 lg:mb-20">
-          <Eyebrow className="block text-white/70 mb-5">Lidmaatschap</Eyebrow>
-          <h2 className="font-heading font-bold text-3xl md:text-4xl lg:text-5xl text-white leading-tight mb-5 tracking-tight">
+          <Eyebrow tone="onGreen" className="block mb-5">Lidmaatschap</Eyebrow>
+          <h2 className="font-heading font-bold text-3xl md:text-4xl lg:text-5xl text-[var(--ld-on-green)] leading-tight mb-5 tracking-tight">
             Kies hoe je wilt starten
             <br />
             met Let&apos;s Dog
           </h2>
-          <p className="text-white/75 text-lg max-w-2xl mx-auto leading-relaxed">
+          <p className="text-[var(--ld-on-green)]/75 text-lg max-w-2xl mx-auto leading-relaxed">
             Krijg direct toegang tot de volledige puppycursus, praktische video&apos;s, checklists en de Let&apos;s Dog-community. Alles stap voor stap, zodat je weet wat je pup nodig heeft in elke fase.
           </p>
         </div>
@@ -186,8 +186,8 @@ export function Pricing() {
         {/* Trust bar */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 max-w-4xl mx-auto">
           {trustItems.map(({ icon: Icon, label }) => (
-            <div key={label} className="flex items-center justify-center gap-3 text-white/85">
-              <span className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
+            <div key={label} className="flex items-center justify-center gap-3 text-[var(--ld-on-green)]/85">
+              <span className="w-9 h-9 rounded-full bg-[var(--ld-on-green)]/15 flex items-center justify-center flex-shrink-0">
                 <Icon size={16} />
               </span>
               <span className="text-sm font-semibold">{label}</span>
@@ -196,8 +196,8 @@ export function Pricing() {
         </div>
 
         {/* Social proof rating */}
-        <div className="flex items-center justify-center gap-2 text-white/70 text-sm">
-          <Star size={14} weight="fill" className="text-[#FFA580]" />
+        <div className="flex items-center justify-center gap-2 text-[var(--ld-on-green)]/70 text-sm">
+          <Star size={14} weight="fill" className="text-[var(--ld-peach)]" />
           <span>4,8 — meer dan 500 hondenouders gingen je voor.</span>
         </div>
       </div>
