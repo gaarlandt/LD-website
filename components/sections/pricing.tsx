@@ -136,10 +136,10 @@ function PricingCard({ tier }: { tier: Tier }) {
         ))}
       </ul>
 
-      {/* CTA — brand-compliant variants (recommended = primary/ink, rest = secondary).
-          The old peach button used an accent as a button background, which the brand
-          guardrails forbid; the design system has no peach button by design. */}
-      <Button asChild variant={tier.highlighted ? "primary" : "secondary"} block pill>
+      {/* CTA — the recommended tier gets the brand's one accent CTA (peach, ink text);
+          the others stay secondary so only the recommended action pops. Accent-as-button
+          is allowed for the single highest-emphasis action per screen. */}
+      <Button asChild variant={tier.highlighted ? "peach" : "secondary"} block pill>
         <a href={tier.ctaHref} target="_blank" rel="noopener noreferrer">
           {tier.ctaLabel}
         </a>

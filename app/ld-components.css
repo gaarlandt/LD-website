@@ -181,6 +181,11 @@
 .ld-card__body   { color: var(--ld-text-muted); }
 .ld-card__footer { margin-top: var(--ld-s-5); padding-top: var(--ld-s-4); border-top: 1px solid var(--ld-border); }
 
+/* Accent CTA — the one high-emphasis conversion button per screen (ink text for AA).
+   Use sparingly: a single featured action, never routine buttons. */
+.ld-btn--peach { --_bg: var(--ld-peach); --_fg: var(--ld-ink); }
+.ld-btn--peach:hover { --_bg: var(--ld-peach-deep); }
+
 /* ---------- Nav ---------- */
 .ld-topbar {
   display: flex; align-items: center; justify-content: space-between;

@@ -14,6 +14,7 @@ const buttonVariants = cva('ld-btn', {
       primary: 'ld-btn--primary',
       brand: 'ld-btn--brand',
       accent: 'ld-btn--accent',
+      peach: 'ld-btn--peach',
       secondary: 'ld-btn--secondary',
       ghost: 'ld-btn--ghost',
       onGreen: 'ld-btn--on-green',
