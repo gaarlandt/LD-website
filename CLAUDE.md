@@ -76,7 +76,7 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 ```
 
 ## Styling Conventions
-- **Colors**: Brand green `#75876D`, Beige `#EFE8E4`, Black `#141414`, Peach `#FFA580`, Dark green `#162A0E`, Soft blue `#6E8FB8` (use sparingly — small accents only, never as a primary surface or large fill)
+- **Colors**: Brand green `#75876D`, Beige `#EFE8E4`, Black `#141414`, Peach `#FFA580`, Dark green `#162A0E`, Soft blue `#A5C3E2` (use sparingly — small accents only, never as a primary surface or large fill)
 - **Approach**: Inline Tailwind classes, no CSS modules or external stylesheets
 - **Responsive**: Mobile-first, `md:` and `lg:` breakpoints
 - **Nav hover**: Brand green underline animates on hover via `after:` pseudo-element

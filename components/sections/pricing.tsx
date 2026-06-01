@@ -1,4 +1,5 @@
-import { Check, Shield, Wallet, RefreshCw, Star } from "lucide-react";
+import { Check, ShieldCheck, Wallet, ArrowsClockwise, Star } from "@phosphor-icons/react/dist/ssr";
+import { Card, CardTitle, CardFooter, Badge, Button, Eyebrow } from "@/components/ui";
 
 export type Tier = {
   key: "flex" | "early" | "consult";
@@ -80,46 +81,30 @@ export const tiers: Tier[] = [
 ];
 
 const trustItems = [
-  { icon: Shield, label: "Veilig betalen via Mollie" },
+  { icon: ShieldCheck, label: "Veilig betalen via Mollie" },
   { icon: Wallet, label: "Geen verborgen kosten" },
-  { icon: RefreshCw, label: "Opzegbaar in accountinstellingen" },
+  { icon: ArrowsClockwise, label: "Opzegbaar in accountinstellingen" },
 ];
 
 function PricingCard({ tier }: { tier: Tier }) {
-  const ctaClasses =
-    tier.ctaStyle === "peach"
-      ? "bg-[#FFA580] text-[#141414] hover:bg-[#ff9060] shadow-lg"
-      : tier.ctaStyle === "dark"
-        ? "bg-[#141414] text-white hover:bg-[#000]"
-        : "bg-[#EFE8E4] text-[#141414] hover:bg-[#e3d8d1]";
-
-  const priceColor = tier.highlighted ? "text-[#FFA580]" : "text-[#141414]";
+  const checkWrap = tier.highlighted ? "bg-[#FFA580]/20" : "bg-[#75876D]/15";
   const checkColor = tier.highlighted ? "text-[#FFA580]" : "text-[#75876D]";
+  const priceColor = tier.highlighted ? "text-[#FFA580]" : "text-[#141414]";
 
   return (
-    <div
-      className={`relative flex flex-col bg-white rounded-3xl p-8 ${
-        tier.highlighted
-          ? "lg:-translate-y-6 shadow-[0_20px_60px_rgba(0,0,0,0.25)] ring-1 ring-[#FFA580]/40"
-          : "shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
-      }`}
-    >
+    <Card featured={tier.highlighted} className="relative flex flex-col">
       {tier.topBadge && (
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-          <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#FFA580] text-[#141414] text-xs font-bold uppercase tracking-wide shadow-md whitespace-nowrap">
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+          <Badge tone="peach" className="font-bold uppercase tracking-wide shadow-md whitespace-nowrap">
             {tier.topBadge}
-          </span>
+          </Badge>
         </div>
       )}
 
       {/* Header: name + corner badge */}
-      <div className="flex items-start justify-between mb-3">
-        <h3 className="font-heading font-bold text-2xl text-[#141414]">
-          {tier.name}
-        </h3>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-[#141414]/45">
-          {tier.cornerBadge}
-        </span>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <CardTitle>{tier.name}</CardTitle>
+        <Eyebrow className="text-[#141414]/45 mt-1">{tier.cornerBadge}</Eyebrow>
       </div>
 
       <p className="text-[#141414]/60 text-[15px] leading-relaxed mb-7 min-h-[3.5rem]">
@@ -135,41 +120,35 @@ function PricingCard({ tier }: { tier: Tier }) {
           <span className="text-[#141414]/60 text-[15px] mb-2">{tier.priceUnit}</span>
         </div>
       </div>
-      <p className="text-[#141414]/55 text-sm mb-7 min-h-[1.25rem]">
-        {tier.priceSub}
-      </p>
+      <p className="text-[#141414]/55 text-sm mb-7 min-h-[1.25rem]">{tier.priceSub}</p>
 
       {/* Features */}
       <ul className="space-y-3 mb-8 flex-grow">
         {tier.features.map((feature) => (
           <li key={feature} className="flex items-start gap-3">
             <span
-              className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center ${
-                tier.highlighted ? "bg-[#FFA580]/20" : "bg-[#75876D]/15"
-              }`}
+              className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center ${checkWrap}`}
             >
-              <Check size={12} className={checkColor} strokeWidth={3} />
+              <Check size={12} weight="bold" className={checkColor} />
             </span>
             <span className="text-[15px] text-[#141414]/85">{feature}</span>
           </li>
         ))}
       </ul>
 
-      {/* CTA */}
-      <a
-        href={tier.ctaHref}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={`block w-full text-center py-3.5 rounded-full font-semibold text-[15px] transition-all duration-200 cursor-pointer ${ctaClasses}`}
-      >
-        {tier.ctaLabel}
-      </a>
+      {/* CTA — the recommended tier gets the brand's one accent CTA (peach, ink text);
+          the others stay secondary so only the recommended action pops. Accent-as-button
+          is allowed for the single highest-emphasis action per screen. */}
+      <Button asChild variant={tier.highlighted ? "peach" : "secondary"} block pill>
+        <a href={tier.ctaHref} target="_blank" rel="noopener noreferrer">
+          {tier.ctaLabel}
+        </a>
+      </Button>
 
-      {/* Footer note */}
-      <p className="text-center text-[11px] font-bold uppercase tracking-widest text-[#141414]/40 mt-6 pt-6 border-t border-[#141414]/10">
+      <CardFooter className="text-center text-[11px] font-bold uppercase tracking-widest text-[#141414]/40">
         {tier.footerNote}
-      </p>
-    </div>
+      </CardFooter>
+    </Card>
   );
 }
 
@@ -186,9 +165,7 @@ export function Pricing() {
       <div className="relative z-10 max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16 lg:mb-20">
-          <p className="text-sm font-semibold text-white/70 uppercase tracking-widest mb-5">
-            Lidmaatschap
-          </p>
+          <Eyebrow className="block text-white/70 mb-5">Lidmaatschap</Eyebrow>
           <h2 className="font-heading font-bold text-3xl md:text-4xl lg:text-5xl text-white leading-tight mb-5 tracking-tight">
             Kies hoe je wilt starten
             <br />
@@ -200,7 +177,7 @@ export function Pricing() {
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-7 mb-16 lg:mt-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-7 mb-16 lg:mt-10 items-start">
           {tiers.map((tier) => (
             <PricingCard key={tier.key} tier={tier} />
           ))}
@@ -211,7 +188,7 @@ export function Pricing() {
           {trustItems.map(({ icon: Icon, label }) => (
             <div key={label} className="flex items-center justify-center gap-3 text-white/85">
               <span className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
-                <Icon size={16} strokeWidth={2} />
+                <Icon size={16} />
               </span>
               <span className="text-sm font-semibold">{label}</span>
             </div>
@@ -220,7 +197,7 @@ export function Pricing() {
 
         {/* Social proof rating */}
         <div className="flex items-center justify-center gap-2 text-white/70 text-sm">
-          <Star size={14} className="fill-[#FFA580] text-[#FFA580]" strokeWidth={0} />
+          <Star size={14} weight="fill" className="text-[#FFA580]" />
           <span>4,8 — meer dan 500 hondenouders gingen je voor.</span>
         </div>
       </div>

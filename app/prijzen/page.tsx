@@ -4,6 +4,13 @@ import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { JsonLd } from "@/components/shared/json-ld";
 import { productLd } from "@/lib/structured-data";
 import { Pricing, tiers } from "@/components/sections/pricing";
+import {
+  Badge,
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui";
 
 export const metadata = pageMetadata({
   title: "Prijzen — Let's Dog",
@@ -57,13 +64,9 @@ export default function Prijzen() {
             {/* Pills */}
             <div className="flex flex-wrap gap-3">
               {heroPills.map((pill) => (
-                <span
-                  key={pill}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/70 text-[#141414] text-sm font-semibold"
-                >
-                  <span className="w-2 h-2 rounded-full bg-[#FFA580]" />
+                <Badge key={pill} dot className="font-semibold">
                   {pill}
-                </span>
+                </Badge>
               ))}
             </div>
           </div>
@@ -84,9 +87,9 @@ export default function Prijzen() {
 
             {/* Vanaf €4,92 per maand badge */}
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-              <span className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#FFA580] text-[#141414] text-sm font-bold shadow-lg whitespace-nowrap">
+              <Badge tone="peach" className="font-bold shadow-lg whitespace-nowrap">
                 Vanaf €4,92 per maand
-              </span>
+              </Badge>
             </div>
           </div>
         </div>
@@ -101,14 +104,14 @@ export default function Prijzen() {
           <h2 className="font-heading font-bold text-2xl md:text-3xl text-[#141414] mb-8 text-center">
             Vragen over prijzen
           </h2>
-          <div className="space-y-6">
-            {faqs.map(({ q, a }) => (
-              <div key={q} className="border-b border-[#141414]/10 pb-6">
-                <p className="font-semibold text-[#141414] mb-2">{q}</p>
-                <p className="text-[#141414]/65 text-[15px] leading-relaxed">{a}</p>
-              </div>
+          <Accordion type="single" collapsible>
+            {faqs.map(({ q, a }, i) => (
+              <AccordionItem key={q} value={`faq-${i}`}>
+                <AccordionTrigger>{q}</AccordionTrigger>
+                <AccordionContent>{a}</AccordionContent>
+              </AccordionItem>
             ))}
-          </div>
+          </Accordion>
         </div>
       </SectionWrapper>
     </>

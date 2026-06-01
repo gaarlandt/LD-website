@@ -1,0 +1,150 @@
+/* ============================================================
+   Let's Dog — Design Tokens (repo-wired copy)
+   Source of truth: brand-guide-letsdog design-system tokens.css.
+
+   Integration adaptations for this Next.js app (documented intentionally):
+   1. --ld-font-body is bound to var(--font-dm-sans) — this app loads DM Sans
+      via next/font (exposed as that CSS var), NOT as a globally-registered
+      'DM Sans' family, so the bare 'DM Sans' name wouldn't resolve.
+   2. The design-system tokens.css also ships GLOBAL element rules
+      (body / h1-h6 / *) — those are intentionally OMITTED here so wiring the
+      system in stays additive and does not restyle the existing site.
+   3. The auto prefers-color-scheme dark block is OMITTED — this marketing
+      site is light-only (viewport colorScheme: "light"). The manual
+      [data-theme="dark"] hook is kept for parity / future use.
+   ============================================================ */
+
+/* National 2 — display/headings face, registered under the brand's
+   canonical family name 'National 2' (with the space). */
+@font-face {
+  font-family: 'National 2';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('../public/fonts/National2-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'National 2';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('../public/fonts/National2-Medium.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'National 2';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('../public/fonts/National2-Bold.ttf') format('truetype');
+}
+
+:root {
+  /* Primary */
+  --ld-green:        #75876D;
+  --ld-green-ink:    #3F4A3A;
+  --ld-green-soft:   #E6ECE3;
+  --ld-beige:        #EFE8E4;
+  --ld-beige-deep:   #E4DAD4;
+  --ld-ink:          #141414;
+  --ld-paper:        #FFFFFF;
+
+  /* Accent family (use sparingly — one per screen) */
+  --ld-peach:        #FFA580;
+  --ld-peach-deep:   #E88463;
+  --ld-blue:         #A5C3E2;
+  --ld-lime:         #DFF0C3;
+  --ld-brown:        #523F34;
+  --ld-terracotta:   #330811;
+  --ld-forest:       #162A0E;
+
+  /* Pinned stand-out accent */
+  --ld-accent:       #A5C3E2;
+  --ld-accent-ink:   #1F3E5A;
+  --ld-accent-soft:  #E8F0F8;
+  --ld-accent-deep:  #7FA8CC;
+
+  /* Semantic — light */
+  --ld-bg:           var(--ld-beige);
+  --ld-bg-raised:    var(--ld-paper);
+  --ld-bg-sunken:    #F6F1EE;
+  --ld-text:         var(--ld-ink);
+  --ld-text-muted:   #5B5B5B;
+  --ld-text-subtle:  #8A8A8A;
+  --ld-border:       #D8CFC9;
+  --ld-border-strong:#1F1F1F;
+  --ld-focus:        var(--ld-green);
+  --ld-success:      #5E7A4F;
+  --ld-warning:      #D18A4A;
+  --ld-danger:       #9A2E2E;
+
+  /* Component-level */
+  --ld-btn-primary-bg:   var(--ld-ink);
+  --ld-btn-primary-fg:   var(--ld-paper);
+  --ld-btn-primary-hov:  #2a2a2a;
+  --ld-btn-secondary-bg: var(--ld-beige);
+  --ld-btn-secondary-fg: var(--ld-ink);
+  --ld-btn-secondary-hov:var(--ld-beige-deep);
+  --ld-input-bg:         var(--ld-paper);
+  --ld-chip-bg:          var(--ld-paper);
+  --ld-chip-fg:          var(--ld-ink);
+  --ld-divider:          var(--ld-border);
+  --ld-overlay:          rgba(20,20,20,.45);
+
+  /* Text on brand color = always white */
+  --ld-on-green:         #FFFFFF;
+  --ld-on-forest:        #FFFFFF;
+
+  /* Type — National 2 headings, DM Sans body (bound to next/font var) */
+  --ld-font-display: 'National 2', system-ui, -apple-system, sans-serif;
+  --ld-font-body:    var(--font-dm-sans), 'DM Sans', system-ui, -apple-system, sans-serif;
+
+  --ld-fs-12: 0.75rem;  --ld-fs-13: 0.8125rem; --ld-fs-14: 0.875rem;
+  --ld-fs-15: 0.9375rem; --ld-fs-16: 1rem;     --ld-fs-18: 1.125rem;
+  --ld-fs-20: 1.25rem;  --ld-fs-24: 1.5rem;    --ld-fs-30: 1.875rem;
+  --ld-fs-36: 2.25rem;  --ld-fs-48: 3rem;      --ld-fs-64: 4rem; --ld-fs-80: 5rem;
+
+  --ld-lh-tight: 1.08; --ld-lh-snug: 1.2; --ld-lh-normal: 1.5; --ld-lh-relaxed: 1.65;
+  --ld-tracking-tight: -0.02em; --ld-tracking-normal: 0; --ld-tracking-wide: 0.04em; --ld-tracking-caps: 0.08em;
+
+  /* Space */
+  --ld-s-0: 0; --ld-s-1: 4px; --ld-s-2: 8px; --ld-s-3: 12px; --ld-s-4: 16px;
+  --ld-s-5: 24px; --ld-s-6: 32px; --ld-s-7: 48px; --ld-s-8: 64px; --ld-s-9: 96px; --ld-s-10: 128px;
+
+  /* Radius */
+  --ld-r-xs: 6px; --ld-r-sm: 10px; --ld-r-md: 14px; --ld-r-lg: 20px; --ld-r-xl: 28px; --ld-r-pill: 999px;
+
+  /* Shadow */
+  --ld-sh-0: none;
+  --ld-sh-1: 0 1px 2px rgba(20,20,20,.04), 0 1px 1px rgba(20,20,20,.03);
+  --ld-sh-2: 0 2px 4px rgba(20,20,20,.05), 0 8px 16px -8px rgba(20,20,20,.06);
+  --ld-sh-3: 0 4px 8px rgba(20,20,20,.06), 0 16px 32px -12px rgba(20,20,20,.10);
+  --ld-sh-focus: 0 0 0 3px rgba(117,135,109,.35);
+
+  /* Motion */
+  --ld-ease-standard: cubic-bezier(.2,.6,.2,1);
+  --ld-ease-out:      cubic-bezier(.16,1,.3,1);
+  --ld-d-fast: 120ms; --ld-d-base: 200ms; --ld-d-slow: 320ms;
+
+  /* Layout */
+  --ld-container: 1200px;
+  --ld-gutter: 24px;
+}
+
+/* Manual dark hook (not auto-activated on this light-only site) */
+:root[data-theme="dark"] {
+  --ld-bg: #141A14; --ld-bg-raised: #1B231B; --ld-bg-sunken: #0E120E;
+  --ld-text: #ECEAE3; --ld-text-muted: #B7B2A8; --ld-text-subtle: #8A8579;
+  --ld-border: #2D362C; --ld-border-strong: #ECEAE3; --ld-focus: #A8BFA0;
+  --ld-success: #A8BFA0; --ld-warning: #E5A878; --ld-danger: #D88A8A;
+  --ld-green: #A8BFA0; --ld-green-ink: #0E120E; --ld-green-soft: #2A3429;
+  --ld-beige: #2A2521; --ld-beige-deep: #36302A; --ld-ink: #ECEAE3; --ld-paper: #1B231B;
+  --ld-peach: #FFB893; --ld-blue: #B8D2EC; --ld-lime: #C9E0A6;
+  --ld-accent: #B8D2EC; --ld-accent-ink: #10243A; --ld-accent-soft: #22303D; --ld-accent-deep: #8FB6D8;
+  --ld-btn-primary-bg: #ECEAE3; --ld-btn-primary-fg: #141A14; --ld-btn-primary-hov: #FFFEF8;
+  --ld-btn-secondary-bg: #2A3429; --ld-btn-secondary-fg: #ECEAE3; --ld-btn-secondary-hov: #34402F;
+  --ld-input-bg: #1B231B; --ld-chip-bg: #1B231B; --ld-chip-fg: #ECEAE3; --ld-overlay: rgba(0,0,0,.6);
+  --ld-sh-1: 0 1px 2px rgba(0,0,0,.5), 0 1px 1px rgba(0,0,0,.3);
+  --ld-sh-2: 0 2px 4px rgba(0,0,0,.5), 0 8px 16px -8px rgba(0,0,0,.6);
+  --ld-sh-3: 0 4px 8px rgba(0,0,0,.5), 0 16px 32px -12px rgba(0,0,0,.7);
+  --ld-sh-focus: 0 0 0 3px rgba(168,191,160,.35);
+}
