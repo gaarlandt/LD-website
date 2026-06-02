@@ -166,12 +166,13 @@ Lessons that span the Let's Dog apps (BreedSelector, Puppy Agenda, Website) live
 
 **Hub:** `/Users/jurriaan/Documents/Coding/ldcoding/LD - project cross knowledge/` (repo `gaarlandt/ld-project-cross-knowledge`) — start at `index.md`.
 
-| Looking for… | Go to (in the hub) |
-|---|---|
-| PostHog / cross-product identity (`wp:<id>`, email join) | `contracts/posthog-cross-product-identity.md` |
-| WordPress iframe embedding (CSP-only vs shortcode+JWT) | `contracts/wordpress-iframe-embedding.md` |
-| Shared JWT / cookie / eTLD+1 auth rules | `contracts/jwt-cookie-auth-conventions.md` |
-| Workers/Pages, Supabase, Next.js, design-system gotchas | `index.md` |
+**Before you touch any of these, read the canonical rule first — and note which app *owns* it (that's where the source of truth lives and where a change has to be coordinated):**
+
+- **PostHog / cross-product identity** (`wp:<id>`, lowercased-email join) → read `contracts/posthog-cross-product-identity.md`. **Owner: Puppy Agenda** (origin: PA `docs/solutions/integrations/posthog-cross-product-identity.md`).
+- **WordPress iframe embedding** (CSP-only vs shortcode+JWT) → read `contracts/wordpress-iframe-embedding.md`. **Owner: BreedSelector** (origin: BS `docs/solutions/architecture-patterns/wordpress-iframe-embedding-pattern-selection-2026-05-21.md`).
+- **JWT / cookie / eTLD+1 auth** → read `contracts/jwt-cookie-auth-conventions.md`. **Owner: Puppy Agenda** (origin: PA's `env-driven-cookie-config`, `staging-dev-impersonation`, `cookie-deletion-…` docs).
+- **Dog passport data** — dog name, date of birth, breed, … and medical data → **Owner: Puppy Agenda.** PA holds the canonical record, synced from WordPress → PA (design: PA `docs/plans/2026-05-27-001-feat-wp-dog-data-sync-plan.md`). This site will read these fields at later stages — coordinate with PA before depending on them.
+- **Workers / Pages, Supabase, Next.js, design-system gotchas** → `index.md` (per-cluster origin docs listed there).
 
 **Lessons from the other apps that apply *here*:** [docs/solutions/cross-project/lessons-from-other-ld-apps.md](docs/solutions/cross-project/lessons-from-other-ld-apps.md)
 
