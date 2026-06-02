@@ -66,6 +66,43 @@ export function Footer() {
                 </svg>
               </a>
             </div>
+
+            {/* App download — Google Play live, App Store binnenkort */}
+            <div className="mt-8">
+              <Eyebrow tone="onGreen" className="block mb-4">
+                Download de app
+              </Eyebrow>
+              <div className="flex items-center gap-3">
+                <a
+                  href="https://play.google.com/store/apps/details?id=nl.letsdog.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Download de Let's Dog app in Google Play"
+                  className="opacity-90 hover:opacity-100 transition-opacity duration-200"
+                >
+                  <Image
+                    src={asset("/images/google-play-badge.png")}
+                    alt="Ontdek het op Google Play"
+                    width={156}
+                    height={46}
+                    className="h-11 w-auto"
+                  />
+                </a>
+                <span
+                  className="inline-flex items-center opacity-50"
+                  aria-label="App Store — binnenkort beschikbaar"
+                >
+                  <Image
+                    src={asset("/images/app-store-badge.svg")}
+                    alt="Download in de App Store"
+                    width={140}
+                    height={42}
+                    className="h-11 w-auto"
+                  />
+                </span>
+              </div>
+              <p className="text-xs text-[var(--ld-on-forest)]/40 mt-2">App Store — binnenkort</p>
+            </div>
           </div>
 
           {/* Navigatie */}

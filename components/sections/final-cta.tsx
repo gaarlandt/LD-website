@@ -22,7 +22,7 @@ export function FinalCta() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button variant="peach" pill asChild>
-            <Link href="/prijzen">Start vandaag</Link>
+            <Link href="#prijzen">Start vandaag</Link>
           </Button>
           <p className="text-[var(--ld-text-subtle)] text-sm">Opzegbaar in de app</p>
         </div>

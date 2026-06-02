@@ -2,26 +2,26 @@ import Link from "next/link";
 import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { Button, Eyebrow } from "@/components/ui";
-import { CheckCircle, VideoCamera, BookOpen, Headphones, Users } from "@phosphor-icons/react/dist/ssr";
+import { CheckCircle, VideoCamera, BookOpen, DeviceMobile, Users } from "@phosphor-icons/react/dist/ssr";
 
 const outcomes = [
   {
     icon: CheckCircle,
     title: "Jij weet elke dag wat je doet.",
     description:
-      "De puppyagenda vertelt je precies wat je moet doen, lezen en bekijken — voor en tijdens de puppyfase.",
+      "Rust en houvast in plaats van twijfel — een aanpak die stap voor stap met je pup meegroeit.",
   },
   {
     icon: VideoCamera,
-    title: "Videolessen die je écht verder helpen.",
+    title: "Echte uitleg van gecertificeerde trainers.",
     description:
-      "Gecertificeerde trainers leggen uit waarom gedrag gebeurt en hoe je het aanpakt. Geen quickfixes, wel echte resultaten.",
+      "Waarom gedrag gebeurt en hoe je het aanpakt. Geen quickfixes, wel echte resultaten.",
   },
   {
-    icon: Headphones,
-    title: "Audio-lessen voor onderweg.",
+    icon: DeviceMobile,
+    title: "Leer overal, ook onderweg.",
     description:
-      "Luister tijdens een wandeling of autorit. Kennis die je meeneemt in het dagelijks leven.",
+      "De video tijdens de wandeling, de audioles in de auto. Op je telefoon, waar je ook bent.",
   },
   {
     icon: Users,
