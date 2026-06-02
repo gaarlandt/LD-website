@@ -2,11 +2,11 @@ import { pageMetadata } from "@/lib/seo";
 import { Hero } from "@/components/sections/hero";
 import { Problem } from "@/components/sections/problem";
 import { Hope } from "@/components/sections/hope";
-import { BreedSelector } from "@/components/sections/breed-selector";
+import { PuppyAgendaTeaser } from "@/components/sections/puppy-agenda-teaser";
 import { Trust } from "@/components/sections/trust";
-import { HowItWorks } from "@/components/sections/how-it-works";
 import { Pricing } from "@/components/sections/pricing";
 import { FinalCta } from "@/components/sections/final-cta";
+import { RassenkeuzeStrip } from "@/components/sections/rassenkeuze-strip";
 
 export const metadata = pageMetadata({
   title: "Let's Dog — Puppytraining die werkt",
@@ -21,11 +21,11 @@ export default function Home() {
       <Hero />
       <Problem />
       <Hope />
-      <BreedSelector />
+      <PuppyAgendaTeaser />
       <Trust />
-      <HowItWorks />
       <Pricing />
       <FinalCta />
+      <RassenkeuzeStrip />
     </>
   );
 }

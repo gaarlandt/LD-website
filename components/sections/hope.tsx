@@ -1,27 +1,27 @@
 import Link from "next/link";
 import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
-import { Button, Eyebrow } from "@/components/ui";
-import { CheckCircle, VideoCamera, BookOpen, Headphones, Users } from "@phosphor-icons/react/dist/ssr";
+import { Eyebrow } from "@/components/ui";
+import { CheckCircle, VideoCamera, DeviceMobile, Users } from "@phosphor-icons/react/dist/ssr";
 
 const outcomes = [
   {
     icon: CheckCircle,
     title: "Jij weet elke dag wat je doet.",
     description:
-      "De puppyagenda vertelt je precies wat je moet doen, lezen en bekijken — voor en tijdens de puppyfase.",
+      "Rust en houvast in plaats van twijfel — een aanpak die stap voor stap met je pup meegroeit.",
   },
   {
     icon: VideoCamera,
-    title: "Videolessen die je écht verder helpen.",
+    title: "Echte uitleg van gecertificeerde trainers.",
     description:
-      "Gecertificeerde trainers leggen uit waarom gedrag gebeurt en hoe je het aanpakt. Geen quickfixes, wel echte resultaten.",
+      "Waarom gedrag gebeurt en hoe je het aanpakt. Geen quickfixes, wel echte resultaten.",
   },
   {
-    icon: Headphones,
-    title: "Audio-lessen voor onderweg.",
+    icon: DeviceMobile,
+    title: "Leer overal, ook onderweg.",
     description:
-      "Luister tijdens een wandeling of autorit. Kennis die je meeneemt in het dagelijks leven.",
+      "De video tijdens de wandeling, de audioles in de auto. Op je telefoon, waar je ook bent.",
   },
   {
     icon: Users,
@@ -49,16 +49,6 @@ export function Hope() {
               sizes="(max-width: 1024px) 100vw, 50vw"
               className="object-cover"
             />
-          </div>
-          {/* Floating callout — repeats the link's aria-label, so hide it from AT */}
-          <div
-            className="absolute -bottom-5 right-4 lg:-right-5 bg-[var(--ld-lime)] rounded-2xl p-4 lg:p-5 shadow-[var(--ld-sh-3)] max-w-[180px] lg:max-w-[200px]"
-            aria-hidden="true"
-          >
-            <BookOpen size={20} className="text-[var(--ld-green)] mb-2" />
-            <p className="text-sm font-semibold text-[var(--ld-text)] leading-snug">
-              Puppyagenda voor elke week
-            </p>
           </div>
         </Link>
 
@@ -90,12 +80,6 @@ export function Hope() {
                 </div>
               </div>
             ))}
-          </div>
-
-          <div className="mt-10">
-            <Button variant="brand" pill asChild>
-              <Link href="/prijzen">Start vandaag</Link>
-            </Button>
           </div>
         </div>
       </div>
