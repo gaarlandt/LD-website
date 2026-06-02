@@ -56,8 +56,8 @@ export function ContactContent() {
               </Badge>
             </div>
 
-            {/* CTA — single, clean action, centered */}
-            <div className="mt-4 flex justify-center">
+            {/* CTA — single, clean action; left of centre, a touch lower */}
+            <div className="mt-8 flex justify-center max-w-md">
               <Button variant="brand" pill onClick={() => setModalOpen(true)}>
                 <PaperPlaneTilt size={18} />
                 Stuur een bericht

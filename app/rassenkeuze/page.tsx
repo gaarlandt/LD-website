@@ -84,7 +84,7 @@ export default function Rassenkeuze() {
               </Badge>
             </div>
 
-            <Button variant="brand" pill asChild className="mt-8">
+            <Button variant="brand" pill asChild className="mt-12">
               <a href="#quiz">
                 Start de rassenkeuze hulp
                 <ArrowRight size={16} />
