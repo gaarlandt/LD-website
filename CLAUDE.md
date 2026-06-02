@@ -160,6 +160,23 @@ This project uses the **compound-engineering** harness (`harness: compound-engin
 
 **Bootstrap**: if `.compound-engineering/config.local.yaml` doesn't exist in this repo yet, run `/ce-setup` once. It checks CE tool availability and creates the local config (gitignored).
 
+## Cross-project knowledge (Let's Dog)
+
+Lessons that span the Let's Dog apps (BreedSelector, Puppy Agenda, Website) live in a shared hub — the per-repo `/ce-compound` flow doesn't cross repos, so check here before solving anything cross-cutting.
+
+**Hub:** `/Users/jurriaan/Documents/Coding/ldcoding/LD - project cross knowledge/` (repo `gaarlandt/ld-project-cross-knowledge`) — start at `index.md`.
+
+| Looking for… | Go to (in the hub) |
+|---|---|
+| PostHog / cross-product identity (`wp:<id>`, email join) | `contracts/posthog-cross-product-identity.md` |
+| WordPress iframe embedding (CSP-only vs shortcode+JWT) | `contracts/wordpress-iframe-embedding.md` |
+| Shared JWT / cookie / eTLD+1 auth rules | `contracts/jwt-cookie-auth-conventions.md` |
+| Workers/Pages, Supabase, Next.js, design-system gotchas | `index.md` |
+
+**Lessons from the other apps that apply *here*:** [docs/solutions/cross-project/lessons-from-other-ld-apps.md](docs/solutions/cross-project/lessons-from-other-ld-apps.md)
+
+To record a new cross-cutting lesson, say **"this is a cross-project learning."**
+
 ## Important Notes
 - Static export: no Next.js server features (no API routes, no SSR). **One exception:** the contact form POSTs to a Cloudflare Pages Function at `functions/api/contact.ts` (relays to Postmark; token in `POSTMARK_SERVER_TOKEN`). Cloudflare runs `functions/` alongside the static `out/`, so the build stays a plain `next build` (the Function is web-standard `Request`/`Response`/`fetch` only — no Node APIs, no npm deps; typed locally so `next build`'s `**/*.ts` typecheck passes). Note: `functions/` does **not** run under `next dev` — verify the form on the Cloudflare preview. Metadata routes (`app/robots.ts`, `app/sitemap.ts`, `app/manifest.ts`) need `export const dynamic = "force-static"`.
 - Next's image optimizer is off (`images.unoptimized: true`, required for static export) — modern formats come from the `OptimizedImage` `<picture>` component + committed `sharp` variants instead (see the spec-compliance section).
