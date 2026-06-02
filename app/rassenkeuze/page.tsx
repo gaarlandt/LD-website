@@ -72,15 +72,8 @@ export default function Rassenkeuze() {
               Beantwoord 10 korte vragen over je leefstijl, woonruimte en ervaring. Je krijgt direct een persoonlijk rasadvies — gratis en vrijblijvend.
             </p>
 
-            <Button variant="brand" pill asChild>
-              <a href="#quiz">
-                Start de rassenkeuze hulp
-                <ArrowRight size={16} />
-              </a>
-            </Button>
-
             {/* Pills */}
-            <div className="flex flex-wrap gap-3 mt-7">
+            <div className="flex flex-wrap gap-3">
               <Badge>
                 <span className="w-2 h-2 rounded-full bg-[var(--ld-green)] flex-shrink-0" aria-hidden="true" />
                 Gratis &amp; vrijblijvend
@@ -90,6 +83,13 @@ export default function Rassenkeuze() {
                 ± 2 minuten
               </Badge>
             </div>
+
+            <Button variant="brand" pill asChild className="mt-8">
+              <a href="#quiz">
+                Start de rassenkeuze hulp
+                <ArrowRight size={16} />
+              </a>
+            </Button>
           </div>
 
           {/* Image column */}

@@ -56,17 +56,11 @@ export function ContactContent() {
               </Badge>
             </div>
 
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            {/* CTA — single, clean action, centered */}
+            <div className="mt-4 flex justify-center">
               <Button variant="brand" pill onClick={() => setModalOpen(true)}>
                 <PaperPlaneTilt size={18} />
                 Stuur een bericht
-              </Button>
-              <Button variant="ghost" pill asChild>
-                <a href={WHATSAPP_HREF} target="_blank" rel="noopener noreferrer">
-                  <WhatsAppIcon />
-                  App via WhatsApp
-                </a>
               </Button>
             </div>
           </div>
