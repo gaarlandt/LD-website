@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
-import { Button, Eyebrow } from "@/components/ui";
-import { CheckCircle, VideoCamera, BookOpen, DeviceMobile, Users } from "@phosphor-icons/react/dist/ssr";
+import { Eyebrow } from "@/components/ui";
+import { CheckCircle, VideoCamera, DeviceMobile, Users } from "@phosphor-icons/react/dist/ssr";
 
 const outcomes = [
   {
@@ -50,16 +50,6 @@ export function Hope() {
               className="object-cover"
             />
           </div>
-          {/* Floating callout — repeats the link's aria-label, so hide it from AT */}
-          <div
-            className="absolute -bottom-5 right-4 lg:-right-5 bg-[var(--ld-lime)] rounded-2xl p-4 lg:p-5 shadow-[var(--ld-sh-3)] max-w-[180px] lg:max-w-[200px]"
-            aria-hidden="true"
-          >
-            <BookOpen size={20} className="text-[var(--ld-green)] mb-2" />
-            <p className="text-sm font-semibold text-[var(--ld-text)] leading-snug">
-              Puppyagenda voor elke week
-            </p>
-          </div>
         </Link>
 
         {/* Right: outcomes */}
@@ -90,12 +80,6 @@ export function Hope() {
                 </div>
               </div>
             ))}
-          </div>
-
-          <div className="mt-10">
-            <Button variant="brand" pill asChild>
-              <Link href="/prijzen">Start vandaag</Link>
-            </Button>
           </div>
         </div>
       </div>
