@@ -67,7 +67,16 @@ export function Footer() {
               </a>
             </div>
 
-            {/* App download — Google Play live, App Store binnenkort */}
+            {/* App download — Google Play live, App Store binnenkort.
+                Both official badges are kept untouched, but they don't render at equal
+                visual size at the same CSS height: Apple's artwork fills its SVG canvas,
+                while Google's PNG bakes in a symmetric ~33% transparent clear-space margin
+                (its mandated clear space), so at a shared height Google's visible pill is
+                ~33% shorter. Compensate by rendering Google's canvas ~1.49x taller (250/168)
+                so its visible pill matches Apple's. Apple = h-11 (2.75rem) → Google = 4.09rem.
+                Use rem (not px) so it tracks the site's fluid root font-size (85%<->100%,
+                see app/globals.css) in lockstep with Apple's rem-based h-11. items-center
+                keeps them aligned (Google's clear-space margin is symmetric). */}
             <div className="mt-8">
               <Eyebrow tone="onGreen" className="block mb-4">
                 Download de app
@@ -83,13 +92,13 @@ export function Footer() {
                   <Image
                     src={asset("/images/google-play-badge.png")}
                     alt="Ontdek het op Google Play"
-                    width={156}
-                    height={46}
-                    className="h-11 w-auto"
+                    width={646}
+                    height={250}
+                    className="h-[4.09rem] w-auto"
                   />
                 </a>
                 <span
-                  className="inline-flex items-center opacity-50"
+                  className="inline-flex items-center"
                   aria-label="App Store — binnenkort beschikbaar"
                 >
                   <Image
