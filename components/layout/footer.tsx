@@ -98,7 +98,7 @@ export function Footer() {
                   />
                 </a>
                 <span
-                  className="inline-flex items-center opacity-50"
+                  className="inline-flex items-center"
                   aria-label="App Store — binnenkort beschikbaar"
                 >
                   <Image
