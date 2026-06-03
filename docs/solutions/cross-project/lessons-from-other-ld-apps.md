@@ -39,5 +39,9 @@ Curated from BreedSelector (BS) and Puppy Agenda V2 (PA). Only items that genuin
 
 - **Two-layer testing strategy** (Vitest unit + manual regression with trigger-path ASK rule) — a near-exact fit: static-export, single contributor, browser-only behaviour. → `…/Keuzehulp/code_breedselector/docs/solutions/architecture-patterns/two-layer-testing-strategy-2026-05-12.md`
 
+## Dependencies & supply-chain
+
+- **Transitive-only vulns need an `overrides` block, not Dependabot.** Patch a CVE in a buried sub-dependency via a `package.json` `overrides` floor (you're on **npm**); Dependabot can't bump one in isolation. Triage `npm audit` by dependency *path* first — your CF-Pages build toolchain and any local CLIs aren't runtime exposure, so size urgency by where the code runs, not the severity badge. → `…/PuppyAgenda/Puppy Agenda V2/Puppy Agenda V2 Code/docs/solutions/tooling-decisions/transitive-dep-vulns-need-overrides-not-dependabot-2026-06-03.md`
+
 ---
 *Maintained via the `cross-project-learnings-letsdog` skill. To add an entry, say "this is a cross-project learning."*
