@@ -1,6 +1,7 @@
 ---
 title: "A fresh git worktree has no node_modules — run `npm install` in it before building"
 date: 2026-06-02
+last_updated: 2026-06-03
 category: developer-experience
 module: development-workflow
 problem_type: developer_experience
@@ -39,6 +40,18 @@ npm run build
 
 `node_modules` is gitignored and not copied into worktrees (nor would you want to — a clean install is correct). `.worktreeinclude` is for small gitignored files like `.env`, not `node_modules`.
 
+### Faster alternative — symlink the parent, but only when it's current
+
+If you've just confirmed the parent checkout's `node_modules` is **up to date** with `package.json` (no deps added on main since its last `npm install`), you can skip the per-worktree install and symlink the parent's modules instead — instant, and both `npm run build` and the preview dev server resolve deps through it:
+
+```bash
+ln -s <main-repo>/node_modules <worktree>/node_modules
+# e.g. from inside the worktree:
+ln -s /Users/you/Code/website-redesign/node_modules ./node_modules
+```
+
+The symlink is gitignored just like `node_modules`, so it never shows up in the diff. **`npm install` stays the safe default**, though: a symlink inherits whatever the parent has, so if the parent is stale (the exact failure above) the symlink reproduces it. Reach for the symlink only when you're sure the parent is current — when in doubt, install. (In practice the preview tool needs *some* `node_modules` in the worktree to launch the dev server at all; the symlink is the quickest way to satisfy that when the parent is known-good.)
+
 ## Why This Matters
 
 git worktrees share the `.git` object store but each has its **own working directory with no `node_modules`**. Node's upward resolution masks the gap by finding the parent's modules, so the failure is **partial and misleading**: the build compiles hundreds of modules, then dies on the one package the parent lacks. You chase a phantom "missing dependency" when the real fix is one `npm install` in the worktree.
@@ -62,6 +75,11 @@ $ npm run build
 $ npm install --no-audit --no-fund   # e.g. "added 504 packages in 12s"
 $ npm run build                       # ✓ all routes prerender
 $ git checkout package-lock.json      # optional: drop benign "peer": true churn
+
+# Fast alternative when the parent install is known-current (e.g. just to launch
+# the preview dev server): symlink instead of installing — instant, gitignored.
+$ ln -s ../../../node_modules ./node_modules   # path = main checkout's node_modules
+$ npm run build                                 # ✓ resolves deps through the symlink
 ```
 
 ## Related
