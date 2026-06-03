@@ -15,9 +15,14 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#75876D",
     lang: "nl",
     icons: [
+      // "any" = shown as-drawn (install dialog, splash). Squircle silver icons
+      // with transparent corners. "maskable" = full-bleed icons (dog inside the
+      // safe zone) the OS crops to its launcher mask. Both purposes are supplied
+      // so Android adaptive icons render correctly. See HANDOFF + scripts/generate-icons.mjs.
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/icons/maskable-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
+      { src: "/icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };
 }

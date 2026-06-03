@@ -1,12 +1,18 @@
-// Generates the app-icon set from the square brand dog-mark
+// Generates ONLY the legacy favicon.ico from the square brand dog-mark
 // (public/images/icon-black.svg) on a white field. Re-run with:
 //   node scripts/generate-icons.mjs
 //
-// Outputs:
-//   app/apple-icon.png        180x180 apple-touch-icon (Next auto-wires)
+// Output:
 //   public/favicon.ico        32x32 legacy favicon (PNG-in-ICO)
-//   public/icons/icon-192.png 192x192 PWA icon (any + maskable safe zone)
-//   public/icons/icon-512.png 512x512 PWA icon (any + maskable safe zone)
+//
+// NOTE — the PWA app icons (public/icons/icon-{192,512}.png + maskable-{192,512}.png)
+// and the iOS apple-touch-icon (app/apple-icon.png) are NO LONGER generated here.
+// They are hand-authored "Silver" raster assets (silver squircle + balloon-dog,
+// with full-bleed maskables) committed directly; this script can't reproduce that
+// design from the flat SVG, so it must NOT overwrite them. To refresh the icon set,
+// re-export from the design tool and drop the PNGs into public/icons/ + app/apple-icon.png.
+// The apple-icon is icon-180 flattened onto an opaque silver field — iOS renders
+// transparency as black, so the apple-touch-icon must be fully opaque.
 //
 // The wordmark app/icon.svg stays the primary tab favicon (HANDOFF #5).
 import sharp from "sharp";
@@ -50,9 +56,8 @@ function pngToIco(pngBuf, w, h) {
   return Buffer.concat([header, entry, pngBuf]);
 }
 
-writeFileSync(path.join(ROOT, "public", "icons", "icon-192.png"), await iconPng(192, 0.6));
-writeFileSync(path.join(ROOT, "public", "icons", "icon-512.png"), await iconPng(512, 0.6));
-writeFileSync(path.join(ROOT, "app", "apple-icon.png"), await iconPng(180, 0.66));
+// Only the legacy favicon is generated from the SVG mark. The PWA app icons and
+// apple-touch-icon are hand-authored silver assets (see header) — do not write them here.
 writeFileSync(path.join(ROOT, "public", "favicon.ico"), pngToIco(await iconPng(32, 0.74), 32, 32));
 
-console.log("Icons written: apple-icon.png, favicon.ico, icon-192.png, icon-512.png");
+console.log("Icon written: favicon.ico (PWA app icons + apple-icon are hand-authored — see header).");
