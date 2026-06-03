@@ -63,7 +63,7 @@ export function Hope() {
             met Let&apos;s Dog.
           </h2>
           <p className="text-[var(--ld-text-muted)] text-lg mb-10 leading-relaxed">
-            Geen tegenstrijdige adviezen meer. Eén welzijnsgerichte aanpak, stap voor stap, op jouw tempo.
+            Geen tegenstrijdige adviezen meer. Eén aanpak die je rust, duidelijkheid en vertrouwen geeft, stap voor stap.
           </p>
 
           <div className="space-y-7">

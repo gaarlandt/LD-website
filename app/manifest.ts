@@ -5,10 +5,10 @@ export const dynamic = "force-static";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Let's Dog — Puppytraining die werkt",
+    name: "Let's Dog — Rust en vertrouwen met je pup",
     short_name: "Let's Dog",
     description:
-      "Puppytraining die werkt: een dagelijks plan, videolessen van gecertificeerde trainers en een community die je begrijpt.",
+      "Rust en vertrouwen met je pup: week voor week een plan, videolessen van gecertificeerde trainers en een community die je begrijpt.",
     start_url: "/",
     display: "standalone",
     background_color: "#EFE8E4",

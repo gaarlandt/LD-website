@@ -45,14 +45,14 @@ export function Hero() {
 
           {/* H1 */}
           <h1 className="font-heading font-bold text-5xl md:text-7xl lg:text-[length:var(--ld-fs-80)] text-[var(--ld-on-green)] leading-[1.02] tracking-tight mb-10">
-            Jouw pup begrijpen.
+            Meer rust en vertrouwen,
             <br />
-            <span className="text-[var(--ld-lime)]">Samen groeien.</span>
+            <span className="text-[var(--ld-lime)]">samen met je pup.</span>
           </h1>
 
           {/* Subtext — empathie eerst */}
           <p className="text-lg lg:text-2xl text-[var(--ld-on-green)]/85 leading-relaxed mb-12 max-w-xl">
-            Nieuwe pup thuis. Blij, en totaal de kluts kwijt. Wij geven je een dagelijks plan, zodat jij weet wat je doet en je pup weet wat hij kan verwachten.
+            Nieuwe pup in huis. Dolblij, en soms even de kluts kwijt. Wij zetten week voor week voor je klaar wat er nu telt. Zo weet jij wat je doet, en weet je pup wat hij kan verwachten.
           </p>
 
           {/* CTA */}

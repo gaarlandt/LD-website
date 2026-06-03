@@ -38,7 +38,7 @@ export function Footer() {
               className="h-7 w-auto mb-4"
             />
             <p className="text-sm leading-relaxed text-[var(--ld-on-forest)]/60 max-w-xs">
-              Puppytraining die werkt. Gebouwd door gecertificeerde hondengedragstherapeuten.
+              Rust en vertrouwen met je pup. Gebouwd door gecertificeerde hondengedragstherapeuten.
             </p>
 
             {/* Social */}

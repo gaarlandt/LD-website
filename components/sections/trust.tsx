@@ -1,13 +1,19 @@
+import type { ElementType } from "react";
 import Image from "next/image";
 import { asset } from "@/lib/utils";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { Card, Eyebrow } from "@/components/ui";
 import { Quotes, Medal, Star } from "@phosphor-icons/react/dist/ssr";
 
-const stats = [
+// A stat shows a big number, except "Gecertificeerde trainers" — a bare "2"
+// reads smaller than the team is, so that cell shows a medal icon instead while
+// keeping the same cell height as the numbers.
+type Stat = { label: string; value?: string; icon?: ElementType };
+
+const stats: Stat[] = [
   { value: "500+", label: "Puppy's op weg geholpen" },
   { value: "50+", label: "Videolessen beschikbaar" },
-  { value: "2", label: "Gecertificeerde trainers" },
+  { icon: Medal, label: "Gecertificeerde trainers" },
   { value: "100%", label: "Welzijnsgericht" },
 ];
 
@@ -61,11 +67,21 @@ export function Trust() {
     <SectionWrapper className="bg-[var(--ld-beige)]" id="bewijs">
       {/* Stats bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20 pb-20 border-b border-[var(--ld-border)]">
-        {stats.map(({ value, label }) => (
+        {stats.map(({ value, icon: Icon, label }) => (
           <div key={label} className="text-center">
-            <p className="font-heading font-bold text-4xl md:text-5xl text-[var(--ld-green)] mb-2">
-              {value}
-            </p>
+            {Icon ? (
+              <div className="mb-2 flex items-center justify-center">
+                <Icon
+                  weight="fill"
+                  className="h-10 w-10 md:h-12 md:w-12 text-[var(--ld-green)]"
+                  aria-hidden="true"
+                />
+              </div>
+            ) : (
+              <p className="font-heading font-bold text-4xl md:text-5xl text-[var(--ld-green)] mb-2">
+                {value}
+              </p>
+            )}
             <p className="text-sm text-[var(--ld-text-muted)] leading-snug">{label}</p>
           </div>
         ))}
