@@ -131,8 +131,8 @@ export const SHOTS = {
   },
   tooltip: {
     src: "/images/pa-tooltip.png",
-    width: 330,
-    height: 278,
+    width: 317,
+    height: 290,
     alt: "Uitleg in de app: icoontjes en kleuren per lestype",
   },
 } as const;

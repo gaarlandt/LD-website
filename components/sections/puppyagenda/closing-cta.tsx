@@ -14,8 +14,8 @@ export function PaClosingCta() {
             Begin vandaag met je puppyagenda
           </h2>
           <p className="mt-3.5 text-[18px] leading-[1.6] text-white/90">
-            Maak een gratis account en bekijk de preview. Upgrade voor toegang tot alle weken, videolessen en
-            audio-lessen.
+            Week voor week weet je precies wat je met je pup doet. Kies het abonnement dat bij je past en begin
+            direct.
           </p>
         </div>
         <Button variant="onGreen" asChild>

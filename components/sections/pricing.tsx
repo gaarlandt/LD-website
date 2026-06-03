@@ -1,4 +1,4 @@
-import { Check, ShieldCheck, Wallet, ArrowsClockwise, Star } from "@phosphor-icons/react/dist/ssr";
+import { Check, ShieldCheck, Wallet, ArrowsClockwise } from "@phosphor-icons/react/dist/ssr";
 import { Card, CardTitle, CardFooter, Badge, Button, Eyebrow } from "@/components/ui";
 
 export type Tier = {
@@ -70,13 +70,13 @@ export const tiers: Tier[] = [
       "Volledige puppycursus",
       "Alle video's & checklists",
       "Let's Dog Community",
-      "1× Online Consult (t.w.v. €39)",
+      "1× Online Consult (t.w.v. €39,50)",
       "Direct 1-op-1 advies van een trainer",
     ],
     ctaLabel: "Kies Jaar + Consult",
     ctaHref: "https://app.letsdog.nl",
     ctaStyle: "dark",
-    footerNote: "7 dagen geld-terug-garantie · totale waarde €138",
+    footerNote: "7 dagen geld-terug-garantie · totale waarde €138,50",
   },
 ];
 
@@ -193,12 +193,6 @@ export function Pricing() {
               <span className="text-sm font-semibold">{label}</span>
             </div>
           ))}
-        </div>
-
-        {/* Social proof rating */}
-        <div className="flex items-center justify-center gap-2 text-[var(--ld-on-green)]/70 text-sm">
-          <Star size={14} weight="fill" className="text-[var(--ld-peach)]" />
-          <span>4,8 — meer dan 500 hondenouders gingen je voor.</span>
         </div>
       </div>
     </section>

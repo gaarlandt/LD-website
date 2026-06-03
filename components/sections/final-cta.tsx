@@ -12,9 +12,9 @@ export function FinalCta() {
           Begin vandaag
         </Eyebrow>
         <h2 className="font-heading font-bold text-4xl md:text-5xl text-[var(--ld-text)] leading-tight mb-6 tracking-tight">
-          Je pup wacht niet.
+          Hoe eerder je begint,
           <br />
-          Jij hoeft ook niet.
+          hoe rustiger het wordt.
         </h2>
         <p className="text-[var(--ld-text-muted)] text-lg leading-relaxed mb-10 max-w-md mx-auto">
           Meld je aan en start direct. De puppyagenda, je eerste videoles en de community staan voor je klaar.
