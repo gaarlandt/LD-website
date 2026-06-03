@@ -18,15 +18,17 @@ export function PaProgress() {
             height={SHOTS.voortgang.height}
             sizes="(max-width: 1024px) 90vw, 600px"
           />
-          {/* Cleaned tooltip — corners clipped via overflow+radius. Shown from lg
-              up, where the negative offset lands in the column gap (no overflow). */}
-          <div className="absolute -bottom-7 -right-6 hidden w-[230px] overflow-hidden rounded-[14px] border border-[var(--ld-border)] shadow-[var(--ld-sh-3)] lg:block">
+          {/* Pre-rendered tooltip card — the PNG already carries its own rounded
+              corners and soft shadow (transparent padding around the card), so no
+              clip/border/box-shadow is needed. Shown from lg up, where the negative
+              offset lands in the column gap. */}
+          <div className="absolute -bottom-8 -right-8 hidden w-[250px] lg:block">
             <OptimizedImage
               src={SHOTS.tooltip.src}
               alt={SHOTS.tooltip.alt}
               width={SHOTS.tooltip.width}
               height={SHOTS.tooltip.height}
-              sizes="230px"
+              sizes="250px"
               className="block h-auto w-full"
             />
           </div>
