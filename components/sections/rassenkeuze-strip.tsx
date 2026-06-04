@@ -10,7 +10,7 @@ import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 export function RassenkeuzeStrip() {
   return (
     <section id="rassenkeuze" className="bg-white px-6 lg:px-8 py-16 lg:py-20" aria-label="Rassenkeuze hulp">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 rounded-2xl bg-[var(--ld-accent-soft)] border border-[var(--ld-blue)]/40 px-6 py-7 lg:px-9">
           <div>
             <h2 className="font-heading font-bold text-xl md:text-2xl text-[var(--ld-text)] mb-1 leading-snug">

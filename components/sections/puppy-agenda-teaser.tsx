@@ -100,7 +100,7 @@ export function PuppyAgendaTeaser() {
         </div>
         <Button variant="secondary" pill asChild>
           <Link href="/puppyagenda">
-            Bekijk de hele agenda
+            Bekijk de cursus
             <ArrowRight size={16} />
           </Link>
         </Button>

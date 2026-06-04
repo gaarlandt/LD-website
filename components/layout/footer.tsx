@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { asset } from "@/lib/utils";
 import { Container, Eyebrow } from "@/components/ui";
+import { AppStoreComingSoon } from "./app-store-coming-soon";
 
 const navLinks = [
   { href: "/", label: "Homepage" },
@@ -97,20 +98,8 @@ export function Footer() {
                     className="h-[4.09rem] w-auto"
                   />
                 </a>
-                <span
-                  className="inline-flex items-center"
-                  aria-label="App Store — binnenkort beschikbaar"
-                >
-                  <Image
-                    src={asset("/images/app-store-badge.svg")}
-                    alt="Download in de App Store"
-                    width={140}
-                    height={42}
-                    className="h-11 w-auto"
-                  />
-                </span>
+                <AppStoreComingSoon />
               </div>
-              <p className="text-xs text-[var(--ld-on-forest)]/40 mt-2">App Store — binnenkort</p>
             </div>
           </div>
 

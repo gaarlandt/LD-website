@@ -31,10 +31,9 @@ const testimonials = [
     location: "Naarden",
   },
   {
-    // Placeholder — replace with real testimonial when available
     quote:
-      "Dankzij de puppyagenda wisten we precies wat we elke week moesten doen. De videolessen zijn helder en de community is super behulpzaam. Aanrader voor elke nieuwe puppyeigenaar!",
-    name: "Marieke",
+      "De puppycursus was, zoals anderen hier ook aangeven, echt helemaal top. Kenny is uitgegroeid tot een vrolijke, lieve en gehoorzame hond, die dankzij Eliens begeleiding en puppycursus zijn weg goed heeft weten te vinden in het leven in Amsterdam.",
+    name: "Machteld",
     location: "Amsterdam",
   },
 ];
