@@ -5,7 +5,7 @@ import { Container, Eyebrow } from "@/components/ui";
 
 const navLinks = [
   { href: "/", label: "Homepage" },
-  { href: "/puppyagenda", label: "Puppyagenda" },
+  { href: "/puppyagenda", label: "Puppycursus" },
   { href: "/rassenkeuze", label: "Rassenkeuze hulp" },
   { href: "/prijzen", label: "Prijzen" },
   { href: "/veelgestelde-vragen", label: "FAQ" },

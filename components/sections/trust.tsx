@@ -64,9 +64,11 @@ function Stars() {
 
 export function Trust() {
   return (
-    <SectionWrapper className="bg-[var(--ld-beige)]" id="bewijs">
+    <>
+    {/* Stats — white band */}
+    <SectionWrapper className="bg-white" id="bewijs">
       {/* Stats bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20 pb-20 border-b border-[var(--ld-border)]">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {stats.map(({ value, icon: Icon, label }) => (
           <div key={label} className="text-center">
             {Icon ? (
@@ -86,7 +88,10 @@ export function Trust() {
           </div>
         ))}
       </div>
+    </SectionWrapper>
 
+    {/* Testimonials — soft-green band */}
+    <SectionWrapper className="bg-[var(--ld-green-soft)]">
       {/* Section header */}
       <div className="text-center mb-14">
         <Eyebrow tone="brand" className="block mb-4">
@@ -98,7 +103,7 @@ export function Trust() {
       </div>
 
       {/* Testimonials */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {testimonials.map(({ quote, name, location }) => (
           <Card key={name} hover className="flex flex-col">
             <Quotes size={24} className="text-[var(--ld-green)] mb-5 flex-shrink-0" />
@@ -114,7 +119,10 @@ export function Trust() {
           </Card>
         ))}
       </div>
+    </SectionWrapper>
 
+    {/* Certificeringen — white band */}
+    <SectionWrapper className="bg-white">
       {/* Certifications */}
       <div className="text-center mb-14">
         <Eyebrow tone="brand" className="block mb-4">
@@ -150,5 +158,6 @@ export function Trust() {
         />
       </div>
     </SectionWrapper>
+    </>
   );
 }

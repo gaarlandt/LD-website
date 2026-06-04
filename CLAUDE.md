@@ -84,7 +84,7 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 
 ## Navigation Order
 ```
-Rassenkeuze hulp | Puppyagenda | Prijzen | Over ons | FAQ | Contact
+Rassenkeuze hulp | Puppycursus | Prijzen | Over ons | FAQ | Contact
 ```
 Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/layout/footer.tsx`. Desktop navbar also includes outlined **Inloggen** + solid green **Start gratis** CTA buttons (both link to `app.letsdog.nl`).
 

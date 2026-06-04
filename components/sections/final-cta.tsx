@@ -4,7 +4,7 @@ import { Button, Eyebrow } from "@/components/ui";
 export function FinalCta() {
   return (
     <section
-      className="relative bg-[var(--ld-beige)] overflow-hidden py-24 lg:py-32 px-6 lg:px-8"
+      className="relative bg-[var(--ld-green-soft)] overflow-hidden py-24 lg:py-32 px-6 lg:px-8"
       aria-label="Begin nu met Let's Dog"
     >
       <div className="relative z-10 max-w-2xl mx-auto text-center">
@@ -22,7 +22,7 @@ export function FinalCta() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button variant="peach" pill asChild>
-            <Link href="#prijzen">Start vandaag</Link>
+            <Link href="#prijzen">Start de cursus vandaag</Link>
           </Button>
           <p className="text-[var(--ld-text-subtle)] text-sm">Opzegbaar in de app</p>
         </div>
