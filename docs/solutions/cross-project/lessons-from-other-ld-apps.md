@@ -28,6 +28,7 @@ Curated from BreedSelector (BS) and Puppy Agenda V2 (PA). Only items that genuin
 ## Contracts you participate in
 
 - **PostHog cross-product identity** — the WP/marketing surface must follow the shared identity rules (`wp:<id>`, lowercased-email join, per-app `aud`). → `…/contracts/posthog-cross-product-identity.md`
+- **Fixed-overlay positioning in embedded iframes** — when the Website embeds an app via iframe (e.g. BreedSelector), the Website is the **embedder**: pin the `<iframe>` to the viewport (`position:sticky;top:0;height:100dvh`, or `position:fixed` if an ancestor's `overflow` defeats sticky) so the embedded app's `position:fixed` overlays (modals, toasts) don't clip behind a sticky header or below the fold. → `…/contracts/iframe-fixed-overlay-positioning.md`
 
 ## UI / UX patterns
 
