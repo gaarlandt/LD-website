@@ -58,7 +58,7 @@ export function Hero() {
           {/* CTA */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <Button variant="peach" pill asChild>
-              <Link href="/prijzen">Start vandaag</Link>
+              <Link href="/prijzen">Start de cursus vandaag</Link>
             </Button>
             <p className="text-sm text-[var(--ld-on-green)]/60">Opzegbaar in de app</p>
           </div>
@@ -92,7 +92,7 @@ export function Hero() {
       </div>
 
       {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[var(--ld-beige)] to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[var(--ld-green-soft)] to-transparent" />
     </section>
   );
 }

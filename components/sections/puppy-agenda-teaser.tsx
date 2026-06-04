@@ -81,12 +81,12 @@ const legendOrder: LessonType[] = ["checklist", "video", "audio", "gezondheid"];
 
 export function PuppyAgendaTeaser() {
   return (
-    <SectionWrapper className="bg-[var(--ld-bg-sunken)]" id="puppyagenda">
+    <SectionWrapper className="bg-[var(--ld-green-soft)]" id="puppyagenda">
       {/* Header: eyebrow + heading + total pill (left), secondary CTA (right) */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
         <div>
           <Eyebrow tone="brand" className="block mb-4">
-            De puppyagenda
+            De puppycursus
           </Eyebrow>
           <h2 className="font-heading font-bold text-3xl md:text-4xl text-[var(--ld-text)] leading-tight">
             Van voorbereiding
@@ -100,7 +100,7 @@ export function PuppyAgendaTeaser() {
         </div>
         <Button variant="secondary" pill asChild>
           <Link href="/puppyagenda">
-            Bekijk de hele agenda
+            Bekijk de cursus
             <ArrowRight size={16} />
           </Link>
         </Button>

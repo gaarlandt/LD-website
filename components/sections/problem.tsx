@@ -25,7 +25,7 @@ const problems = [
 
 export function Problem() {
   return (
-    <SectionWrapper className="bg-[var(--ld-beige)]" id="herkenning">
+    <SectionWrapper className="bg-[var(--ld-green-soft)]" id="herkenning">
       {/* Section label */}
       <Eyebrow tone="brand" className="block mb-4">
         Herkenbaar?
