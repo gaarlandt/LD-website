@@ -2,7 +2,7 @@ import { Check, ShieldCheck, Wallet, ArrowsClockwise } from "@phosphor-icons/rea
 import { Card, CardTitle, CardFooter, Badge, Button, Eyebrow } from "@/components/ui";
 
 export type Tier = {
-  key: "flex" | "early" | "consult";
+  key: "flex" | "early";
   name: string;
   cornerBadge: string;
   description: string;
@@ -57,26 +57,6 @@ export const tiers: Tier[] = [
     footerNote: "7 dagen geld-terug-garantie · eerste jaar €59",
     highlighted: true,
     topBadge: "Meest gekozen",
-  },
-  {
-    key: "consult",
-    name: "Jaar + Consult",
-    cornerBadge: "Premium",
-    description: "Hetzelfde jaarplan + een 1-op-1 consult met een trainer.",
-    priceMain: "€79",
-    priceUnit: "/eerste jaar",
-    priceSub: "Daarna €119/jaar",
-    features: [
-      "Volledige puppycursus",
-      "Alle video's & checklists",
-      "Let's Dog Community",
-      "1× Online Consult (t.w.v. €39,50)",
-      "Direct 1-op-1 advies van een trainer",
-    ],
-    ctaLabel: "Kies Jaar + Consult",
-    ctaHref: "https://app.letsdog.nl",
-    ctaStyle: "dark",
-    footerNote: "7 dagen geld-terug-garantie · totale waarde €138,50",
   },
 ];
 
@@ -177,7 +157,7 @@ export function Pricing() {
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-7 mb-16 lg:mt-10 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-7 mb-16 lg:mt-10 items-start max-w-3xl mx-auto">
           {tiers.map((tier) => (
             <PricingCard key={tier.key} tier={tier} />
           ))}
