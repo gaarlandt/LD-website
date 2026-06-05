@@ -15,7 +15,7 @@ import {
 export const metadata = pageMetadata({
   title: "Prijzen — Let's Dog",
   description:
-    "Drie manieren om te starten met Let's Dog: Flexibel maandelijks, Early Member jaar, of Jaar + Consult. Vanaf €4,92 per maand. Betalen via Mollie.",
+    "Twee manieren om te starten met Let's Dog: Flexibel maandelijks of Early Member jaar. Vanaf €4,92 per maand. Betalen via Mollie.",
   path: "/prijzen/",
 });
 
@@ -39,7 +39,7 @@ const faqs = [
   },
   {
     q: "Krijg ik mijn geld terug als ik snel opzeg?",
-    a: "Bij een jaarabonnement (Early Member of Jaar + Consult): ja, binnen 7 dagen. Je zegt op via de accountinstellingen en wij storten het volledige bedrag automatisch binnen 14 dagen terug. Bij het maandabonnement (Flexibel) is geen restitutie mogelijk — je kunt wel elke maand opzeggen zodat de volgende maand niet wordt afgeschreven.",
+    a: "Bij een jaarabonnement (Early Member): ja, binnen 7 dagen. Je zegt op via de accountinstellingen en wij storten het volledige bedrag automatisch binnen 14 dagen terug. Bij het maandabonnement (Flexibel) is geen restitutie mogelijk — je kunt wel elke maand opzeggen zodat de volgende maand niet wordt afgeschreven.",
   },
 ];
 
@@ -54,7 +54,7 @@ export default function Prijzen() {
           <div>
             <h1 className="font-heading font-bold text-4xl md:text-5xl lg:text-[3.75rem] text-[#141414] leading-[1.05] tracking-tight mb-7">
               Eén juiste aanpak.{" "}
-              <span className="text-[#FFA580]">Drie manieren</span> om te starten.
+              <span className="text-[#FFA580]">Twee manieren</span> om te starten.
             </h1>
 
             <p className="text-[#141414]/70 text-lg leading-relaxed mb-8 max-w-lg">

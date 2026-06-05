@@ -15,7 +15,7 @@ Let's Dog kent twee soorten abonnementen, met elk hun eigen voorwaarden:
 
 Het maandabonnement is **niet restitueerbaar**. Er is geen proefperiode en geen bedenktijd: zodra de betaling is voltooid en je toegang krijgt tot de content, is het bedrag voor die maand definitief. Je kunt het abonnement op elk moment opzeggen via je accountinstellingen — de opzegging gaat in aan het einde van de lopende betaalperiode. Volgende maanden worden niet meer in rekening gebracht.
 
-### Jaarabonnement (Early Member en Jaar + Consult)
+### Jaarabonnement (Early Member)
 
 Het jaarabonnement heeft een **proefperiode van 7 dagen**. Als je binnen 7 dagen na de start van je abonnement opzegt via je accountinstellingen, krijg je het volledige bedrag terug. Na deze 7 dagen vervalt het recht op restitutie en geldt het jaarabonnement voor de volledige looptijd. Aan het einde van de looptijd kun je opzeggen of laten doorlopen.
 
