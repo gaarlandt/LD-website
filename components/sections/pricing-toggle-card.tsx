@@ -67,10 +67,11 @@ export function PricingToggleCard() {
                 {PERIOD_LABEL[p]}
                 {p === "yearly" && (
                   <span
+                    aria-hidden="true"
                     className={`rounded-full px-2 py-0.5 text-xs font-bold ${
                       active
                         ? "bg-[var(--ld-peach)] text-[var(--ld-text)]"
-                        : "bg-[var(--ld-peach)]/20 text-[var(--ld-peach-deep)]"
+                        : "bg-[var(--ld-peach)]/20 text-[var(--ld-text)]"
                     }`}
                   >
                     {savingsLabel}
@@ -106,6 +107,7 @@ export function PricingToggleCard() {
         <div className="mb-2 flex items-end gap-2">
           {isYearly && early.listPriceValue != null && (
             <span className="mb-2 font-heading text-2xl leading-none text-[var(--ld-text-subtle)] line-through">
+              <span className="sr-only">Oude prijs: </span>
               {formatEUR(early.listPriceValue, { cents: true })}
             </span>
           )}

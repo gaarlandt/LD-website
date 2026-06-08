@@ -12,7 +12,6 @@ export type Tier = {
   description: string;
   priceMain: string;
   priceUnit: string;
-  priceSub: string;
   features: string[];
   ctaLabel: string;
   ctaHref: string;
@@ -37,7 +36,6 @@ export const tiers: Tier[] = [
     description: "Maandelijks opzegbaar — geen jaarcontract, geen verplichting.",
     priceMain: "€19,99",
     priceUnit: "/maand",
-    priceSub: "",
     features: [
       "Volledige puppycursus",
       "Alle video's & checklists",
@@ -57,7 +55,6 @@ export const tiers: Tier[] = [
     description: "Volledige toegang — Early Member prijs zolang we lanceren.",
     priceMain: "€59",
     priceUnit: "/eerste jaar",
-    priceSub: "Daarna €99/jaar · slechts €4,92 p/m",
     features: [
       "Volledige puppycursus",
       "Alle video's & checklists",
