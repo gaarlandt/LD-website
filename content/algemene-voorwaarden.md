@@ -152,13 +152,13 @@ Let's Dog is niet aansprakelijk voor vertraging of tekortkoming door overmacht, 
 
 ## 15. Privacy
 
-Het gebruik van persoonsgegevens wordt geregeld in de Privacyverklaring.
+Het gebruik van persoonsgegevens wordt geregeld in het Privacybeleid.
 
 Let's Dog verwerkt persoonsgegevens in overeenstemming met de toepasselijke privacywetgeving, waaronder de Algemene Verordening Gegevensbescherming (AVG).
 
-In de Privacyverklaring wordt uitgelegd welke persoonsgegevens wij verzamelen, voor welke doeleinden wij deze gebruiken en welke rechten gebruikers hebben met betrekking tot hun gegevens.
+In het Privacybeleid wordt uitgelegd welke persoonsgegevens wij verzamelen, voor welke doeleinden wij deze gebruiken en welke rechten gebruikers hebben met betrekking tot hun gegevens.
 
-De Privacyverklaring maakt integraal onderdeel uit van deze Voorwaarden en is beschikbaar via de website van Let's Dog.
+Het Privacybeleid maakt integraal onderdeel uit van deze Voorwaarden en is beschikbaar via de website van Let's Dog.
 
 ## 16. Apple App Store en Google Play
 
