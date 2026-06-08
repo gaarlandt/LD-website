@@ -1,12 +1,13 @@
+import { PROD_HOSTS } from "@/lib/prod-hosts";
+
 const GA_ID_PATTERN = /^G-[A-Z0-9]{6,12}$/;
 
-// Real production hostnames. Anywhere else (pages.dev preview URLs,
-// localhost, etc.) sends events with debug_mode=true AND
-// traffic_type='internal', so they get filtered out of standard GA4
-// reports by the property's "Internal Traffic" Data Filter (Admin →
-// Data Filters). DebugView ignores Data Filters, so debug events still
-// show up there for verification.
-const PROD_HOSTS = ["www.letsdog.nl", "letsdog.nl"];
+// Anywhere other than PROD_HOSTS (pages.dev preview URLs, localhost, etc.)
+// sends events with debug_mode=true AND traffic_type='internal', so they get
+// filtered out of standard GA4 reports by the property's "Internal Traffic"
+// Data Filter (Admin → Data Filters). DebugView ignores Data Filters, so debug
+// events still show up there for verification. PROD_HOSTS lives in
+// lib/prod-hosts.ts so the PostHog provider tags environment the same way.
 
 // NOTE: GA4 scripts here intentionally render WITHOUT Cookiebot's
 // type="text/plain" + data-cookieconsent gating. Tracking fires

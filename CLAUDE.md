@@ -12,7 +12,7 @@ Marketing website for Let's Dog, a puppy training platform. Built as a static Ne
 - **Fonts**: National2 (headings, local OTF), DM Sans (body, Google Fonts)
 - **Images**: photographic JPEGs served as AVIF/WebP via the `OptimizedImage` `<picture>` component; variants generated at build-time by `sharp` ^0.34 (`scripts/optimize-images.mjs`) — see "On-page SEO, metadata & spec compliance" below
 - **Content (legal pages)**: Markdown via `gray-matter` ^4 + `react-markdown` ^10 + `remark-gfm` ^4 — see "Markdown-driven legal pages" below
-- **Analytics**: GA4 (`G-0FCGXJHMMY`, fires immediately) + Cookiebot banner (display-only, does not gate tracking)
+- **Analytics**: GA4 (`G-0FCGXJHMMY`, fires immediately) + PostHog (EU project 143695, browser-only) — both dual-fired via `lib/analytics.ts` `trackEvent`; Cookiebot banner (display-only, does not gate tracking)
 - **Deployment**: Cloudflare Pages (project: `website-letsdog`, production URL: `website-letsdog.pages.dev`, custom domains flip in at cutover)
 
 ## Key Commands
@@ -58,14 +58,15 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 │   ├── layout/             # Navbar, Footer
 │   ├── sections/           # Homepage sections (hero, problem, hope, etc.)
 │   ├── shared/             # Reusable (WhatsApp, reveal, section-wrapper, JsonLd, OptimizedImage, legal layout)
-│   └── analytics/          # Cookiebot, GA4, CTATracker
+│   └── analytics/          # Cookiebot, GA4, CTATracker, PostHogProvider
 ├── content/                # Markdown source for the 5 legal pages (privacybeleid, ai-gebruiksvoorwaarden, cookieverklaring, retour, ip-overdrachtsverklaring). Edit these to change copy without touching TSX.
 ├── lib/
 │   ├── utils.ts            # Asset path helper
 │   ├── seo.ts              # SITE_URL/SITE_NAME + pageMetadata() (per-page canonical/og/twitter)
 │   ├── structured-data.ts  # JSON-LD builders (Organization, WebSite, FAQPage, Product, Person)
 │   ├── content.ts          # loadLegalContent(slug) — reads content/<slug>.md at build time via gray-matter
-│   └── analytics.ts        # trackEvent helper + window.gtag types
+│   ├── analytics.ts        # trackEvent (dual-fire GA4+PostHog) + identifyLead
+│   └── prod-hosts.ts        # PROD_HOSTS allowlist (shared by ga4.tsx + posthog-provider)
 ├── public/                 # Static assets (images, fonts, _headers, _redirects, llms.txt, .well-known/security.txt, og/, images/optimized/)
 ├── scripts/                # Build-time asset generators (optimize-images, generate-icons, generate-og-image) — sharp
 ├── docs/                   # Documentation
@@ -100,12 +101,16 @@ Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/lay
   - `NEXT_PUBLIC_COOKIEBOT_CBID=<Domain Group ID from Cookiebot dashboard>`
   - `NODE_VERSION=20`
   - `POSTMARK_SERVER_TOKEN=<Postmark Server API token>` — **secret** (NOT `NEXT_PUBLIC`); powers the contact form via `functions/api/contact.ts`. Optional: `CONTACT_TO` (default `support@letsdog.nl`), `CONTACT_FROM` (default `noreply@letsdog.nl`, must be a Postmark-verified sender).
+  - `NEXT_PUBLIC_POSTHOG_KEY=phc_Uxz55z5X0tMh6NHp8WWF3lD6oy2G3Xf0NiOZrrBJgFq` (PostHog EU project 143695 — public client-side ingestion key, shared across all Let's Dog apps)
+  - `NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com`
 
 ## Analytics & Consent
 - **GA4**: measurement ID `G-0FCGXJHMMY` (shared across all Let's Dog domains — `www`, `keuzehulp`, `agenda`, `app`). See the GA4 doc in Google Drive (`Tech/GA4 LD/`) for cross-domain config, custom dimensions, key events, Google Ads conversion mapping.
 - **Hostname behavior**: GA4 sends `debug_mode: true` automatically when hostname is anything other than `www.letsdog.nl` or `letsdog.nl` (preview URLs, localhost). Production hostnames send normally.
-- **CTA tracking**: `components/analytics/cta-tracker.tsx` mounts a delegated document click listener that fires `cta_clicked` events for any link to `app.letsdog.nl`, `keuzehulp.letsdog.nl`, or `agenda.letsdog.nl` with params `link_url`, `link_text`, `link_location` (navbar/body), `link_destination`.
-- **Cookiebot banner is display-only.** GA4 fires regardless of consent state — see comment in `components/analytics/ga4.tsx` for how to restore real gating if that decision is reversed.
+- **PostHog**: project `143695` on EU (`https://eu.i.posthog.com`), keyed via `NEXT_PUBLIC_POSTHOG_KEY/HOST`. Browser-only, initialised in `components/analytics/posthog-provider.tsx` (mounted in `app/layout.tsx`) — static export has no server runtime. Fires always (same posture as GA4). Follows the cross-product identity contract: `defaults:'2026-01-30'`, `respect_dnt`, session recording off, `cross_subdomain_cookie` (anon id flows into `app.letsdog.nl`), super-properties `app:'website'` + `environment:'production'|'preview'`, `person_profiles:'identified_only'`, autocapture off. `$pageview` is automatic (history-based via `defaults`).
+- **Dual-fire**: `lib/analytics.ts` `trackEvent(name, params)` fires the SAME event to BOTH GA4 (gtag) and PostHog, each guarded independently (a blocked sink never suppresses the other). `identifyLead(email)` is the single PostHog `identify` (contact-form success) — lowercased email is the cross-product join key; no `alias()`. **Add events by calling `trackEvent` — don't call `gtag`/`posthog` directly.**
+- **CTA tracking**: `components/analytics/cta-tracker.tsx` mounts a delegated document click listener that fires `cta_clicked` (via `trackEvent`) for links to `app.letsdog.nl`, `keuzehulp.letsdog.nl`, `agenda.letsdog.nl`, the staging checkout host (`maartend8.sg-host.com` → `link_destination:"checkout"`), and same-site pricing links (`/prijzen` + `#prijzen` → `"pricing"`). Params `link_url`, `link_text`, `link_location` (navbar/body), `link_destination` — **the last two are registered GA4 custom dimensions; do not rename.** Pricing additionally fires GA4-ecommerce `view_item_list` (`components/sections/pricing-view-tracker.tsx`) + `begin_checkout` (`components/sections/plan-cta.tsx`, with `billing_period` monthly/yearly + `items`). App-side `sign_up`/`purchase` live on `app.letsdog.nl` (owned by Jur). See the GA4 setup doc (`Tech/GA4 LD/`).
+- **Cookiebot banner is display-only.** GA4 + PostHog fire regardless of consent state — see comment in `components/analytics/ga4.tsx` for how to restore real gating if that decision is reversed.
 
 ## Markdown-driven legal pages
 
