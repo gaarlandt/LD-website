@@ -105,6 +105,16 @@ Once you're confident the cutover is stable:
 
 ---
 
+## Funnel analytics — at go-live (GA4 + PostHog)
+
+Added with the funnel-analytics work (`feat/funnel-analytics`). The website ships dual-fired GA4 + PostHog events; these items close the loop on the live domain:
+
+- [ ] **Swap the pricing checkout from staging → production.** The tier `ctaHref`s in `components/sections/pricing.tsx` point at the SiteGround **staging** shop `https://maartend8.sg-host.com/checkout/?add-to-cart=<id>` (product IDs `1978` Flexibel / `592` Early Member). Update the host **and** any changed product IDs to production. Then mirror the new host in `components/analytics/cta-tracker.tsx` (the `TRACKED_HOSTS` `"checkout"` entry) and in the GA4 cross-domain domain list (next item). `begin_checkout` params derive from the `tiers` data, so they follow the new IDs automatically.
+- [ ] **Add `app.letsdog.nl` (+ the production checkout host) to GA4 cross-domain** "Configure your domains" (Admin → Data Streams → Configure tag settings). Already a pending item in the GA4 setup doc (`Tech/GA4 LD/`); the funnel needs it so a www→app→checkout journey counts as one session.
+- [ ] **Verify the PostHog cross-subdomain cookie.** On the real apex, confirm the `ph_…` distinct-id cookie has `Domain=.letsdog.nl` (it scopes to `pages.dev` on preview, so this only resolves post-cutover). Coordinate `app.letsdog.nl` to init the same PostHog project (143695) with `cross_subdomain_cookie:true` and call `posthog.identify('wp:<id>', { email:<lowercased> })` on login — that's what stitches website → app onto one person.
+
+---
+
 ## Spec compliance — post-cutover
 
 The bulk of The Website Specification work shipped pre-cutover (in-repo: canonical/sitemap/robots/JSON-LD/og:image/security headers/security.txt/favicons/manifest/404/image-optimization/llms.txt/Link headers — see `docs/plans/2026-05-30-001-feat-website-spec-compliance-plan.md`). The items below are **DNS- or live-domain-gated** and must be done at/after cutover. Tick them as you go.

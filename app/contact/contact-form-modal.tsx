@@ -12,7 +12,7 @@ import {
   Textarea,
   Button,
 } from "@/components/ui";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, identifyLead } from "@/lib/analytics";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -69,6 +69,9 @@ export function ContactFormModal({
       });
       if (!res.ok) throw new Error("send failed");
       trackEvent("contact_form_submitted");
+      // The one PostHog identify on the site — lowercased email is the
+      // cross-product join key (see lib/analytics.ts + the identity contract).
+      identifyLead(form.email);
       setForm(EMPTY);
       setStatus("success");
     } catch {

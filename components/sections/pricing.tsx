@@ -1,5 +1,7 @@
 import { Check, ShieldCheck, Wallet, ArrowsClockwise } from "@phosphor-icons/react/dist/ssr";
-import { Card, CardTitle, CardFooter, Badge, Button, Eyebrow } from "@/components/ui";
+import { Card, CardTitle, CardFooter, Badge, Eyebrow } from "@/components/ui";
+import { PlanCTA } from "./plan-cta";
+import { PricingViewTracker } from "./pricing-view-tracker";
 
 export type Tier = {
   key: "flex" | "early";
@@ -16,6 +18,11 @@ export type Tier = {
   footerNote: string;
   highlighted?: boolean;
   topBadge?: string;
+  // Analytics (begin_checkout) — kept beside ctaHref so a cutover product-ID
+  // swap updates the tracked id in lockstep with the checkout link.
+  productId: number;
+  priceValue: number;
+  billingPeriod: "monthly" | "yearly";
 };
 
 export const tiers: Tier[] = [
@@ -36,6 +43,9 @@ export const tiers: Tier[] = [
     ctaHref: "https://maartend8.sg-host.com/checkout/?add-to-cart=1978&quantity=1",
     ctaStyle: "neutral",
     footerNote: "Geen geld-terug-garantie · opzegbaar per maand",
+    productId: 1978,
+    priceValue: 12.99,
+    billingPeriod: "monthly",
   },
   {
     key: "early",
@@ -57,6 +67,9 @@ export const tiers: Tier[] = [
     footerNote: "7 dagen geld-terug-garantie · eerste jaar €59",
     highlighted: true,
     topBadge: "Meest gekozen",
+    productId: 592,
+    priceValue: 59,
+    billingPeriod: "yearly",
   },
 ];
 
@@ -118,12 +131,9 @@ function PricingCard({ tier }: { tier: Tier }) {
 
       {/* CTA — the recommended tier gets the brand's one accent CTA (peach, ink text);
           the others stay secondary so only the recommended action pops. Accent-as-button
-          is allowed for the single highest-emphasis action per screen. */}
-      <Button asChild variant={tier.highlighted ? "peach" : "secondary"} block pill>
-        <a href={tier.ctaHref} target="_blank" rel="noopener noreferrer">
-          {tier.ctaLabel}
-        </a>
-      </Button>
+          is allowed for the single highest-emphasis action per screen. The button is a
+          client leaf (PlanCTA) that fires begin_checkout before navigating. */}
+      <PlanCTA tier={tier} />
 
       <CardFooter className="text-center text-[11px] font-bold uppercase tracking-widest text-[var(--ld-text-subtle)]">
         {tier.footerNote}
@@ -139,6 +149,7 @@ export function Pricing() {
       id="prijzen"
       aria-label="Prijzen"
     >
+      <PricingViewTracker />
       {/* Subtle radial gradient highlight (decorative lighter-green wash — intentional one-off) */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,#85977D_0%,transparent_60%)] pointer-events-none" />
 

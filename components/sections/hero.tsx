@@ -52,7 +52,7 @@ export function Hero() {
 
           {/* Subtext — empathie eerst */}
           <p className="text-lg lg:text-2xl text-[var(--ld-on-green)]/85 leading-relaxed mb-12 max-w-xl">
-            Nieuwe pup in huis. Dolblij, en soms even de kluts kwijt. Wij zetten week voor week voor je klaar wat er nu telt. Zo weet jij wat je doet, en weet je pup wat hij kan verwachten.
+            Nieuwe pup in huis. Dolblij, en soms even de kluts kwijt. In onze puppycursus zetten week voor week voor je klaar wat er nu telt. Zo weet jij wat je doet, en weet je pup wat hij kan verwachten.
           </p>
 
           {/* CTA */}
