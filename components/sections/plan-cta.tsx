@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui";
 import { trackEvent } from "@/lib/analytics";
-import type { Tier } from "./pricing";
+import type { Tier } from "./pricing-data";
 
 // Client leaf so the <Pricing> cards stay server-rendered. Fires the GA4-native
 // begin_checkout (dual-fired to PostHog) with the plan distinction (monthly vs

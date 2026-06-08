@@ -64,7 +64,7 @@ export function faqPageLd(categories: FaqCategory[]) {
 type PricingTier = { name: string; priceMain: string; description: string };
 
 function parsePrice(s: string): string {
-  // "€12,99" -> "12.99", "€59" -> "59.00"
+  // "€19,99" -> "19.99", "€59" -> "59.00"
   const n = parseFloat(s.replace(/[^\d,]/g, "").replace(",", "."));
   return Number.isFinite(n) ? n.toFixed(2) : "0.00";
 }
