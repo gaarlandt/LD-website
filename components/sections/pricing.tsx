@@ -14,7 +14,6 @@ export type Tier = {
   features: string[];
   ctaLabel: string;
   ctaHref: string;
-  ctaStyle: "neutral" | "peach" | "dark";
   footerNote: string;
   highlighted?: boolean;
   topBadge?: string;
@@ -41,7 +40,6 @@ export const tiers: Tier[] = [
     ],
     ctaLabel: "Start Maandelijks",
     ctaHref: "https://maartend8.sg-host.com/checkout/?add-to-cart=1978&quantity=1",
-    ctaStyle: "neutral",
     footerNote: "Geen geld-terug-garantie · opzegbaar per maand",
     productId: 1978,
     priceValue: 12.99,
@@ -63,7 +61,6 @@ export const tiers: Tier[] = [
     ],
     ctaLabel: "Claim Early Member Prijs",
     ctaHref: "https://maartend8.sg-host.com/checkout/?add-to-cart=592&quantity=1",
-    ctaStyle: "peach",
     footerNote: "7 dagen geld-terug-garantie · eerste jaar €59",
     highlighted: true,
     topBadge: "Meest gekozen",
