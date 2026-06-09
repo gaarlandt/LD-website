@@ -34,7 +34,7 @@ export function Problem() {
       <h2 className="font-heading font-bold text-3xl md:text-4xl text-[var(--ld-text)] leading-tight mb-4 max-w-xl">
         Een nieuwe pup is geweldig.
         <br />
-        En soms ook gewoon heel zwaar.
+        En soms ook uitdagend.
       </h2>
       <p className="text-[var(--ld-text-muted)] text-lg mb-14 max-w-xl">
         Je bent niet de enige. Bijna elke puppy-eigenaar herkent dit.

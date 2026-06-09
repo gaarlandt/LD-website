@@ -24,7 +24,6 @@ export function FinalCta() {
           <Button variant="peach" pill asChild>
             <Link href="#prijzen">Start de cursus vandaag</Link>
           </Button>
-          <p className="text-[var(--ld-text-subtle)] text-sm">Opzegbaar in de app</p>
         </div>
 
         {/* Risk reduction */}

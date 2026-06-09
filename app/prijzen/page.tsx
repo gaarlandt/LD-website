@@ -1,9 +1,9 @@
 import { pageMetadata } from "@/lib/seo";
-import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { JsonLd } from "@/components/shared/json-ld";
 import { productLd } from "@/lib/structured-data";
-import { Pricing, tiers } from "@/components/sections/pricing";
+import { tiers } from "@/components/sections/pricing-data";
+import { PricingToggleCard } from "@/components/sections/pricing-toggle-card";
 import {
   Badge,
   Accordion,
@@ -47,7 +47,7 @@ export default function Prijzen() {
   return (
     <>
       <JsonLd data={productLd(tiers)} />
-      {/* Upper hero — beige */}
+      {/* Upper hero — beige: text column + interactive pricing card */}
       <section className="relative bg-[#EFE8E4] pt-32 pb-20 lg:pb-24 px-6 lg:px-8 overflow-hidden">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Text column */}
@@ -75,35 +75,15 @@ export default function Prijzen() {
             </div>
           </div>
 
-          {/* Image column */}
+          {/* Pricing card column (replaces the former hero image) */}
           <div className="relative">
-            <div className="relative rounded-3xl overflow-hidden aspect-[4/5] lg:aspect-[5/6] bg-[#E8DDD6]">
-              <OptimizedImage
-                src="/images/hero.jpeg"
-                alt="Eigenaar met haar puppy"
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover object-center"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#141414]/30 via-transparent to-transparent" />
-            </div>
-
-            {/* Vanaf €4,92 per maand badge */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-              <Badge tone="peach" className="font-bold shadow-lg whitespace-nowrap">
-                Vanaf €4,92 per maand
-              </Badge>
-            </div>
+            <PricingToggleCard />
           </div>
         </div>
       </section>
 
-      {/* Lower section — 3-tier cards on green */}
-      <Pricing />
-
-      {/* FAQ */}
-      <SectionWrapper className="bg-white">
+      {/* FAQ — soft-green section, visually distinct from the beige hero */}
+      <SectionWrapper className="bg-[var(--ld-green-soft)]">
         <div className="max-w-2xl mx-auto">
           <h2 className="font-heading font-bold text-2xl md:text-3xl text-[#141414] mb-8 text-center">
             Vragen over prijzen

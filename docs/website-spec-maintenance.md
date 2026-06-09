@@ -14,7 +14,7 @@ This site is compliant with [The Website Specification](https://specification.we
 | **Rename / remove a route** | add a 301 in `public/_redirects`; remove it from `app/sitemap.ts` + `public/llms.txt` + nav/footer | `curl -I` old path → 301; sitemap has no dead/redirecting URLs |
 | **Add a legal page** | `content/<slug>.md` + a 15-line `app/<slug>/page.tsx` (copy an existing one) + sitemap + llms.txt + footer link | page renders; in sitemap |
 | **Edit the FAQ** | edit **`app/veelgestelde-vragen/faq-data.ts`** only — the FAQPage JSON-LD reads the same array | Google Rich Results test |
-| **Edit pricing** | edit the **`tiers`** array in `components/sections/pricing.tsx` — the Product/Offer JSON-LD reads it | Google Rich Results test |
+| **Edit pricing** | edit the **`tiers`** array in `components/sections/pricing-data.ts` — the Product/Offer JSON-LD reads it; derived figures (per-year, savings %, per-month) recompute from `priceValue` in `pricing-toggle-card.tsx` | Google Rich Results test |
 | **Add a social profile** | add it to `components/layout/footer.tsx` **and** `SAME_AS` in `lib/structured-data.ts` | both reflect the new URL |
 | **Change the brand icon / colors** | `npm run generate:icons`; update `theme_color` in `app/manifest.ts` + `viewport.themeColor` in `app/layout.tsx` if the brand color changed | Lighthouse → PWA/installable |
 | **Add a 3rd-party script / embed** | nothing today — the CSP is `frame-ancestors` only (no `script-src` allowlist to maintain). *If* a full content-CSP is ever added, this becomes an allowlist edit in `public/_headers` | — |
@@ -24,7 +24,7 @@ This site is compliant with [The Website Specification](https://specification.we
 
 - **Canonical / OG / Twitter** come from `lib/seo.ts` → `pageMetadata()`. Any page that calls it is correct by construction.
 - **FAQ JSON-LD** reads `app/veelgestelde-vragen/faq-data.ts`. Edit the data; the markup follows.
-- **Pricing JSON-LD** reads the `tiers` array in `components/sections/pricing.tsx`.
+- **Pricing JSON-LD** reads the `tiers` array in `components/sections/pricing-data.ts`.
 - **og:image** is generated from the hero photo; only regenerate when the hero changes.
 
 ## The verification toolbox

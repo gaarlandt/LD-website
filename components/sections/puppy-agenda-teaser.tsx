@@ -98,7 +98,7 @@ export function PuppyAgendaTeaser() {
             Meer dan 150 lessen
           </span>
         </div>
-        <Button variant="secondary" pill asChild>
+        <Button variant="peach" pill asChild>
           <Link href="/puppyagenda">
             Bekijk de cursus
             <ArrowRight size={16} />

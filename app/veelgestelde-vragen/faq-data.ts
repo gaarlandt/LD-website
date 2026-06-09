@@ -48,7 +48,7 @@ export const faqCategories: FaqCategory[] = [
     faqs: [
       {
         q: "Wat kost het abonnement?",
-        a: "Twee smaken: Flexibel €12,99/maand (maandelijks opzegbaar, niet restitueerbaar) of Early Member €59/eerste jaar (daarna €99 — onze launch-prijs, 7 dagen geld-terug-garantie). Betaling verloopt via Mollie.",
+        a: "Twee smaken: Flexibel €19,99/maand (maandelijks opzegbaar, niet restitueerbaar) of Early Member €59/eerste jaar (daarna €99 — onze launch-prijs, 7 dagen geld-terug-garantie). Betaling verloopt via Mollie.",
       },
       {
         q: "Kan ik opzeggen wanneer ik wil?",

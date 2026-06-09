@@ -40,7 +40,7 @@ export function Hero() {
           {/* Eyebrow */}
           <Eyebrow tone="onGreen" className="flex items-center gap-3 mb-10">
             <span className="h-px w-8 bg-[var(--ld-on-green)]/60 inline-block" />
-            Welzijnsgerichte puppytraining
+            Online puppytraining
           </Eyebrow>
 
           {/* H1 */}
@@ -52,7 +52,7 @@ export function Hero() {
 
           {/* Subtext — empathie eerst */}
           <p className="text-lg lg:text-2xl text-[var(--ld-on-green)]/85 leading-relaxed mb-12 max-w-xl">
-            Nieuwe pup in huis. Dolblij, en soms even de kluts kwijt. In onze puppycursus zetten week voor week voor je klaar wat er nu telt. Zo weet jij wat je doet, en weet je pup wat hij kan verwachten.
+            Nieuwe pup in huis. Dolblij, en soms even de kluts kwijt. In onze online puppycursus krijg je elke week een kant en klaar stappenplan. Hiermee heb jij de controle en je pup de duidelijkheid.
           </p>
 
           {/* CTA */}
@@ -60,7 +60,6 @@ export function Hero() {
             <Button variant="peach" pill asChild>
               <Link href="/prijzen">Start de cursus vandaag</Link>
             </Button>
-            <p className="text-sm text-[var(--ld-on-green)]/60">Opzegbaar in de app</p>
           </div>
 
           {/* Trust nudge */}
