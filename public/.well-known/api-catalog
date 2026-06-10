@@ -1,0 +1,16 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://letsdog.nl/",
+      "describedby": [
+        { "href": "https://letsdog.nl/llms.txt", "type": "text/markdown", "title": "Site index for LLMs" }
+      ],
+      "sitemap": [
+        { "href": "https://letsdog.nl/sitemap.xml", "type": "application/xml" }
+      ],
+      "terms-of-service": [
+        { "href": "https://letsdog.nl/algemene-voorwaarden/", "type": "text/html" }
+      ]
+    }
+  ]
+}

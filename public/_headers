@@ -22,6 +22,14 @@
   Link: </llms.txt>; rel="describedby"; type="text/markdown"; title="Site index for LLMs"
   Link: </sitemap.xml>; rel="sitemap"; type="application/xml"
   Link: </.well-known/security.txt>; rel="security"; type="text/plain"
+  Link: </.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"
+
+# RFC 9727 API catalog, served as an RFC 9264 Linkset. The file has no
+# extension, so Cloudflare would otherwise serve it as application/octet-stream.
+# Content-Type is set by no other matching rule, so the merge invariant holds
+# (this block adds neither a security header nor Cache-Control).
+/.well-known/api-catalog
+  Content-Type: application/linkset+json; charset=utf-8
 
 /_next/static/*
   Cache-Control: public, max-age=31536000, immutable

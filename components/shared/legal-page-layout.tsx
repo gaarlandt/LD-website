@@ -71,7 +71,10 @@ export function LegalPageLayout({ data, content, children }: LegalPageLayoutProp
               tbody: ({ children }) => <tbody>{children}</tbody>,
               tr: ({ children }) => <tr>{children}</tr>,
               th: ({ children }) => (
-                <th className="font-semibold text-[var(--ld-text)] text-left py-2 pr-4 align-top">
+                // GFM only emits a header row (inside <thead>), so every <th>
+                // is a column header — scope="col" is unambiguously correct
+                // and gives screen readers explicit row/column association.
+                <th scope="col" className="font-semibold text-[var(--ld-text)] text-left py-2 pr-4 align-top">
                   {children}
                 </th>
               ),
