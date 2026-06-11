@@ -78,11 +78,11 @@ export function Navbar() {
         <Link
           href="/"
           className="flex-shrink-0 hover:opacity-80 transition-opacity duration-200"
-          aria-label="Let's Dog — terug naar homepage"
+          aria-label="Let's dog — terug naar homepage"
         >
           <Image
             src={asset("/images/logo-black.svg")}
-            alt="Let's Dog"
+            alt="Let's dog"
             width={120}
             height={35}
             className="h-8 w-auto"

@@ -9,9 +9,9 @@ import { FinalCta } from "@/components/sections/final-cta";
 import { RassenkeuzeStrip } from "@/components/sections/rassenkeuze-strip";
 
 export const metadata = pageMetadata({
-  title: "Let's Dog — Rust en vertrouwen met je pup",
+  title: "Let's dog — Rust en vertrouwen met je pup",
   description:
-    "Nieuwe pup in huis en even de kluts kwijt? Let's Dog geeft je week voor week een plan, videolessen van gecertificeerde trainers en een community die je begrijpt.",
+    "Nieuwe pup in huis en even de kluts kwijt? Let's dog geeft je week voor week een plan, videolessen van gecertificeerde trainers en een community die je begrijpt.",
   path: "/",
 });
 

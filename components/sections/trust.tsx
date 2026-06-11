@@ -12,7 +12,7 @@ type Stat = { label: string; value?: string; icon?: ElementType };
 
 const stats: Stat[] = [
   { value: "500+", label: "Puppy's op weg geholpen" },
-  { value: "50+", label: "Videolessen beschikbaar" },
+  { value: "80+", label: "Videolessen beschikbaar" },
   { icon: Medal, label: "Gecertificeerde trainers" },
   { value: "100%", label: "Welzijnsgericht" },
 ];
@@ -26,7 +26,7 @@ const testimonials = [
   },
   {
     quote:
-      "Elien is een fantastische hondengedragscoach die ons met veel kennis en geduld heeft begeleid. Dankzij Let’s Dog en haar advies maakten we de juiste keuze bij het uitzoeken van het ras, de fokker en de hond. Haar begeleiding in de opvoeding van ons lieve Guus was onmisbaar en heeft ons enorm geholpen om met ons gezin Guus op te voeden.",
+      "Elien is een fantastische hondengedragscoach die ons met veel kennis en geduld heeft begeleid. Dankzij Let’s dog en haar advies maakten we de juiste keuze bij het uitzoeken van het ras, de fokker en de hond. Haar begeleiding in de opvoeding van ons lieve Guus was onmisbaar en heeft ons enorm geholpen om met ons gezin Guus op te voeden.",
     name: "Saskia",
     location: "Naarden",
   },
@@ -41,11 +41,11 @@ const testimonials = [
 const certifications = [
   {
     title: "NVGH",
-    subtitle: "Nederlandse Vereniging voor Gedragshulpverleners Honden",
+    subtitle: "Lid van Nederlandse Vereniging van Gedragstherapeuten voor Honden",
   },
   {
     title: "Raad van Beheer",
-    subtitle: "Erkend opleider puppycursussen",
+    subtitle: "Lid van Raad van Beheer - kwaliteitskeurmerk voor instructeurs.",
   },
 ];
 
@@ -153,7 +153,7 @@ export function Trust() {
           alt="NVGH en Raad van Beheer certificeringslogo's"
           width={400}
           height={120}
-          className="max-w-xs md:max-w-sm h-auto"
+          className="w-full max-w-[416px] md:max-w-[499px] h-auto"
         />
       </div>
     </SectionWrapper>

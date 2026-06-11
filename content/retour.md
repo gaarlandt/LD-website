@@ -1,6 +1,6 @@
 ---
 title: Retour- en annuleringsbeleid
-description: Hoe je een product retourneert of een abonnement opzegt bij Let's Dog. Termijnen, voorwaarden en het retourproces.
+description: Hoe je een product retourneert of een abonnement opzegt bij Let's dog. Termijnen, voorwaarden en het retourproces.
 ---
 
 ## 1. Herroepingsrecht voor fysieke producten
@@ -9,11 +9,11 @@ Klanten hebben 14 dagen bedenktijd na ontvangst van fysieke producten, mits deze
 
 ## 2. Abonnementen (digitale toegang)
 
-Let's Dog kent twee soorten abonnementen, met elk hun eigen voorwaarden:
+Let's dog kent twee soorten abonnementen, met elk hun eigen voorwaarden:
 
 ### Maandabonnement (Flexibel)
 
-Het maandabonnement is **niet restitueerbaar**. Er is geen proefperiode en geen bedenktijd: zodra de betaling is voltooid en je toegang krijgt tot de content, is het bedrag voor die maand definitief. Je kunt het abonnement op elk moment opzeggen via je accountinstellingen — de opzegging gaat in aan het einde van de lopende betaalperiode. Volgende maanden worden niet meer in rekening gebracht.
+Het maandabonnement is **niet restitueerbaar**. Er is geen proefperiode en geen bedenktijd: zodra de betaling is voltooid en je toegang krijgt tot de content, is het bedrag voor die maand definitief. Je kunt het abonnement op elk moment opzeggen via je accountinstellingen, de opzegging gaat in aan het einde van de lopende betaalperiode. Volgende maanden worden niet meer in rekening gebracht.
 
 ### Jaarabonnement (Early Member)
 
@@ -21,7 +21,7 @@ Het jaarabonnement heeft een **proefperiode van 7 dagen**. Als je binnen 7 dagen
 
 ## 3. Retourprocedure (fysieke producten)
 
-Deze procedure geldt alleen voor **fysieke producten**. Neem contact op via support@letsdog.nl en start de retour binnen 14 dagen na ontvangst. De kosten van het retour zenden zijn voor de klant. Digitale abonnementen worden niet fysiek geretourneerd — daarvoor gelden de regels uit sectie 2.
+Deze procedure geldt alleen voor **fysieke producten**. Neem contact op via support@letsdog.nl en start de retour binnen 14 dagen na ontvangst. De kosten van het retour zenden zijn voor de klant. Digitale abonnementen worden niet fysiek geretourneerd, daarvoor gelden de regels uit sectie 2.
 
 ## 4. Uitzonderingen
 
@@ -33,7 +33,7 @@ Producten op maat en geopend diervoer kunnen niet worden geretourneerd. Voor dig
 
 **Fysieke producten**: na goedkeuring van de retour wordt het volledige aankoopbedrag binnen 14 dagen teruggestort op de oorspronkelijke betaalmethode.
 
-**Maandabonnement**: niet restitueerbaar — zie sectie 2.
+**Maandabonnement**: niet restitueerbaar, zie sectie 2.
 
 ## 6. Klachtenprocedure
 

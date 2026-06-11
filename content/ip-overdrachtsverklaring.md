@@ -1,14 +1,14 @@
 ---
 title: IP-overdrachtsverklaring
-description: Verklaring waarmee freelancers en partners hun intellectuele eigendomsrechten op geleverde werken overdragen aan Let's Dog B.V.
+description: Verklaring waarmee freelancers en partners hun intellectuele eigendomsrechten op geleverde werken overdragen aan Let's dog B.V.
 signature_form: true
 ---
 
-Ondergetekende verklaart hierbij alle intellectuele eigendomsrechten op de geleverde werken over te dragen aan Let's Dog B.V.
+Ondergetekende verklaart hierbij alle intellectuele eigendomsrechten op de geleverde werken over te dragen aan Let's dog B.V.
 
 ## 1. Overdracht
 
-Freelancer of partner draagt hierbij alle rechten op teksten, video's, ontwerpen of code over aan Let's Dog B.V.
+Freelancer of partner draagt hierbij alle rechten op teksten, video's, ontwerpen of code over aan Let's dog B.V.
 
 ## 2. Vrijwaring
 

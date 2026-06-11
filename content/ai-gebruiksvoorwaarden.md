@@ -1,7 +1,7 @@
 ---
 title: AI-gebruiksvoorwaarden
-description: Voorwaarden voor het gebruik van de AI-gedragstrainer (AI Coach) van Let's Dog.
-lead: Deze voorwaarden zijn van toepassing op het gebruik van de AI-gedragstrainer van Let's Dog.
+description: Voorwaarden voor het gebruik van de AI-gedragstrainer (AI Coach) van Let's dog.
+lead: Deze voorwaarden zijn van toepassing op het gebruik van de AI-gedragstrainer van Let's dog.
 ---
 
 ## 1. Wat doet de AI?
@@ -14,7 +14,7 @@ De AI biedt suggesties, maar is geen vervanging van een professionele trainer of
 
 ## 3. Gebruik op eigen risico
 
-Let's Dog is niet aansprakelijk voor schade veroorzaakt door opvolging van AI-advies.
+Let's dog is niet aansprakelijk voor schade veroorzaakt door opvolging van AI-advies.
 
 ## 4. Gebruiksdata
 

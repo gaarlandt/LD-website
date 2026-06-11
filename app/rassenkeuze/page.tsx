@@ -6,7 +6,7 @@ import { Button, Card, Badge, Eyebrow } from "@/components/ui";
 import { ArrowRight, Sparkle } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata = pageMetadata({
-  title: "Rassenkeuze hulp — Welk ras past bij jou? | Let's Dog",
+  title: "Rassenkeuze hulp — Welk ras past bij jou? | Let's dog",
   description:
     "Beantwoord 10 korte vragen en ontdek welk hondenras het beste bij jouw levensstijl past. Gratis, wetenschappelijk onderbouwd rasadvies.",
   path: "/rassenkeuze/",
@@ -29,7 +29,7 @@ const steps = [
     number: "3",
     title: "Ontvang je persoonlijke rasadvies",
     description:
-      "Direct in beeld — gratis en vrijblijvend. Geen account nodig.",
+      "Direct in beeld, gratis en vrijblijvend. Geen account nodig.",
   },
 ];
 
@@ -38,21 +38,21 @@ const exploreCards = [
     eyebrow: "Gids",
     title: "Puppycursus",
     description:
-      "Wat je week voor week doet als de pup er eenmaal is — stap voor stap.",
+      "Wat je week voor week doet als de pup er eenmaal is, stap voor stap.",
     href: "/puppyagenda",
   },
   {
     eyebrow: "Aanpak",
     title: "Over ons",
     description:
-      "Hoe we welzijnsgericht trainen, en wie de gedragstherapeuten achter Let's Dog zijn.",
+      "Hoe we welzijnsgericht trainen, en wie de gedragstherapeuten achter Let's dog zijn.",
     href: "/over-ons",
   },
   {
     eyebrow: "Later",
     title: "Prijzen",
     description:
-      "Geen haast. Kijk gerust rond wat een lidmaatschap inhoudt — voor straks.",
+      "Geen haast. Kijk gerust rond wat een lidmaatschap inhoudt, voor straks.",
     href: "/prijzen",
   },
 ];
@@ -69,7 +69,7 @@ export default function Rassenkeuze() {
               Welk ras past <span className="text-[var(--ld-peach)]">écht</span> bij jou?
             </h1>
             <p className="text-[var(--ld-text-muted)] text-lg leading-relaxed mb-8 max-w-lg">
-              Beantwoord 10 korte vragen over je leefstijl, woonruimte en ervaring. Je krijgt direct een persoonlijk rasadvies — gratis en vrijblijvend.
+              Beantwoord 10 korte vragen over je leefstijl, woonruimte en ervaring. Je krijgt direct een persoonlijk rasadvies, gratis en vrijblijvend.
             </p>
 
             {/* Pills */}
@@ -159,7 +159,7 @@ export default function Rassenkeuze() {
         <div className="rounded-[var(--ld-r-lg)] overflow-hidden border border-[var(--ld-border)] bg-white shadow-[var(--ld-sh-3)]">
           <iframe
             src="https://keuzehulp.letsdog.nl"
-            title="Let's Dog Rassenkeuze hulp — rasadvies quiz"
+            title="Let's dog Rassenkeuze hulp — rasadvies quiz"
             className="w-full min-h-[700px] border-0"
             loading="lazy"
             allow="clipboard-write"

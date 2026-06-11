@@ -26,18 +26,18 @@ export const metadata: Metadata = {
   // canonical / og:url resolve to an absolute apex URL. (www → apex 301
   // is a Cloudflare Redirect Rule added at cutover, not in code.)
   metadataBase: new URL(SITE_URL),
-  title: "Let's Dog — Rust en vertrouwen met je pup",
+  title: "Let's dog — Rust en vertrouwen met je pup",
   description:
-    "Nieuwe pup in huis en even de kluts kwijt? Let's Dog geeft je week voor week een plan, videolessen van gecertificeerde trainers en een community die je begrijpt.",
+    "Nieuwe pup in huis en even de kluts kwijt? Let's dog geeft je week voor week een plan, videolessen van gecertificeerde trainers en een community die je begrijpt.",
   keywords: ["puppytraining", "hondentraining", "puppy opvoeding", "hond training", "puppycursus"],
   // Fallback OG/Twitter block. Real pages set their own complete openGraph
   // (incl. a self-referential og:url) via lib/seo.ts → pageMetadata(); this
   // only applies to routes without their own metadata export (e.g. 404).
   openGraph: {
-    title: "Let's Dog — Rust en vertrouwen met je pup",
+    title: "Let's dog — Rust en vertrouwen met je pup",
     description:
       "Meer rust en vertrouwen, samen met je pup. Videolessen, puppyagenda en community.",
-    siteName: "Let's Dog",
+    siteName: "Let's dog",
     locale: "nl_NL",
     type: "website",
     images: [OG_IMAGE],

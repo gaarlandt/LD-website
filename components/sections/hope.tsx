@@ -9,25 +9,25 @@ const outcomes = [
     icon: CheckCircle,
     title: "Jij weet elke dag wat je doet.",
     description:
-      "Rust en houvast in plaats van twijfel — een aanpak die stap voor stap met je pup meegroeit.",
+      "Rust en houvast in plaats van twijfel, een aanpak die stap voor stap met je pup meegroeit.",
   },
   {
     icon: VideoCamera,
     title: "Echte uitleg van gecertificeerde trainers.",
     description:
-      "Waarom gedrag gebeurt en hoe je het aanpakt. Geen quickfixes, wel echte resultaten.",
+      "Oorzaken van gedrag en hoe ga je ermee om. Geen quickfixes, wel echte resultaten.",
   },
   {
     icon: DeviceMobile,
-    title: "Leer overal, ook onderweg.",
+    title: "Leer met het hele gezin.",
     description:
-      "De video tijdens de wandeling, de audioles in de auto. Op je telefoon, waar je ook bent.",
+      "Bekijk samen de video's zodat iedereen op dezelfde wijze de pup traint en opvoedt.",
   },
   {
     icon: Users,
     title: "Een community die je begrijpt.",
     description:
-      "Praat met andere puppy-eigenaren die hetzelfde meemaken. Geen oordeel, wel herkenning en steun.",
+      "Praat met andere puppy-eigenaren en gedragstherapeuten. Geen oordeel, wel herkenning en steun.",
   },
 ];
 
@@ -60,7 +60,7 @@ export function Hope() {
           <h2 className="font-heading font-bold text-3xl md:text-4xl text-[var(--ld-text)] leading-tight mb-5">
             Zo ziet je leven eruit
             <br />
-            met Let&apos;s Dog.
+            met Let&apos;s dog.
           </h2>
           <p className="text-[var(--ld-text-muted)] text-lg mb-10 leading-relaxed">
             Geen tegenstrijdige adviezen meer. Eén aanpak die je rust, duidelijkheid en vertrouwen geeft, stap voor stap.

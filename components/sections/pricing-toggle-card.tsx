@@ -158,7 +158,7 @@ export function PricingToggleCard() {
             <span>
               Je betaalt{" "}
               <strong className="text-[var(--ld-text)]">{formatEUR(meerPerJaar)}</strong>{" "}
-              meer per jaar — kies Jaarlijks
+              meer per jaar, kies Jaarlijks
             </span>
           </div>
         )}

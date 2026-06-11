@@ -6,7 +6,7 @@ import { PaPhases } from "@/components/sections/puppyagenda/phases";
 import { PaClosingCta } from "@/components/sections/puppyagenda/closing-cta";
 
 export const metadata = pageMetadata({
-  title: "Puppycursus — Let's Dog",
+  title: "Puppycursus — Let's dog",
   description:
     "Alles wat je moet doen, lezen en bekijken — week voor week klaargezet. Video, leesstof en audio, afgevinkt zodra je klaar bent.",
   path: "/puppyagenda/",

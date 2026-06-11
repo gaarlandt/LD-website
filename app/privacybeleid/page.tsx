@@ -5,7 +5,7 @@ import { loadLegalContent } from "@/lib/content";
 const { data, content } = loadLegalContent("privacybeleid");
 
 export const metadata = pageMetadata({
-  title: `${data.title} — Let's Dog`,
+  title: `${data.title} — Let's dog`,
   description: data.description,
   path: "/privacybeleid/",
 });

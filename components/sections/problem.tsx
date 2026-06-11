@@ -5,13 +5,13 @@ import { MagnifyingGlass, Moon, Question } from "@phosphor-icons/react/dist/ssr"
 const problems = [
   {
     icon: MagnifyingGlass,
-    title: "De ene zegt dit, de ander dat.",
+    title: "De een zegt dit, de ander dat.",
     description:
-      "Je zoekt online en krijgt tien verschillende antwoorden. Welk advies klopt? Wat past bij jouw hond? Je weet het niet meer.",
+      "Je zoekt online en krijgt tien verschillende antwoorden. Welk advies klopt, is betrouwbaar en werkt echt?",
   },
   {
     icon: Moon,
-    title: "Je pup bijt, blaft of slaapt niet.",
+    title: "Je pup bijt, blaft veel of slaapt slecht.",
     description:
       "Je doet je best, maar het lukt niet. Je bent moe, twijfelt aan jezelf, en vraagt je af of het ooit beter wordt.",
   },

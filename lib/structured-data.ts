@@ -75,9 +75,9 @@ export function productLd(tiers: PricingTier[]) {
   return {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: "Let's Dog lidmaatschap",
+    name: "Let's dog lidmaatschap",
     description:
-      "Volledige puppycursus met videolessen, checklists, puppyagenda en de Let's Dog-community. Twee manieren om te starten.",
+      "Volledige puppycursus met videolessen, checklists, puppyagenda en de Let's dog-community. Twee manieren om te starten.",
     brand: { "@type": "Brand", name: SITE_NAME },
     url: `${SITE_URL}/prijzen/`,
     offers: tiers.map((t) => ({
@@ -100,7 +100,7 @@ export function personLd() {
     name: "Elien",
     jobTitle: "Gecertificeerde hondengedragstherapeut",
     description:
-      "Oprichtster van Let's Dog en gecertificeerd hondengedragstherapeut.",
+      "Oprichtster van Let's dog en gecertificeerd hondengedragstherapeut.",
     worksFor: { "@id": ORG_ID },
     url: `${SITE_URL}/over-ons/`,
   };

@@ -11,12 +11,12 @@ export const faqCategories: FaqCategory[] = [
     slug: "over-de-app",
     faqs: [
       {
-        q: "Wat is Let's Dog precies?",
-        a: "Let's Dog is een web app voor puppy-eigenaren. Je vindt er een puppyagenda, videolessen van gecertificeerde trainers, audio-lessen voor onderweg en een community van andere eigenaren. Alles op één plek, stap voor stap opgebouwd.",
+        q: "Wat is Let's dog precies?",
+        a: "Let's dog is een web app voor puppy-eigenaren. Je vindt er een puppyagenda, videolessen van gecertificeerde trainers, audio-lessen voor onderweg en een community van andere eigenaren. Alles op één plek, stap voor stap opgebouwd.",
       },
       {
         q: "Heb ik een smartphone nodig?",
-        a: "Nee. De web app werkt op elke browser — laptop, tablet of telefoon. Je kunt ook inloggen via de mobiele app als je video's in het veld wilt bekijken tijdens een trainingssessie.",
+        a: "Nee. De web app werkt op elke browser, laptop, tablet of telefoon. Je kunt ook inloggen via de mobiele app als je video's in het veld wilt bekijken tijdens een trainingssessie.",
       },
       {
         q: "Wanneer is de app beschikbaar?",
@@ -30,7 +30,7 @@ export const faqCategories: FaqCategory[] = [
     faqs: [
       {
         q: "Werkt de methode voor elk ras?",
-        a: "Ja. We werken met welzijnsgerichte methodes die zijn gebaseerd op hoe honden leren — ongeacht ras. Wel is elke hond uniek, en de puppyagenda houdt rekening met individuele verschillen.",
+        a: "Ja. We werken met welzijnsgerichte methodes die zijn gebaseerd op hoe honden leren, ongeacht ras. Wel is elke hond uniek, en de puppyagenda houdt rekening met individuele verschillen.",
       },
       {
         q: "Mijn pup is al ouder dan 12 weken. Is het te laat?",
@@ -48,11 +48,11 @@ export const faqCategories: FaqCategory[] = [
     faqs: [
       {
         q: "Wat kost het abonnement?",
-        a: "Twee smaken: Flexibel €19,99/maand (maandelijks opzegbaar, niet restitueerbaar) of Early Member €59/eerste jaar (daarna €99 — onze launch-prijs, 7 dagen geld-terug-garantie). Betaling verloopt via Mollie.",
+        a: "Twee smaken: Flexibel €19,99/maand (maandelijks opzegbaar, niet restitueerbaar) of Early Member €59/eerste jaar (daarna €99, onze launch-prijs, 7 dagen geld-terug-garantie). Betaling verloopt via Mollie.",
       },
       {
         q: "Kan ik opzeggen wanneer ik wil?",
-        a: "Ja, opzeggen kan altijd via de accountinstellingen in de app. Bij het maandabonnement stopt het abonnement aan het einde van de lopende maand — terugbetaling van die maand is niet mogelijk. Bij een jaarabonnement geldt 7 dagen geld-terug-garantie: opzeggen binnen 7 dagen na start = volledige terugbetaling.",
+        a: "Ja, opzeggen kan altijd via de accountinstellingen in de app. Bij het maandabonnement stopt het abonnement aan het einde van de lopende maand, terugbetaling van die maand is niet mogelijk. Bij een jaarabonnement geldt 7 dagen geld-terug-garantie: opzeggen binnen 7 dagen na start = volledige terugbetaling.",
       },
       {
         q: "Via welke betaalmethoden kan ik betalen?",
@@ -60,7 +60,7 @@ export const faqCategories: FaqCategory[] = [
       },
       {
         q: "Wat als ik niet tevreden ben?",
-        a: "Bij een jaarabonnement: zeg binnen 7 dagen op via je accountinstellingen, dan krijg je je geld automatisch terug. Bij het maandabonnement: zeg op via je accountinstellingen, dan stopt het aan het einde van de lopende maand. Heb je een andere vraag of klacht? Neem contact op via het contactformulier — we zoeken altijd een oplossing.",
+        a: "Bij een jaarabonnement: zeg binnen 7 dagen op via je accountinstellingen, dan krijg je je geld automatisch terug. Bij het maandabonnement: zeg op via je accountinstellingen, dan stopt het aan het einde van de lopende maand. Heb je een andere vraag of klacht? Neem contact op via het contactformulier, we zoeken altijd een oplossing.",
       },
     ],
   },

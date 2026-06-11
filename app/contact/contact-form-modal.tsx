@@ -101,7 +101,7 @@ export function ContactFormModal({
           <>
             <DialogTitle>Stuur een bericht</DialogTitle>
             <DialogDescription className="mb-6">
-              Vul het formulier in — we antwoorden binnen 1 werkdag.
+              Vul het formulier in, we antwoorden binnen 1 werkdag.
             </DialogDescription>
 
             <form onSubmit={handleSubmit} noValidate className="space-y-5">

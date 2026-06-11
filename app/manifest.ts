@@ -5,8 +5,8 @@ export const dynamic = "force-static";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Let's Dog — Rust en vertrouwen met je pup",
-    short_name: "Let's Dog",
+    name: "Let's dog — Rust en vertrouwen met je pup",
+    short_name: "Let's dog",
     description:
       "Rust en vertrouwen met je pup: week voor week een plan, videolessen van gecertificeerde trainers en een community die je begrijpt.",
     start_url: "/",

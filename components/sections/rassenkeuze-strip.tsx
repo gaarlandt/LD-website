@@ -20,7 +20,7 @@ export function RassenkeuzeStrip() {
               Nog geen pup? Of twijfel je over het ras?
             </h2>
             <p className="text-[var(--ld-text-muted)] text-[15px] leading-relaxed">
-              Doe de gratis rassenkeuze hulp — 10 vragen, wetenschappelijk onderbouwd.
+              Doe de gratis rassenkeuze hulp, 10 vragen, wetenschappelijk onderbouwd.
             </p>
           </div>
           <Button variant="brand" pill asChild className="flex-shrink-0">
