@@ -53,7 +53,7 @@ export const PHASES: Phase[] = [
     lessons: [
       ["lezen", "Wat heb je nodig? De complete aanschaflijst"],
       ["lezen", "Hoe maak je je huis puppyproof?"],
-      ["lezen", "Halsband of tuigje — wat kies je?"],
+      ["lezen", "Halsband of tuigje, wat kies je?"],
       ["health", "Giftige stoffen voor honden"],
       ["video", "Videoles: de eerste nacht voorbereiden"],
     ],
@@ -101,7 +101,7 @@ export const PHASES: Phase[] = [
     weeks: "Week 5 t/m 12",
     age: "Pup 12–16 weken",
     blurb:
-      "De ontdekkingsfase. De wereld wordt spannender, je pup wisselt van tanden en leert zelfstandig te zijn — ook als het even tegenzit.",
+      "De ontdekkingsfase. De wereld wordt spannender, je pup wisselt van tanden en leert zelfstandig te zijn, ook als het even tegenzit.",
     icon: Tree,
     lessons: [
       ["lezen", "Doortrainen: vasthouden wat je hebt opgebouwd"],

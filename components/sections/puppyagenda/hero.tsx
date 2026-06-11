@@ -19,7 +19,7 @@ export function PaHero() {
             klaargezet.
           </h1>
           <p className="mt-5 max-w-[440px] text-[19px] leading-[1.6] text-[var(--ld-text-muted)]">
-            Open de app en je weet meteen wat er deze week telt. Video, leesstof en audio — afgevinkt zodra je
+            Open de app en je weet meteen wat er deze week telt. Video, leesstof en audio, afgevinkt zodra je
             klaar bent.
           </p>
         </div>

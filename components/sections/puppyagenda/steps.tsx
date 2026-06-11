@@ -9,7 +9,7 @@ const steps = [
   {
     Icon: NumberCircleOne,
     title: "Kies je startpunt",
-    body: "Vóór de komst of midden in de puppyfase — de agenda begint waar jij bent.",
+    body: "Vóór de komst of midden in de puppyfase, de agenda begint waar jij bent.",
   },
   {
     Icon: NumberCircleTwo,

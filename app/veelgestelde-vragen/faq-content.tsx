@@ -36,7 +36,7 @@ export function FaqContent() {
               <span className="text-[var(--ld-peach)]">antwoorden.</span>
             </h1>
             <p className="text-[var(--ld-text-muted)] text-lg leading-relaxed mb-8 max-w-lg">
-              Alles wat je wilt weten over Let&apos;s Dog — van onze
+              Alles wat je wilt weten over Let&apos;s dog, van onze
               trainingsmethode tot je abonnement.
             </p>
             <Button variant="brand" pill asChild>

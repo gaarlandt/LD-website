@@ -7,7 +7,7 @@ import { GreenHeroBand } from "@/components/shared/green-hero-band";
 export const metadata: Metadata = {
   // Next already emits <meta name="robots" content="noindex"> for the
   // not-found route, so we only set the title here.
-  title: "Pagina niet gevonden — Let's Dog",
+  title: "Pagina niet gevonden — Let's dog",
 };
 
 const quickLinks = [
@@ -34,7 +34,7 @@ export default function NotFound() {
         <div className="max-w-2xl mx-auto text-center">
           <p className="text-[var(--ld-text-muted)] text-lg leading-relaxed mb-10">
             De pagina die je zocht bestaat niet (meer) of is verplaatst. Geen
-            zorgen — hieronder vind je snel je weg terug.
+            zorgen, hieronder vind je snel je weg terug.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3 mb-12">

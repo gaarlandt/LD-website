@@ -40,7 +40,7 @@ export function Hero() {
           {/* Eyebrow */}
           <Eyebrow tone="onGreen" className="flex items-center gap-3 mb-10">
             <span className="h-px w-8 bg-[var(--ld-on-green)]/60 inline-block" />
-            Online puppytraining
+            Online puppycursus
           </Eyebrow>
 
           {/* H1 */}

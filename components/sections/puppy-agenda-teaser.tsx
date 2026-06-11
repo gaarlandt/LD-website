@@ -30,7 +30,6 @@ const phases: {
   number: string;
   icon: typeof House;
   title: string;
-  week: string;
   description: string;
   types: LessonType[];
   lessons: number;
@@ -39,9 +38,8 @@ const phases: {
     number: "01",
     icon: House,
     title: "Vóór de komst",
-    week: "Week −4 t/m −1",
     description:
-      "De voorbereidingsfase, terwijl je pup nog bij de fokker is. Je maakt je huis klaar en weet precies wat je nodig hebt.",
+      "De voorbereidingsfase. Je pup is nog bij de fokker. Je maakt je huis klaar en weet precies wat je nodig hebt.",
     types: ["checklist", "gezondheid", "video"],
     lessons: 15,
   },
@@ -49,7 +47,6 @@ const phases: {
     number: "02",
     icon: SunHorizon,
     title: "De eerste week thuis",
-    week: "Week 1",
     description:
       "Je pup komt thuis. Een rustig dagschema, de eerste nachten en de start van zindelijkheids- en benchtraining.",
     types: ["checklist", "audio", "video", "gezondheid"],
@@ -59,9 +56,8 @@ const phases: {
     number: "03",
     icon: PawPrint,
     title: "Wennen & socialiseren",
-    week: "Week 2 t/m 4",
     description:
-      "De eerste socialisatiefase. Je pup ontdekt de wereld, leert de basiscommando’s en wendt stap voor stap aan alleen zijn.",
+      "De eerste socialisatiefase. Je pup ontdekt de wereld, leert de basiscommando’s en went stap voor stap aan zijn nieuwe omgeving.",
     types: ["checklist", "video", "audio"],
     lessons: 10,
   },
@@ -69,9 +65,8 @@ const phases: {
     number: "04",
     icon: Plant,
     title: "Ontdekken & groeien",
-    week: "Week 5 t/m 12",
     description:
-      "De ontdekkingsfase. De wereld wordt spannender, je pup wisselt van tanden en leert zelfstandig te zijn — ook als het even tegenzit.",
+      "De ontdekkingsfase. De wereld wordt spannender, tegelijkertijd wordt jouw pup ook zelfstandiger en durft verder van jou weg te gaan.",
     types: ["checklist", "gezondheid", "video", "audio"],
     lessons: 20,
   },
@@ -86,16 +81,16 @@ export function PuppyAgendaTeaser() {
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
         <div>
           <Eyebrow tone="brand" className="block mb-4">
-            De puppycursus
+            De puppyagenda
           </Eyebrow>
           <h2 className="font-heading font-bold text-3xl md:text-4xl text-[var(--ld-text)] leading-tight">
-            Van voorbereiding
+            Van geboorte
             <br />
-            tot ontdekkingsfase
+            tot pubertijd
           </h2>
           <span className="inline-flex items-center gap-2 mt-5 px-4 py-1.5 rounded-full bg-[var(--ld-green)]/10 text-[var(--ld-green-ink)] text-sm font-semibold">
             <Sparkle size={15} weight="fill" className="text-[var(--ld-green)]" />
-            Meer dan 150 lessen
+            Meer dan 130 lessen
           </span>
         </div>
         <Button variant="peach" pill asChild>
@@ -108,7 +103,7 @@ export function PuppyAgendaTeaser() {
 
       {/* Phase cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {phases.map(({ number, icon: PhaseIcon, title, week, description, types, lessons }) => (
+        {phases.map(({ number, icon: PhaseIcon, title, description, types, lessons }) => (
           <Card key={number} className="flex flex-col h-full">
             <div className="flex items-center justify-between mb-5">
               <div className="w-11 h-11 rounded-xl bg-[var(--ld-beige)] flex items-center justify-center">
@@ -117,7 +112,6 @@ export function PuppyAgendaTeaser() {
               <span className="font-heading font-bold text-lg text-[var(--ld-text)]/15">{number}</span>
             </div>
             <h3 className="font-heading font-bold text-lg text-[var(--ld-text)] mb-1 leading-snug">{title}</h3>
-            <p className="text-sm font-semibold text-[var(--ld-green)] mb-3">{week}</p>
             <p className="text-[var(--ld-text-muted)] text-[14px] leading-relaxed flex-grow pb-4 mb-4 border-b border-[var(--ld-border)]">
               {description}
             </p>

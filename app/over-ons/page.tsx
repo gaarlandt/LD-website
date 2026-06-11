@@ -7,50 +7,44 @@ import { JsonLd } from "@/components/shared/json-ld";
 import { personLd } from "@/lib/structured-data";
 import { OptimizedImage } from "@/components/shared/optimized-image";
 import { Button, Card, Badge, Eyebrow } from "@/components/ui";
-import { ShieldCheck, Heart, BookOpen, MagnifyingGlass, Certificate } from "@phosphor-icons/react/dist/ssr";
+import { ShieldCheck, BookOpen, MagnifyingGlass, Certificate } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata = pageMetadata({
-  title: "Over ons — Let's Dog",
+  title: "Over ons — Let's dog",
   description:
-    "Leer Elien kennen — gecertificeerde hondengedragstherapeut en oprichtster van Let's Dog. Welzijnsgericht, wetenschappelijk onderbouwd.",
+    "Leer Elien kennen — gecertificeerde hondengedragstherapeut en oprichtster van Let's dog. Welzijnsgericht, wetenschappelijk onderbouwd.",
   path: "/over-ons/",
 });
 
 const methodCards = [
   {
     icon: ShieldCheck,
-    title: "Geen fysieke correcties — nooit",
+    title: "Geen fysieke correcties, nooit",
     description:
-      "We werken uitsluitend met positieve bekrachtiging. Straf en dwang zijn geen onderdeel van onze methode, punt.",
-  },
-  {
-    icon: Heart,
-    title: "Welzijn van hond én eigenaar centraal",
-    description:
-      "Een goede band met je hond begint bij jouw welzijn. We begeleiden eigenaar én hond — niet de een zonder de ander.",
+      "We werken uitsluitend met positieve bekrachtiging. Straf en dwang zijn geen onderdeel van onze aanpak.",
   },
   {
     icon: BookOpen,
     title: "Wetenschappelijk onderbouwd",
     description:
-      "Onze aanpak is gebaseerd op actueel gedragsonderzoek en de principes van leertheorie — geen mythen, geen buikgevoel.",
+      "Onze aanpak is gebaseerd op de laatste wetenschappelijke inzichten en technieken.",
   },
   {
     icon: MagnifyingGlass,
     title: "Toegankelijk voor elk ras",
     description:
-      "De methode werkt voor elke hond, ongeacht ras of grootte. We houden wél rekening met individuele verschillen.",
+      "De methode werkt voor elke hond, ongeacht ras of grootte.",
   },
 ];
 
 const certs = [
   {
     name: "NVGH-lid",
-    desc: "Nederlandse Vereniging voor Gedragshulpverleners Honden — de beroepsvereniging voor gedragsprofessionals.",
+    desc: "Lid van Nederlandse Vereniging van Gedragstherapeuten voor Honden.",
   },
   {
     name: "Raad van Beheer",
-    desc: "Erkend opleider puppycursussen door de Raad van Beheer — de officiële stamboekhouder voor rashonden in Nederland.",
+    desc: "Lid van Raad van Beheer - kwaliteitskeurmerk voor instructeurs.",
   },
 ];
 
@@ -74,10 +68,10 @@ export default function OverOns() {
               <span className="text-[var(--ld-peach)]">Niet één van de twee.</span>
             </h1>
             <p className="text-[var(--ld-text-muted)] text-lg leading-relaxed mb-8 max-w-lg">
-              Let&apos;s Dog is opgericht door Elien, gecertificeerd
+              Let&apos;s dog is opgericht door Elien, gecertificeerd
               hondengedragstherapeut. Na honderden eigenaren te hebben begeleid
-              bouwde ze een methode die aansluit bij hoe honden écht leren —
-              zonder dwang, zonder schuldgevoel.
+              bouwde ze een methode die aansluit bij hoe honden écht leren,
+              zonder dwang, op basis van vertrouwen.
             </p>
 
             {/* Cert badges */}
@@ -99,7 +93,7 @@ export default function OverOns() {
             <div className="relative rounded-3xl overflow-hidden aspect-[4/5] lg:aspect-[5/6] bg-[var(--ld-beige-deep)]">
               <OptimizedImage
                 src="/images/elien.jpeg"
-                alt="Elien, oprichtster van Let's Dog"
+                alt="Elien, oprichtster van Let's dog"
                 fill
                 priority
                 sizes="(max-width: 1024px) 100vw, 50vw"
@@ -129,14 +123,14 @@ export default function OverOns() {
           <div className="space-y-5 text-[var(--ld-text-muted)] text-[16px] leading-relaxed mb-10">
             <p>
               Als gecertificeerde hondengedragstherapeut heb ik honderden
-              eigenaren begeleid — van wanhopige beginners tot mensen wier pup
+              eigenaren begeleid, van wanhopige beginners tot mensen wier pup
               al maanden problemen vertoonde. Eén ding zag ik steeds terug: ze
               hadden niet het juiste hulpmiddel op het juiste moment.
             </p>
             <p>
-              Let&apos;s Dog is gebouwd op wat ik in de praktijk heb geleerd.
+              Let&apos;s dog is gebouwd op wat ik in de praktijk heb geleerd.
               Structuur, duidelijkheid, en een methode die aansluit bij hoe
-              honden écht leren — zonder dwang, zonder schuldgevoel.
+              honden écht leren, zonder dwang, op basis van vertrouwen.
             </p>
           </div>
           {/* Pull-quote */}
@@ -156,14 +150,13 @@ export default function OverOns() {
             Onze methode
           </Eyebrow>
           <h2 className="font-heading font-bold text-3xl md:text-4xl text-[var(--ld-text)] leading-tight mb-4">
-            Waar Let&apos;s Dog op gebouwd is
+            Waar Let&apos;s dog op gebouwd is
           </h2>
           <p className="text-[var(--ld-text-muted)] text-lg max-w-xl mx-auto">
-            Vier principes die bij alles wat we maken het uitgangspunt zijn —
-            van de puppyagenda tot het persoonlijke advies.
+            Drie principes die bij alles wat we maken het uitgangspunt zijn.
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {methodCards.map(({ icon: Icon, title, description }) => (
             <Card key={title} hover>
               <div className="w-11 h-11 rounded-xl bg-[var(--ld-lime)] flex items-center justify-center mb-5">
@@ -191,7 +184,7 @@ export default function OverOns() {
               Erkend. Wetenschappelijk. Betrouwbaar.
             </h2>
             <p className="text-[var(--ld-text-muted)] text-[16px]">
-              Let&apos;s Dog is opgezet door een erkend professional en
+              Let&apos;s dog is opgezet door een erkend professional en
               aangesloten bij de toonaangevende Nederlandse instanties.
             </p>
           </div>
@@ -218,7 +211,7 @@ export default function OverOns() {
               alt="NVGH en Raad van Beheer certificeringslogo's"
               width={400}
               height={120}
-              className="max-w-xs md:max-w-sm h-auto"
+              className="w-full max-w-[416px] md:max-w-[499px] h-auto"
             />
           </div>
         </div>

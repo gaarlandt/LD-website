@@ -33,7 +33,7 @@ export function Footer() {
           <div>
             <Image
               src={asset("/images/logo-white.svg")}
-              alt="Let's Dog"
+              alt="Let's dog"
               width={120}
               height={35}
               className="h-7 w-auto mb-4"
@@ -48,7 +48,7 @@ export function Footer() {
                 href="https://www.instagram.com/letsdogworld/"
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Let's Dog op Instagram"
+                aria-label="Let's dog op Instagram"
                 className="flex items-center justify-center w-12 h-12 rounded-2xl border border-[var(--ld-on-forest)]/15 bg-[var(--ld-on-forest)]/[0.04] text-[var(--ld-on-forest)]/60 hover:bg-[var(--ld-on-forest)]/10 hover:text-[var(--ld-on-forest)] transition-colors duration-200"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
@@ -59,7 +59,7 @@ export function Footer() {
                 href="https://www.tiktok.com/@letsdogworld6"
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Let's Dog op TikTok"
+                aria-label="Let's dog op TikTok"
                 className="flex items-center justify-center w-12 h-12 rounded-2xl border border-[var(--ld-on-forest)]/15 bg-[var(--ld-on-forest)]/[0.04] text-[var(--ld-on-forest)]/60 hover:bg-[var(--ld-on-forest)]/10 hover:text-[var(--ld-on-forest)] transition-colors duration-200"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
@@ -87,7 +87,7 @@ export function Footer() {
                   href="https://play.google.com/store/apps/details?id=nl.letsdog.app"
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Download de Let's Dog app in Google Play"
+                  aria-label="Download de Let's dog app in Google Play"
                   className="opacity-90 hover:opacity-100 transition-opacity duration-200"
                 >
                   <Image
@@ -145,7 +145,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-[var(--ld-on-forest)]/10 pt-6">
           <p className="text-xs text-[var(--ld-on-forest)]/40">
-            © {new Date().getFullYear()}{" "}Let&apos;s Dog. Alle rechten voorbehouden.
+            © {new Date().getFullYear()}{" "}Let&apos;s dog. Alle rechten voorbehouden.
           </p>
         </div>
       </Container>

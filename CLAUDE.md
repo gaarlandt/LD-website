@@ -77,6 +77,7 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 ```
 
 ## Styling Conventions
+- **Brand name**: written **`Let's dog`** (lowercase *d*) in all website output — copy, page titles, metadata, alt/aria, manifest, and structured data (`SITE_NAME` in `lib/seo.ts`). Restyled from "Let's Dog" on 2026-06-11; the `brand-guide-letsdog` skill matches. Don't reintroduce the capital *D* (a few internal code comments still carry it — those aren't user-facing).
 - **Colors**: Brand green `#75876D`, Beige `#EFE8E4`, Black `#141414`, Peach `#FFA580`, Dark green `#162A0E`, Soft blue `#A5C3E2` (use sparingly — small accents only, never as a primary surface or large fill)
 - **Approach**: Inline Tailwind classes, no CSS modules or external stylesheets
 - **Tailwind ignores Markdown** (`@source not "../**/*.md"` in `app/globals.css`): Tailwind v4 auto-scans the repo for class candidates, so class-like prose in docs (e.g. a literal `bg-[var(--ld-*)]` in a plan) generates a malformed utility — a **fatal 500 in `next dev`**, only a warning in `next build`. Keep real classes in `.tsx`/`.ts`; don't drop that `@source not` line.

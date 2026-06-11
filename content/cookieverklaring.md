@@ -1,6 +1,6 @@
 ---
 title: Cookieverklaring
-description: Informatie over het gebruik van cookies op de Let's Dog website.
+description: Informatie over het gebruik van cookies op de Let's dog website.
 lead: We gebruiken cookies om onze website gebruiksvriendelijker en relevanter te maken.
 ---
 
@@ -34,10 +34,10 @@ Bij je eerste bezoek tonen wij een cookiebanner waarmee je kunt aangeven welke c
 
 Wij maken gebruik van de volgende diensten van derden die cookies kunnen plaatsen:
 
-- Google Analytics — websitestatistieken
-- Meta (Facebook) Pixel — advertentietracking
-- TikTok Pixel — advertentietracking
-- Hotjar — gebruikerservaring en heatmaps
+- Google Analytics, websitestatistieken
+- Meta (Facebook) Pixel, advertentietracking
+- TikTok Pixel, advertentietracking
+- Hotjar, gebruikerservaring en heatmaps
 
 ## Cookiegeschiedenis & bewaartermijnen
 

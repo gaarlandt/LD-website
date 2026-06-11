@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 // Relative canonical/og URLs resolve against metadataBase (set in the
 // root layout) to absolute apex URLs.
 export const SITE_URL = "https://letsdog.nl";
-export const SITE_NAME = "Let's Dog";
+export const SITE_NAME = "Let's dog";
 
 // Default social-share image (1200×630). Lives in /public/og/. Wired into
 // every page's openGraph + twitter so shares never fall back to nothing.
@@ -14,7 +14,7 @@ export const OG_IMAGE = {
   url: "/og/og-default.jpg",
   width: 1200,
   height: 630,
-  alt: "Let's Dog — puppytraining die werkt",
+  alt: "Let's dog — puppytraining die werkt",
 };
 
 /**

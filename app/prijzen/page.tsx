@@ -13,9 +13,9 @@ import {
 } from "@/components/ui";
 
 export const metadata = pageMetadata({
-  title: "Prijzen — Let's Dog",
+  title: "Prijzen — Let's dog",
   description:
-    "Twee manieren om te starten met Let's Dog: Flexibel maandelijks of Early Member jaar. Vanaf €4,92 per maand. Betalen via Mollie.",
+    "Twee manieren om te starten met Let's dog: Flexibel maandelijks of Early Member jaar. Vanaf €4,92 per maand. Betalen via Mollie.",
   path: "/prijzen/",
 });
 
@@ -27,7 +27,7 @@ const heroPills = [
 const faqs = [
   {
     q: "Hoe lang geldt de Early Member-prijs?",
-    a: "Zolang we lanceren — er is nog geen vaste einddatum. Wie nu instapt, betaalt €59 voor het eerste jaar. Wanneer we de prijs verhogen naar €99/jaar, communiceren we dat ruim van tevoren.",
+    a: "Zolang we lanceren, er is nog geen vaste einddatum. Wie nu instapt, betaalt €59 voor het eerste jaar. Wanneer we de prijs verhogen naar €99/jaar, communiceren we dat ruim van tevoren.",
   },
   {
     q: "Via welke betaalmethoden kan ik betalen?",
@@ -35,11 +35,11 @@ const faqs = [
   },
   {
     q: "Wat als het toch niet bij jullie past?",
-    a: "Je kunt je abonnement op elk moment opzeggen via de accountinstellingen in de app — geen omweg, geen ingewikkelde procedure. Bij een jaarabonnement geldt bovendien 7 dagen geld-terug-garantie: zeg je binnen 7 dagen op, dan krijg je het volledige bedrag automatisch terug. Het maandabonnement is niet restitueerbaar, maar je kunt elke maand opzeggen.",
+    a: "Je kunt je abonnement op elk moment opzeggen via de accountinstellingen in de app, geen omweg, geen ingewikkelde procedure. Bij een jaarabonnement geldt bovendien 7 dagen geld-terug-garantie: zeg je binnen 7 dagen op, dan krijg je het volledige bedrag automatisch terug. Het maandabonnement is niet restitueerbaar, maar je kunt elke maand opzeggen.",
   },
   {
     q: "Krijg ik mijn geld terug als ik snel opzeg?",
-    a: "Bij een jaarabonnement (Early Member): ja, binnen 7 dagen. Je zegt op via de accountinstellingen en wij storten het volledige bedrag automatisch binnen 14 dagen terug. Bij het maandabonnement (Flexibel) is geen restitutie mogelijk — je kunt wel elke maand opzeggen zodat de volgende maand niet wordt afgeschreven.",
+    a: "Bij een jaarabonnement (Early Member): ja, binnen 7 dagen. Je zegt op via de accountinstellingen en wij storten het volledige bedrag automatisch binnen 14 dagen terug. Bij het maandabonnement (Flexibel) is geen restitutie mogelijk, je kunt wel elke maand opzeggen zodat de volgende maand niet wordt afgeschreven.",
   },
 ];
 
@@ -58,7 +58,7 @@ export default function Prijzen() {
             </h1>
 
             <p className="text-[#141414]/70 text-lg leading-relaxed mb-8 max-w-lg">
-              Geen tegenstrijdige tips meer. Kies het tempo dat bij jullie leven past — proberen kan altijd, opzeggen ook.
+              Geen tegenstrijdige tips meer. Kies het tempo dat bij jullie leven past, proberen kan altijd, opzeggen ook.
             </p>
 
             {/* Pills */}

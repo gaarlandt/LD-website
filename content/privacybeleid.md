@@ -1,26 +1,26 @@
 ---
 title: Privacybeleid
-description: Hoe Let's Dog omgaat met je persoonsgegevens, je rechten en onze beveiligingsmaatregelen.
+description: Hoe Let's dog omgaat met je persoonsgegevens, je rechten en onze beveiligingsmaatregelen.
 ---
 
 Laatst bijgewerkt: 8 juni 2026
 
-Dit privacybeleid is van toepassing op de Let’s Dog mobiele app, de webapplicatie, de website en de daarmee samenhangende diensten. Het doel van dit document is duidelijk uit te leggen welke persoonsgegevens worden verwerkt, waarom dit gebeurt, met wie gegevens worden gedeeld, welke rechten gebruikers hebben en hoe accountverwijdering werkt.
+Dit privacybeleid is van toepassing op de Let’s dog mobiele app, de webapplicatie, de website en de daarmee samenhangende diensten. Het doel van dit document is duidelijk uit te leggen welke persoonsgegevens worden verwerkt, waarom dit gebeurt, met wie gegevens worden gedeeld, welke rechten gebruikers hebben en hoe accountverwijdering werkt.
 
 ## 1. Wie is verantwoordelijk?
 
-Let’s Dog B.V.  
+Let’s dog B.V.  
 Naarderstraat 31  
 1272 NK Huizen  
 Nederland  
 E-mail: mail@letsdog.nl  
 KvK-nummer: 98271814
 
-Let’s Dog B.V. is de verwerkingsverantwoordelijke voor de persoonsgegevens die via de app, webapplicatie en website worden verwerkt.
+Let’s dog B.V. is de verwerkingsverantwoordelijke voor de persoonsgegevens die via de app, webapplicatie en website worden verwerkt.
 
 ## 2. Op welke diensten ziet dit privacybeleid?
 
-Dit privacybeleid geldt voor de Let’s Dog mobiele app, de webapplicatie en website op onder meer app.letsdog.nl en letsdog.nl, het aanmaken en gebruiken van een account, het bekijken van cursussen, community-content en profielinformatie, het gebruik van communityfuncties, pushnotificaties indien de gebruiker deze inschakelt, en aankopen en abonnementen die via de webomgeving worden afgesloten.
+Dit privacybeleid geldt voor de Let’s dog mobiele app, de webapplicatie en website op onder meer app.letsdog.nl en letsdog.nl, het aanmaken en gebruiken van een account, het bekijken van cursussen, community-content en profielinformatie, het gebruik van communityfuncties, pushnotificaties indien de gebruiker deze inschakelt, en aankopen en abonnementen die via de webomgeving worden afgesloten.
 
 De mobiele app is primair bedoeld voor het bekijken en gebruiken van content, communityfuncties en accountfunctionaliteit. Waar van toepassing worden aankopen, abonnementen en checkout afgerond via de gekoppelde webomgeving. De mobiele app zelf verwerkt geen volledige betaalkaartgegevens, biedt geen native in-app aankopen via Apple of Google en voert geen betalingsverwerking binnen de app zelf uit.
 
@@ -38,7 +38,7 @@ De mobiele app verwerkt niet rechtstreeks volledige betaalkaartgegevens, native 
 
 ## 5. Waarom verwerken wij deze gegevens?
 
-Wij verwerken persoonsgegevens voor het aanmaken en beheren van accounts, het leveren van de app, website en bijbehorende functies, het tonen van cursuscontent en het opslaan van voortgang, het aanbieden van communityfuncties, het personaliseren van content en advies binnen de Let’s Dog dienst, het beheren van abonnementen en aankopen via de webomgeving, klantenservice en communicatie, beveiliging, fraudepreventie en technische monitoring, analyse en verbetering van de app en webomgeving, het verzenden van pushnotificaties als daarvoor toestemming is gegeven en het voldoen aan wettelijke verplichtingen.
+Wij verwerken persoonsgegevens voor het aanmaken en beheren van accounts, het leveren van de app, website en bijbehorende functies, het tonen van cursuscontent en het opslaan van voortgang, het aanbieden van communityfuncties, het personaliseren van content en advies binnen de Let’s dog dienst, het beheren van abonnementen en aankopen via de webomgeving, klantenservice en communicatie, beveiliging, fraudepreventie en technische monitoring, analyse en verbetering van de app en webomgeving, het verzenden van pushnotificaties als daarvoor toestemming is gegeven en het voldoen aan wettelijke verplichtingen.
 
 ## 6. Op welke grondslagen doen wij dit?
 
@@ -46,11 +46,11 @@ Wij verwerken persoonsgegevens op basis van uitvoering van de overeenkomst met d
 
 ## 7. Analytics, tracking en App Tracking Transparency
 
-De Let’s Dog iOS-app gebruikt persoonsgegevens niet om gebruikers te volgen over apps of websites van andere bedrijven heen. De iOS-app deelt geen persoonsgegevens met databrokers en gebruikt geen User ID, naam, telefoonnummer of e-mailadres voor trackingdoeleinden zoals bedoeld in Apple’s App Tracking Transparency-regels.
+De Let’s dog iOS-app gebruikt persoonsgegevens niet om gebruikers te volgen over apps of websites van andere bedrijven heen. De iOS-app deelt geen persoonsgegevens met databrokers en gebruikt geen User ID, naam, telefoonnummer of e-mailadres voor trackingdoeleinden zoals bedoeld in Apple’s App Tracking Transparency-regels.
 
-Voor zover Let’s Dog analytics gebruikt, gebeurt dit voor functionele analyse, foutopsporing, beveiliging, prestatieverbetering en verbetering van de eigen dienstverlening. Analyticsgegevens worden niet gebruikt om gebruikers over apps of websites van andere bedrijven heen te volgen, tenzij daarvoor vooraf de vereiste toestemming is gevraagd.
+Voor zover Let’s dog analytics gebruikt, gebeurt dit voor functionele analyse, foutopsporing, beveiliging, prestatieverbetering en verbetering van de eigen dienstverlening. Analyticsgegevens worden niet gebruikt om gebruikers over apps of websites van andere bedrijven heen te volgen, tenzij daarvoor vooraf de vereiste toestemming is gevraagd.
 
-Als Let’s Dog in de toekomst technologie zou inzetten die kwalificeert als tracking onder Apple’s regels, zal de iOS-app vooraf toestemming vragen via Apple’s App Tracking Transparency framework voordat dergelijke tracking plaatsvindt.
+Als Let’s dog in de toekomst technologie zou inzetten die kwalificeert als tracking onder Apple’s regels, zal de iOS-app vooraf toestemming vragen via Apple’s App Tracking Transparency framework voordat dergelijke tracking plaatsvindt.
 
 ## 8. Met wie delen wij gegevens?
 
@@ -80,7 +80,7 @@ Gebruikers hebben, voor zover wettelijk van toepassing, recht op inzage, correct
 
 ## 14. Accountverwijdering
 
-Gebruikers kunnen hun accountverwijdering rechtstreeks vanuit de Let’s Dog app starten via Profiel > Instellingen > Account & privacy > Account verwijderen. In deze flow wordt uitgelegd welke gevolgen accountverwijdering heeft. De gebruiker kan de verwijdering daarna bevestigen.
+Gebruikers kunnen hun accountverwijdering rechtstreeks vanuit de Let’s dog app starten via Profiel > Instellingen > Account & privacy > Account verwijderen. In deze flow wordt uitgelegd welke gevolgen accountverwijdering heeft. De gebruiker kan de verwijdering daarna bevestigen.
 
 Bij accountverwijdering verwijderen wij het account en gekoppelde persoonsgegevens voor zover dit mogelijk en wettelijk toegestaan is. Bepaalde gegevens kunnen behouden blijven indien dat noodzakelijk is voor wettelijke verplichtingen, administratie, geschillen, fraudepreventie of beveiliging. Dit geldt bijvoorbeeld voor factuur- en administratieve gegevens waarvoor een wettelijke bewaartermijn geldt.
 

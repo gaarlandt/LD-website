@@ -5,7 +5,7 @@ export function FinalCta() {
   return (
     <section
       className="relative bg-[var(--ld-green-soft)] overflow-hidden py-24 lg:py-32 px-6 lg:px-8"
-      aria-label="Begin nu met Let's Dog"
+      aria-label="Begin nu met Let's dog"
     >
       <div className="relative z-10 max-w-2xl mx-auto text-center">
         <Eyebrow tone="brand" className="block mb-5">

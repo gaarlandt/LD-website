@@ -15,7 +15,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 
 const WHATSAPP_HREF = `https://wa.me/31648362054?text=${encodeURIComponent(
-  "Hoi! Ik heb een vraag over Let's Dog.",
+  "Hoi! Ik heb een vraag over Let's dog.",
 )}`;
 
 function WhatsAppIcon({ className = "w-5 h-5" }: { className?: string }) {
@@ -40,7 +40,7 @@ export function ContactContent() {
             </h1>
             <p className="text-lg md:text-xl text-[var(--ld-text-muted)] leading-relaxed mb-8 max-w-xl">
               Vragen over puppytraining, je lidmaatschap of welk ras bij je past?
-              Stel ze gerust — onze gecertificeerde gedragstherapeuten denken graag
+              Stel ze gerust, onze gecertificeerde gedragstherapeuten denken graag
               met je mee.
             </p>
 
@@ -190,7 +190,7 @@ export function ContactContent() {
                     WhatsApp
                   </p>
                   <p className="text-[var(--ld-text)] font-semibold text-[15px]">
-                    Start een chat — direct antwoord
+                    Start een chat, direct antwoord
                   </p>
                 </div>
               </Card>

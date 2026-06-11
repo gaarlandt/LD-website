@@ -28,10 +28,10 @@ export function Pricing() {
           <h2 className="font-heading font-bold text-3xl md:text-4xl lg:text-5xl text-[var(--ld-on-green)] leading-tight mb-5 tracking-tight">
             Kies hoe je wilt starten
             <br />
-            met Let&apos;s Dog
+            met Let&apos;s dog
           </h2>
           <p className="text-[var(--ld-on-green)]/75 text-lg max-w-2xl mx-auto leading-relaxed">
-            Krijg direct toegang tot de volledige puppycursus, praktische video&apos;s, checklists en de Let&apos;s Dog-community. Alles stap voor stap, zodat je weet wat je pup nodig heeft in elke fase.
+            Krijg direct toegang tot de volledige puppycursus, praktische video&apos;s, checklists en de Let&apos;s dog-community. Alles stap voor stap, zodat je weet wat je pup nodig heeft in elke fase.
           </p>
         </div>
 
