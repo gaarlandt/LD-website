@@ -112,13 +112,13 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
     `Je ontvangt deze e-mail omdat je het contactformulier op letsdog.nl hebt ingevuld.\n` +
     `Let's dog BV · Naarderstraat 317 · 1272 NK Huizen · Nederland\n`;
 
+  // The header logo is an <img> with the wordmark as alt-text fallback: email
+  // clients strip SVG, so this points at a committed PNG on the canonical apex,
+  // and the alt inherits the white/bold styling when images are blocked.
   const customerHtml =
     `<div style="background:#EFE8E4;padding:24px 0;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;">` +
       `<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;">` +
         `<div style="background:#75876D;padding:22px 28px;">` +
-          // Logo as an image with the wordmark as alt-text fallback (email clients
-          // strip SVG, so this is a committed PNG served from the canonical apex;
-          // the alt inherits the white/bold styling when images are blocked).
           `<img src="https://letsdog.nl/images/logo-white.png" alt="Let's dog" width="130" height="38" style="display:block;border:0;line-height:1;width:130px;height:auto;color:#ffffff;font-size:20px;font-weight:600;" />` +
         `</div>` +
         `<div style="padding:28px;color:#141414;">` +
@@ -180,18 +180,22 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
   }
 
   // /email/batch returns 200 with a per-message result array in request order.
-  // Regress to 502 ONLY on a positively-identified support failure (index 0). An
-  // unparseable body falls back to trusting the 2xx (the pre-batch posture), so a
-  // response quirk never drops a message the team actually received. The customer
-  // result (index 1) is intentionally ignored — a bounced confirmation is fine.
+  // Positively confirm the support notification (index 0) succeeded: only an
+  // array whose first element has ErrorCode 0 counts as ok. Anything else — a
+  // non-zero ErrorCode, a short/non-array body, or an unparseable body — is
+  // treated as a support failure (502), so we never report ok to the user
+  // without confirming the team received the message. The customer result
+  // (index 1) is intentionally ignored — a bounced confirmation is fine.
+  let supportOk = false;
   try {
     const results = (await postmarkRes.json()) as Array<{ ErrorCode?: number }>;
-    const supportResult = Array.isArray(results) ? results[0] : undefined;
-    if (supportResult && supportResult.ErrorCode !== undefined && supportResult.ErrorCode !== 0) {
-      return json({ ok: false, error: "send_failed" }, 502);
-    }
+    supportOk = Array.isArray(results) && results[0]?.ErrorCode === 0;
   } catch {
-    // Unparseable 200 body — trust it.
+    supportOk = false;
+  }
+
+  if (!supportOk) {
+    return json({ ok: false, error: "send_failed" }, 502);
   }
 
   return json({ ok: true });
