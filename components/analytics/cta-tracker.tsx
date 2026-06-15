@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { trackEvent } from "@/lib/analytics";
 
 // External Let's Dog properties we attribute CTA clicks to. The checkout host
-// is currently the SiteGround STAGING shop (maartend8.sg-host.com); it flips to
+// is currently the STAGING shop (staging-app.letsdog.nl); it flips to
 // the production checkout host at cutover — see docs/CUTOVER.md. These are the
 // registered GA4 custom-dimension values for link_destination — keep verbatim.
 //
@@ -18,7 +18,7 @@ const TRACKED_HOSTS: Record<string, "app" | "keuzehulp" | "agenda" | "checkout">
   "app.letsdog.nl": "app",
   "keuzehulp.letsdog.nl": "keuzehulp",
   "agenda.letsdog.nl": "agenda",
-  "maartend8.sg-host.com": "checkout",
+  "staging-app.letsdog.nl": "checkout",
 };
 
 export function CTATracker() {

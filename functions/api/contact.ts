@@ -19,6 +19,7 @@ interface Env {
   POSTMARK_SERVER_TOKEN?: string;
   CONTACT_TO?: string;
   CONTACT_FROM?: string;
+  TURNSTILE_SECRET_KEY?: string;
 }
 
 interface PagesContext {
@@ -47,6 +48,43 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+// Cloudflare's always-passes TEST secret — used on non-production hosts when the
+// real secret is unset, so dev/preview run the full check without real keys.
+const TURNSTILE_TEST_SECRET = "1x0000000000000000000000000000000AA";
+
+// Publicly-reachable production surfaces (apex, www, and the Pages production
+// alias). On these the TEST-secret fallback is NOT allowed: a missing real secret
+// fails closed (500) rather than silently disabling Turnstile. Branch previews
+// (<branch>.website-letsdog.pages.dev) and localhost are excluded by exact match,
+// so they keep the dev fallback.
+const TURNSTILE_ENFORCED_HOSTS = new Set([
+  "letsdog.nl",
+  "www.letsdog.nl",
+  "website-letsdog.pages.dev",
+]);
+
+// Verify a Turnstile token against Cloudflare's siteverify endpoint. Returns
+// false on any failure (network, non-2xx, success:false) so the caller fails
+// closed — a missing or invalid token never sends mail.
+async function verifyTurnstile(token: string, secret: string, ip: string): Promise<boolean> {
+  const body = new URLSearchParams();
+  body.set("secret", secret);
+  body.set("response", token);
+  if (ip) body.set("remoteip", ip);
+  try {
+    const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    });
+    if (!res.ok) return false;
+    const data = (await res.json()) as { success?: boolean };
+    return data.success === true;
+  } catch {
+    return false;
+  }
+}
+
 // Only POST is exported, so Cloudflare auto-returns 405 for other methods.
 export async function onRequestPost(context: PagesContext): Promise<Response> {
   const { request, env } = context;
@@ -72,6 +110,22 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
     return json({ ok: false, error: "email" }, 400);
   }
   if (!message || message.length > MAX.message) return json({ ok: false, error: "message" }, 400);
+
+  // Turnstile: confirm the visitor is human before sending anything. Always on —
+  // a missing/invalid token (or a verify failure) returns 400 and sends no mail.
+  // A real secret is required on production hosts; the always-pass TEST-secret
+  // fallback is allowed ONLY on non-production hosts (previews, localhost), so a
+  // forgotten prod secret fails closed (500) instead of silently disabling the gate.
+  const turnstileToken = typeof data.turnstileToken === "string" ? data.turnstileToken : "";
+  const enforced = TURNSTILE_ENFORCED_HOSTS.has(new URL(request.url).hostname);
+  const turnstileSecret = env.TURNSTILE_SECRET_KEY || (enforced ? "" : TURNSTILE_TEST_SECRET);
+  if (!turnstileSecret) {
+    return json({ ok: false, error: "server_not_configured" }, 500);
+  }
+  const ip = request.headers.get("CF-Connecting-IP") || "";
+  if (!(await verifyTurnstile(turnstileToken, turnstileSecret, ip))) {
+    return json({ ok: false, error: "captcha" }, 400);
+  }
 
   const token = env.POSTMARK_SERVER_TOKEN;
   if (!token) {
