@@ -1,9 +1,10 @@
 // Cloudflare Pages Function — POST /api/contact
 //
 // The FIRST server-side code in this otherwise-static export. It relays the
-// contact-form submission to Postmark, which emails support@letsdog.nl. The
-// Postmark token lives ONLY here (Function env via context.env) and never
-// reaches the client bundle.
+// contact-form submission to Postmark in ONE batch call that sends two emails:
+// the support notification (support@letsdog.nl) and a best-effort confirmation
+// copy back to the submitter. The Postmark token lives ONLY here (Function env
+// via context.env) and never reaches the client bundle.
 //
 // Runtime: Cloudflare Workers — web-standard Request/Response/fetch only, no
 // Node APIs, no npm deps. Typed locally (no @cloudflare/workers-types) so
@@ -82,43 +83,115 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
   const to = env.CONTACT_TO || "support@letsdog.nl";
   const from = env.CONTACT_FROM || "noreply@letsdog.nl";
 
-  const textBody =
+  // Support notification — unchanged. This is the source of truth: the team must
+  // receive every submission.
+  const supportText =
     `Nieuw contactbericht via de website\n\n` +
     `Naam: ${name}\n` +
     `E-mail: ${email}\n\n` +
     `Bericht:\n${message}\n`;
 
-  const htmlBody =
+  const supportHtml =
     `<h2>Nieuw contactbericht via de website</h2>` +
     `<p><strong>Naam:</strong> ${escapeHtml(name)}<br>` +
     `<strong>E-mail:</strong> ${escapeHtml(email)}</p>` +
     `<p><strong>Bericht:</strong><br>${escapeHtml(message).replace(/\n/g, "<br>")}</p>`;
 
+  // Customer confirmation — a copy of their own message back to the submitter.
+  // Dutch, on-brand (lowercase "Let's dog"), plain-text + HTML. Best-effort: a
+  // bounced confirmation must never regress the support send (see batch handling).
+  const customerSubject = "We hebben je bericht ontvangen";
+
+  const customerText =
+    `Hoi ${name},\n\n` +
+    `Bedankt voor je bericht. We hebben het goed ontvangen en je hoort binnen ` +
+    `1 werkdag van ons. Hieronder staat een kopie van wat je ons stuurde.\n\n` +
+    `Jouw bericht:\n${message}\n\n` +
+    `Tot snel,\n` +
+    `Team Let's dog\n\n` +
+    `Je ontvangt deze e-mail omdat je het contactformulier op letsdog.nl hebt ingevuld.\n` +
+    `Let's dog BV · Naarderstraat 317 · 1272 NK Huizen · Nederland\n`;
+
+  const customerHtml =
+    `<div style="background:#EFE8E4;padding:24px 0;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;">` +
+      `<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;">` +
+        `<div style="background:#75876D;padding:22px 28px;">` +
+          // Logo as an image with the wordmark as alt-text fallback (email clients
+          // strip SVG, so this is a committed PNG served from the canonical apex;
+          // the alt inherits the white/bold styling when images are blocked).
+          `<img src="https://letsdog.nl/images/logo-white.png" alt="Let's dog" width="130" height="38" style="display:block;border:0;line-height:1;width:130px;height:auto;color:#ffffff;font-size:20px;font-weight:600;" />` +
+        `</div>` +
+        `<div style="padding:28px;color:#141414;">` +
+          `<p style="margin:0 0 16px;font-size:16px;line-height:1.7;">Hoi ${escapeHtml(name)},</p>` +
+          `<p style="margin:0 0 16px;font-size:16px;line-height:1.7;">Bedankt voor je bericht. We hebben het goed ontvangen en je hoort binnen 1 werkdag van ons. Hieronder staat een kopie van wat je ons stuurde.</p>` +
+          `<div style="background:#EFE8E4;border-radius:8px;padding:16px 18px;margin:0 0 20px;">` +
+            `<div style="color:#75876D;font-size:12px;font-weight:600;margin-bottom:8px;">Jouw bericht</div>` +
+            `<div style="color:#141414;font-size:15px;line-height:1.7;">${escapeHtml(message).replace(/\n/g, "<br>")}</div>` +
+          `</div>` +
+          `<p style="margin:0;font-size:16px;line-height:1.7;">Tot snel,<br>Team Let's dog</p>` +
+        `</div>` +
+        `<div style="background:#162A0E;padding:20px 28px;">` +
+          `<p style="margin:0 0 6px;color:rgba(255,255,255,0.65);font-size:12px;line-height:1.6;">Je ontvangt deze e-mail omdat je het contactformulier op letsdog.nl hebt ingevuld.</p>` +
+          `<p style="margin:0;color:rgba(255,255,255,0.5);font-size:12px;line-height:1.6;">Let's dog BV · Naarderstraat 317 · 1272 NK Huizen · Nederland</p>` +
+        `</div>` +
+      `</div>` +
+    `</div>`;
+
+  // Both emails go in ONE Postmark batch call, ordered [support, customer]. The
+  // customer From carries a display name for inbox trust; ReplyTo points back at
+  // the support inbox so a reply reaches a human.
   let postmarkRes: Response;
   try {
-    postmarkRes = await fetch("https://api.postmarkapp.com/email", {
+    postmarkRes = await fetch("https://api.postmarkapp.com/email/batch", {
       method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
         "X-Postmark-Server-Token": token,
       },
-      body: JSON.stringify({
-        From: from,
-        To: to,
-        ReplyTo: email,
-        Subject: `Nieuw contactbericht via de website — ${name}`,
-        TextBody: textBody,
-        HtmlBody: htmlBody,
-        MessageStream: "outbound",
-      }),
+      body: JSON.stringify([
+        {
+          From: from,
+          To: to,
+          ReplyTo: email,
+          Subject: `Nieuw contactbericht via de website — ${name}`,
+          TextBody: supportText,
+          HtmlBody: supportHtml,
+          MessageStream: "outbound",
+        },
+        {
+          From: `"Let's dog" <${from}>`,
+          To: email,
+          ReplyTo: to,
+          Subject: customerSubject,
+          TextBody: customerText,
+          HtmlBody: customerHtml,
+          MessageStream: "outbound",
+        },
+      ]),
     });
   } catch {
     return json({ ok: false, error: "send_failed" }, 502);
   }
 
+  // A non-2xx means Postmark rejected the whole batch (auth/payload) — nothing sent.
   if (!postmarkRes.ok) {
     return json({ ok: false, error: "send_failed" }, 502);
+  }
+
+  // /email/batch returns 200 with a per-message result array in request order.
+  // Regress to 502 ONLY on a positively-identified support failure (index 0). An
+  // unparseable body falls back to trusting the 2xx (the pre-batch posture), so a
+  // response quirk never drops a message the team actually received. The customer
+  // result (index 1) is intentionally ignored — a bounced confirmation is fine.
+  try {
+    const results = (await postmarkRes.json()) as Array<{ ErrorCode?: number }>;
+    const supportResult = Array.isArray(results) ? results[0] : undefined;
+    if (supportResult && supportResult.ErrorCode !== undefined && supportResult.ErrorCode !== 0) {
+      return json({ ok: false, error: "send_failed" }, 502);
+    }
+  } catch {
+    // Unparseable 200 body — trust it.
   }
 
   return json({ ok: true });
