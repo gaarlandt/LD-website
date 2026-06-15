@@ -48,9 +48,20 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-// Cloudflare's always-passes TEST secret — used in dev/preview when the real
-// secret is unset, so verification still runs end-to-end without real keys.
+// Cloudflare's always-passes TEST secret — used on non-production hosts when the
+// real secret is unset, so dev/preview run the full check without real keys.
 const TURNSTILE_TEST_SECRET = "1x0000000000000000000000000000000AA";
+
+// Publicly-reachable production surfaces (apex, www, and the Pages production
+// alias). On these the TEST-secret fallback is NOT allowed: a missing real secret
+// fails closed (500) rather than silently disabling Turnstile. Branch previews
+// (<branch>.website-letsdog.pages.dev) and localhost are excluded by exact match,
+// so they keep the dev fallback.
+const TURNSTILE_ENFORCED_HOSTS = new Set([
+  "letsdog.nl",
+  "www.letsdog.nl",
+  "website-letsdog.pages.dev",
+]);
 
 // Verify a Turnstile token against Cloudflare's siteverify endpoint. Returns
 // false on any failure (network, non-2xx, success:false) so the caller fails
@@ -102,9 +113,15 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
 
   // Turnstile: confirm the visitor is human before sending anything. Always on —
   // a missing/invalid token (or a verify failure) returns 400 and sends no mail.
-  // The TEST-secret fallback lets dev/preview run the full check without real keys.
+  // A real secret is required on production hosts; the always-pass TEST-secret
+  // fallback is allowed ONLY on non-production hosts (previews, localhost), so a
+  // forgotten prod secret fails closed (500) instead of silently disabling the gate.
   const turnstileToken = typeof data.turnstileToken === "string" ? data.turnstileToken : "";
-  const turnstileSecret = env.TURNSTILE_SECRET_KEY || TURNSTILE_TEST_SECRET;
+  const enforced = TURNSTILE_ENFORCED_HOSTS.has(new URL(request.url).hostname);
+  const turnstileSecret = env.TURNSTILE_SECRET_KEY || (enforced ? "" : TURNSTILE_TEST_SECRET);
+  if (!turnstileSecret) {
+    return json({ ok: false, error: "server_not_configured" }, 500);
+  }
   const ip = request.headers.get("CF-Connecting-IP") || "";
   if (!(await verifyTurnstile(turnstileToken, turnstileSecret, ip))) {
     return json({ ok: false, error: "captcha" }, 400);

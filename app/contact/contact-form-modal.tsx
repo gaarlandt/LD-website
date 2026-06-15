@@ -21,6 +21,7 @@ const EMPTY = { name: "", email: "", message: "", company: "" };
 // Cloudflare's always-passes TEST site key — used when the real key is unset so
 // dev/preview render a working widget without a real Turnstile config. The real
 // key is inlined at build time from NEXT_PUBLIC_TURNSTILE_SITE_KEY in production.
+// Pairs with the always-pass test SECRET in functions/api/contact.ts.
 const TURNSTILE_SITE_KEY =
   process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
 
@@ -47,7 +48,11 @@ function loadTurnstile(): Promise<void> {
     s.async = true;
     s.defer = true;
     s.onload = () => resolve();
-    s.onerror = () => reject(new Error("turnstile failed to load"));
+    s.onerror = () => {
+      // Don't cache the rejection — let a later open retry the load.
+      turnstileScript = null;
+      reject(new Error("turnstile failed to load"));
+    };
     document.head.appendChild(s);
   });
   return turnstileScript;
@@ -64,6 +69,7 @@ export function ContactFormModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>("idle");
   const [token, setToken] = useState("");
+  const [turnstileError, setTurnstileError] = useState(false);
   const widgetRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
 
@@ -74,6 +80,7 @@ export function ContactFormModal({
   useEffect(() => {
     if (!formVisible) return;
     let cancelled = false;
+    setTurnstileError(false);
     loadTurnstile()
       .then(() => {
         if (
@@ -90,7 +97,11 @@ export function ContactFormModal({
           "error-callback": () => setToken(""),
         });
       })
-      .catch(() => {});
+      .catch(() => {
+        // Script failed to load (e.g. blocked by an ad-blocker / network). Surface
+        // a fallback so the user isn't stuck behind a permanently disabled button.
+        if (!cancelled) setTurnstileError(true);
+      });
     return () => {
       cancelled = true;
       if (widgetIdRef.current && window.turnstile) {
@@ -288,10 +299,17 @@ export function ContactFormModal({
               {/* Cloudflare Turnstile — anti-abuse check before sending */}
               <div>
                 <div ref={widgetRef} className="flex min-h-[65px] justify-center" />
-                {errors.turnstile && (
+                {turnstileError ? (
                   <p role="alert" className="mt-1 text-sm text-[var(--ld-danger)]">
-                    {errors.turnstile}
+                    De verificatie kon niet laden. Herlaad de pagina of mail ons
+                    direct via mail@letsdog.nl.
                   </p>
+                ) : (
+                  errors.turnstile && (
+                    <p role="alert" className="mt-1 text-sm text-[var(--ld-danger)]">
+                      {errors.turnstile}
+                    </p>
+                  )
                 )}
               </div>
 
