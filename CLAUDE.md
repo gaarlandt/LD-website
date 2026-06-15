@@ -102,7 +102,7 @@ Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/lay
   - `NEXT_PUBLIC_COOKIEBOT_CBID=<Domain Group ID from Cookiebot dashboard>`
   - `NODE_VERSION=20`
   - `POSTMARK_SERVER_TOKEN=<Postmark Server API token>` — **secret** (NOT `NEXT_PUBLIC`); powers the contact form via `functions/api/contact.ts`. Optional: `CONTACT_TO` (default `support@letsdog.nl`), `CONTACT_FROM` (default `noreply@letsdog.nl`, must be a Postmark-verified sender).
-  - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (public, inlined) + `TURNSTILE_SECRET_KEY` (**secret**) — Cloudflare Turnstile keys that gate `functions/api/contact.ts` against abuse; a matched pair from one **Managed** widget (allowed hostnames: `website-letsdog.pages.dev` + `letsdog.nl`). Both unset → the form + Function fall back to Cloudflare's always-pass **test** keys, so dev/preview work without a real widget.
+  - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (public Site Key — set as a **plaintext** variable; inlined into the client bundle at build) + `TURNSTILE_SECRET_KEY` (Secret Key — encrypted **secret**, server-only) — Cloudflare Turnstile keys gating `functions/api/contact.ts` against abuse; a matched pair from one **Managed** widget (hostnames `letsdog.nl` + `www.letsdog.nl` + `website-letsdog.pages.dev`). Set in **Production** scope; leave Preview unset so branch previews use Cloudflare's always-pass **test** keys (real keys would fail on `<branch>.pages.dev` hosts). On a production host a missing secret fails closed (500), never silently open.
   - `NEXT_PUBLIC_POSTHOG_KEY=phc_Uxz55z5X0tMh6NHp8WWF3lD6oy2G3Xf0NiOZrrBJgFq` (PostHog EU project 143695 — public client-side ingestion key, shared across all Let's Dog apps)
   - `NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com`
 
