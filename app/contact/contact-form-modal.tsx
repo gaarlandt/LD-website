@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PaperPlaneTilt, CheckCircle } from "@phosphor-icons/react/dist/ssr";
 import {
   Dialog,
@@ -18,6 +18,41 @@ type Status = "idle" | "submitting" | "success" | "error";
 
 const EMPTY = { name: "", email: "", message: "", company: "" };
 
+// Cloudflare's always-passes TEST site key — used when the real key is unset so
+// dev/preview render a working widget without a real Turnstile config. The real
+// key is inlined at build time from NEXT_PUBLIC_TURNSTILE_SITE_KEY in production.
+const TURNSTILE_SITE_KEY =
+  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
+
+interface TurnstileAPI {
+  render: (el: HTMLElement, opts: Record<string, unknown>) => string;
+  remove: (id: string) => void;
+  reset: (id: string) => void;
+}
+declare global {
+  interface Window {
+    turnstile?: TurnstileAPI;
+  }
+}
+
+// Load the Turnstile script once, lazily; resolve when window.turnstile is ready.
+let turnstileScript: Promise<void> | null = null;
+function loadTurnstile(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  if (window.turnstile) return Promise.resolve();
+  if (turnstileScript) return turnstileScript;
+  turnstileScript = new Promise<void>((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    s.async = true;
+    s.defer = true;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("turnstile failed to load"));
+    document.head.appendChild(s);
+  });
+  return turnstileScript;
+}
+
 export function ContactFormModal({
   open,
   onClose,
@@ -28,6 +63,49 @@ export function ContactFormModal({
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>("idle");
+  const [token, setToken] = useState("");
+  const widgetRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string | null>(null);
+
+  // Render the Turnstile widget while the form is visible. Radix unmounts dialog
+  // content on close, so each open paints a fresh widget; keying the effect on a
+  // boolean (not `status`) keeps idle -> submitting -> error from churning it.
+  const formVisible = open && status !== "success";
+  useEffect(() => {
+    if (!formVisible) return;
+    let cancelled = false;
+    loadTurnstile()
+      .then(() => {
+        if (
+          cancelled ||
+          widgetIdRef.current ||
+          !widgetRef.current ||
+          !window.turnstile
+        )
+          return;
+        widgetIdRef.current = window.turnstile.render(widgetRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          callback: (t: string) => setToken(t),
+          "expired-callback": () => setToken(""),
+          "error-callback": () => setToken(""),
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      if (widgetIdRef.current && window.turnstile) {
+        window.turnstile.remove(widgetIdRef.current);
+        widgetIdRef.current = null;
+      }
+    };
+  }, [formVisible]);
+
+  function resetTurnstile() {
+    if (widgetIdRef.current && window.turnstile) {
+      window.turnstile.reset(widgetIdRef.current);
+    }
+    setToken("");
+  }
 
   // Radix Dialog owns focus-trap, scroll-lock, Esc-to-close and focus-restore —
   // so the hand-rolled effects/refs the Framer-Motion version needed are gone.
@@ -39,6 +117,7 @@ export function ContactFormModal({
     window.setTimeout(() => {
       setStatus("idle");
       setErrors({});
+      setToken("");
     }, 250);
   }
 
@@ -54,9 +133,11 @@ export function ContactFormModal({
   async function handleSubmit(ev: React.FormEvent) {
     ev.preventDefault();
     const e = validate();
+    if (!token) e.turnstile = "Even bevestigen dat je geen robot bent.";
     if (Object.keys(e).length > 0) {
       setErrors(e);
-      document.getElementById(`cf-${Object.keys(e)[0]}`)?.focus();
+      const first = Object.keys(e)[0];
+      if (first !== "turnstile") document.getElementById(`cf-${first}`)?.focus();
       return;
     }
     setErrors({});
@@ -65,7 +146,7 @@ export function ContactFormModal({
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, turnstileToken: token }),
       });
       if (!res.ok) throw new Error("send failed");
       trackEvent("contact_form_submitted");
@@ -76,6 +157,8 @@ export function ContactFormModal({
       setStatus("success");
     } catch {
       setStatus("error");
+      // Turnstile tokens are single-use; get a fresh one for the retry.
+      resetTurnstile();
     }
   }
 
@@ -202,6 +285,16 @@ export function ContactFormModal({
                 />
               </Field>
 
+              {/* Cloudflare Turnstile — anti-abuse check before sending */}
+              <div>
+                <div ref={widgetRef} className="flex min-h-[65px] justify-center" />
+                {errors.turnstile && (
+                  <p role="alert" className="mt-1 text-sm text-[var(--ld-danger)]">
+                    {errors.turnstile}
+                  </p>
+                )}
+              </div>
+
               {status === "error" && (
                 <p role="alert" className="text-sm text-[var(--ld-danger)]">
                   Er ging iets mis bij het versturen. Probeer het opnieuw of mail
@@ -215,6 +308,7 @@ export function ContactFormModal({
                 block
                 pill
                 loading={status === "submitting"}
+                disabled={!token || status === "submitting"}
               >
                 {status === "submitting" ? (
                   "Versturen…"
