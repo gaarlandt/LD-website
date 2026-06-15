@@ -27,8 +27,10 @@ const force = process.argv.includes("--force");
 // Photographic JPEGs + raster app screenshots (PNG, e.g. the puppyagenda
 // product shots) served through OptimizedImage. Skip filenames with spaces — a
 // space breaks the srcset grammar (e.g. "NVGH Logo.jpeg" stays on next/image).
-// PNG badges/logos that intentionally stay on next/image are skipped by name.
-const PNG_SKIP = new Set(["google-play-badge.png"]);
+// PNG badges/logos that intentionally stay on next/image are skipped by name,
+// as is logo-white.png — an email asset referenced by absolute URL, never via
+// OptimizedImage, so it must not spawn responsive AVIF/WebP variants.
+const PNG_SKIP = new Set(["google-play-badge.png", "logo-white.png"]);
 const sources = readdirSync(SRC_DIR).filter(
   (f) =>
     !/\s/.test(f) &&
