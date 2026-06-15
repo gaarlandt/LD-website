@@ -123,7 +123,6 @@ The bulk of The Website Specification work shipped pre-cutover (in-repo: canonic
 
 - [ ] **Add a Cloudflare Redirect Rule: `www` → apex (301).** Dashboard → `letsdog.nl` zone → Rules → Redirect Rules → Create: *If* `Hostname equals www.letsdog.nl` *Then* Static/Dynamic 301 → `https://letsdog.nl${http.request.uri.path}` (preserve path + query). `_redirects` can't match on hostname, so this must be a zone rule. Verify: `curl -sI https://www.letsdog.nl/prijzen/ | grep -iE '^(HTTP|location)'` → `301` → `https://letsdog.nl/prijzen/`.
 - [ ] **Register both properties in Google Search Console** (`https://letsdog.nl` and `https://www.letsdog.nl`), then **submit `https://letsdog.nl/sitemap.xml`** to the apex property.
-- [ ] **Confirm the contact-confirmation email logo renders.** The customer confirmation from `functions/api/contact.ts` embeds `https://letsdog.nl/images/logo-white.png` (apex URL — resolves only post-cutover; before then the `alt="Let's dog"` text fallback shows). Submit the contact form and confirm the logo image loads in the received confirmation email.
 
 **Staging hygiene — `*.pages.dev` indexing (decision: rely on canonicals, no action):**
 

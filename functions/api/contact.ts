@@ -108,18 +108,22 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
     `1 werkdag van ons. Hieronder staat een kopie van wat je ons stuurde.\n\n` +
     `Jouw bericht:\n${message}\n\n` +
     `Tot snel,\n` +
-    `Team Let's dog\n\n` +
+    `Elien\n\n` +
     `Je ontvangt deze e-mail omdat je het contactformulier op letsdog.nl hebt ingevuld.\n` +
     `Let's dog BV · Naarderstraat 317 · 1272 NK Huizen · Nederland\n`;
 
-  // The header logo is an <img> with the wordmark as alt-text fallback: email
-  // clients strip SVG, so this points at a committed PNG on the canonical apex,
-  // and the alt inherits the white/bold styling when images are blocked.
+  // The header logo is an <img> with the wordmark as alt-text fallback (email
+  // clients strip SVG, so this is a committed PNG). Serve it from the origin that
+  // handled this request — the same deploy that hosts the form — so it resolves
+  // in every environment (preview, production, post-cutover apex) rather than a
+  // hardcoded host. The alt inherits the white/bold styling when images are off.
+  const logoOrigin = new URL(request.url).origin;
+
   const customerHtml =
     `<div style="background:#EFE8E4;padding:24px 0;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;">` +
       `<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;">` +
         `<div style="background:#75876D;padding:22px 28px;">` +
-          `<img src="https://letsdog.nl/images/logo-white.png" alt="Let's dog" width="130" height="38" style="display:block;border:0;line-height:1;width:130px;height:auto;color:#ffffff;font-size:20px;font-weight:600;" />` +
+          `<img src="${logoOrigin}/images/logo-white.png" alt="Let's dog" width="130" height="38" style="display:block;border:0;line-height:1;width:130px;height:auto;color:#ffffff;font-size:20px;font-weight:600;" />` +
         `</div>` +
         `<div style="padding:28px;color:#141414;">` +
           `<p style="margin:0 0 16px;font-size:16px;line-height:1.7;">Hoi ${escapeHtml(name)},</p>` +
@@ -128,7 +132,7 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
             `<div style="color:#75876D;font-size:12px;font-weight:600;margin-bottom:8px;">Jouw bericht</div>` +
             `<div style="color:#141414;font-size:15px;line-height:1.7;">${escapeHtml(message).replace(/\n/g, "<br>")}</div>` +
           `</div>` +
-          `<p style="margin:0;font-size:16px;line-height:1.7;">Tot snel,<br>Team Let's dog</p>` +
+          `<p style="margin:0;font-size:16px;line-height:1.7;">Tot snel,<br>Elien</p>` +
         `</div>` +
         `<div style="background:#162A0E;padding:20px 28px;">` +
           `<p style="margin:0 0 6px;color:rgba(255,255,255,0.65);font-size:12px;line-height:1.6;">Je ontvangt deze e-mail omdat je het contactformulier op letsdog.nl hebt ingevuld.</p>` +
@@ -138,8 +142,9 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
     `</div>`;
 
   // Both emails go in ONE Postmark batch call, ordered [support, customer]. The
-  // customer From carries a display name for inbox trust; ReplyTo points back at
-  // the support inbox so a reply reaches a human.
+  // customer confirmation is sent as "Elien van Let's dog" from the support
+  // address (so a reply reaches a human) — that address must be a verified
+  // Postmark sender.
   let postmarkRes: Response;
   try {
     postmarkRes = await fetch("https://api.postmarkapp.com/email/batch", {
@@ -160,7 +165,7 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
           MessageStream: "outbound",
         },
         {
-          From: `"Let's dog" <${from}>`,
+          From: `"Elien van Let's dog" <${to}>`,
           To: email,
           ReplyTo: to,
           Subject: customerSubject,
