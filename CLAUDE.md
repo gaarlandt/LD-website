@@ -34,6 +34,7 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 ## Project Structure
 ```
 .
+├── CONCEPTS.md             # Shared domain vocabulary (entities, named processes, status concepts) — orient here; maintained by /ce-compound
 ├── app/                    # Next.js App Router pages
 │   ├── layout.tsx          # Root layout (navbar, footer, WhatsApp, analytics)
 │   ├── page.tsx            # Homepage
