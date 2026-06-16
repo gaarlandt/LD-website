@@ -21,7 +21,7 @@ const perMonthEq = early.priceValue / 12;
 const savingsPct = Math.round(((monthlyPerYear - early.priceValue) / monthlyPerYear) * 100);
 
 // EUR, Dutch style: comma decimal, € prefix. Whole euros drop cents (€59),
-// fractional keep two (€239,88); `cents` forces two decimals (€99,00).
+// fractional keep two (€239,88); `cents` forces two decimals (€119,00).
 function formatEUR(value: number, opts?: { cents?: boolean }): string {
   const useCents = opts?.cents ?? !Number.isInteger(value);
   return `€${value.toFixed(useCents ? 2 : 0).replace(".", ",")}`;
@@ -29,7 +29,7 @@ function formatEUR(value: number, opts?: { cents?: boolean }): string {
 
 const PERIOD_LABEL: Record<Period, string> = { monthly: "Maandelijks", yearly: "Jaarlijks" };
 const savingsLabel = `Bespaar ${savingsPct}%`;
-const yearlySub = `Dat is maar ${formatEUR(perMonthEq, { cents: true })} per maand · Daarna ${formatEUR(early.listPriceValue ?? 99)}/jaar`;
+const yearlySub = `Dat is maar ${formatEUR(perMonthEq, { cents: true })} per maand · Daarna ${formatEUR(early.listPriceValue ?? 119)}/jaar`;
 const monthlySub = `= ${formatEUR(monthlyPerYear)} per jaar`;
 
 export function PricingToggleCard() {

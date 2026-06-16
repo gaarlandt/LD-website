@@ -39,7 +39,7 @@ const exploreCards = [
     title: "Puppycursus",
     description:
       "Wat je week voor week doet als de pup er eenmaal is, stap voor stap.",
-    href: "/puppyagenda",
+    href: "/puppycursus",
   },
   {
     eyebrow: "Aanpak",

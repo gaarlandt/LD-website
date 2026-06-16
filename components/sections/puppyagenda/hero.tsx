@@ -19,9 +19,18 @@ export function PaHero() {
             klaargezet.
           </h1>
           <p className="mt-5 max-w-[440px] text-[19px] leading-[1.6] text-[var(--ld-text-muted)]">
-            Open de app en je weet meteen wat er deze week telt. Video, leesstof en audio, afgevinkt zodra je
-            klaar bent.
+            Open de app en je weet meteen wat te doen in welke week. Zodat je jouw trainingsvideo&apos;s, lees- en audiodocumenten, daarna kunt afvinken.
           </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Badge>
+              <span className="w-2 h-2 rounded-full bg-[var(--ld-green)] flex-shrink-0" aria-hidden="true" />
+              Wekelijkse agenda
+            </Badge>
+            <Badge>
+              <span className="w-2 h-2 rounded-full bg-[var(--ld-peach)] flex-shrink-0" aria-hidden="true" />
+              Voortgang tracker
+            </Badge>
+          </div>
         </div>
 
         <div className="relative">

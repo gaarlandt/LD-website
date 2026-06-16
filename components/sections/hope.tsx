@@ -9,25 +9,25 @@ const outcomes = [
     icon: CheckCircle,
     title: "Jij weet elke dag wat je doet.",
     description:
-      "Rust en houvast in plaats van twijfel, een aanpak die stap voor stap met je pup meegroeit.",
+      "Rust en houvast, in plaats van twijfel. De training en aanpak die stap voor stap met je pup meegroeit.",
   },
   {
     icon: VideoCamera,
-    title: "Echte uitleg van gecertificeerde trainers.",
+    title: "Duidelijke uitleg van gecertificeerde trainers.",
     description:
-      "Oorzaken van gedrag en hoe ga je ermee om. Geen quickfixes, wel echte resultaten.",
+      "Let's dog kijkt naar de oorzaken van gedrag en leert je hoe je ermee om moet gaan. Geen quickfixes, maar echte resultaten.",
   },
   {
     icon: DeviceMobile,
     title: "Leer met het hele gezin.",
     description:
-      "Bekijk samen de video's zodat iedereen op dezelfde wijze de pup traint en opvoedt.",
+      "Bekijk samen de video's zodat iedereen op dezelfde wijze traint en opvoedt.",
   },
   {
     icon: Users,
-    title: "Een community die je begrijpt.",
+    title: "Een community waar je echt wat aan hebt.",
     description:
-      "Praat met andere puppy-eigenaren en gedragstherapeuten. Geen oordeel, wel herkenning en steun.",
+      "Praat met andere puppy-eigenaren, trainers en gedragstherapeuten. Geen oordeel, wel erkenning en steun.",
   },
 ];
 
@@ -37,8 +37,8 @@ export function Hope() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         {/* Left: image — clickable link to puppyagenda page */}
         <Link
-          href="/puppyagenda"
-          aria-label="Puppyagenda voor elke week"
+          href="/puppycursus"
+          aria-label="Bekijk de puppycursus"
           className="relative order-2 lg:order-1 block group cursor-pointer"
         >
           <div className="relative rounded-2xl overflow-hidden aspect-[4/5] transition-transform duration-300 motion-safe:group-hover:scale-[1.01]">
@@ -63,7 +63,7 @@ export function Hope() {
             met Let&apos;s dog.
           </h2>
           <p className="text-[var(--ld-text-muted)] text-lg mb-10 leading-relaxed">
-            Geen tegenstrijdige adviezen meer. Eén aanpak die je rust, duidelijkheid en vertrouwen geeft, stap voor stap.
+            Geen tegenstrijdige adviezen meer. Gerichte adviezen en training, die je rust, duidelijkheid en vertrouwen geeft. Stap voor stap.
           </p>
 
           <div className="space-y-7">

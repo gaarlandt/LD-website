@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 const quickLinks = [
   { href: "/", label: "Homepage" },
-  { href: "/puppyagenda", label: "Puppycursus" },
+  { href: "/puppycursus", label: "Puppycursus" },
   { href: "/rassenkeuze", label: "Rassenkeuze hulp" },
   { href: "/prijzen", label: "Prijzen" },
   { href: "/veelgestelde-vragen", label: "Veelgestelde vragen" },

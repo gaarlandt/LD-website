@@ -6,7 +6,7 @@ import { AppStoreComingSoon } from "./app-store-coming-soon";
 
 const navLinks = [
   { href: "/", label: "Homepage" },
-  { href: "/puppyagenda", label: "Puppycursus" },
+  { href: "/puppycursus", label: "Puppycursus" },
   { href: "/rassenkeuze", label: "Rassenkeuze hulp" },
   { href: "/prijzen", label: "Prijzen" },
   { href: "/veelgestelde-vragen", label: "FAQ" },

@@ -38,21 +38,20 @@ export function Hero() {
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 w-full pt-6 pb-12 lg:pt-40 lg:pb-32">
         <div className="max-w-3xl">
           {/* Eyebrow */}
-          <Eyebrow tone="onGreen" className="flex items-center gap-3 mb-10">
-            <span className="h-px w-8 bg-[var(--ld-on-green)]/60 inline-block" />
+          <Eyebrow tone="onGreen" className="block mb-10">
             Online puppycursus
           </Eyebrow>
 
           {/* H1 */}
           <h1 className="font-heading font-bold text-5xl md:text-7xl lg:text-[length:var(--ld-fs-80)] text-[var(--ld-on-green)] leading-[1.02] tracking-tight mb-10">
-            Meer rust en vertrouwen,
+            Train en leer samen.
             <br />
-            <span className="text-[var(--ld-lime)]">samen met je pup.</span>
+            <span className="text-[var(--ld-lime)]">Duidelijke video&apos;s, op jullie eigen tempo.</span>
           </h1>
 
           {/* Subtext — empathie eerst */}
           <p className="text-lg lg:text-2xl text-[var(--ld-on-green)]/85 leading-relaxed mb-12 max-w-xl">
-            Nieuwe pup in huis. Dolblij, en soms even de kluts kwijt. In onze online puppycursus krijg je elke week een kant en klaar stappenplan. Hiermee heb jij de controle en je pup de duidelijkheid.
+            Een puppy in huis. Geweldig, maar zonder de juiste begeleiding en training gooit hij zo het hele huishouden overhoop. In onze online puppycursus leer je alle basiscommando&apos;s en krijg je antwoord op al jouw puppyvragen.
           </p>
 
           {/* CTA */}

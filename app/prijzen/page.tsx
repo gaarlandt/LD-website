@@ -21,17 +21,17 @@ export const metadata = pageMetadata({
 
 const heroPills = [
   { dotClass: "bg-[var(--ld-green)]", label: "Welzijnsgericht" },
-  { dotClass: "bg-[var(--ld-peach)]", label: "Maandelijks opzegbaar" },
+  { dotClass: "bg-[var(--ld-peach)]", label: "Wekelijkse agenda" },
 ];
 
 const faqs = [
   {
     q: "Hoe lang geldt de Early Member-prijs?",
-    a: "Zolang we lanceren, er is nog geen vaste einddatum. Wie nu instapt, betaalt €59 voor het eerste jaar. Wanneer we de prijs verhogen naar €99/jaar, communiceren we dat ruim van tevoren.",
+    a: "Zolang we lanceren, er is nog geen vaste einddatum. Wie nu instapt, betaalt €59 voor het eerste jaar. Wanneer we de prijs verhogen naar €119/jaar, communiceren we dat ruim van tevoren.",
   },
   {
     q: "Via welke betaalmethoden kan ik betalen?",
-    a: "Betaling verloopt via Mollie. Je kunt betalen met iDEAL, creditcard, Bancontact en meer gangbare methoden.",
+    a: "Betaling verloopt via Mollie. Je kunt betalen met iDEAL en creditcard.",
   },
   {
     q: "Wat als het toch niet bij jullie past?",

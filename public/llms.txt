@@ -8,7 +8,7 @@ Let's Dog B.V. is gevestigd in Nederland en de site is Nederlandstalig. Ondersta
 
 - [Homepage](https://letsdog.nl/): Wat Let's Dog is en voor wie het bedoeld is.
 - [Rassenkeuze hulp](https://letsdog.nl/rassenkeuze/): Gratis test van 10 vragen die helpt het best passende hondenras te kiezen.
-- [Puppyagenda](https://letsdog.nl/puppyagenda/): Week-voor-week plan voor en tijdens de puppyfase.
+- [Puppycursus](https://letsdog.nl/puppycursus/): Week-voor-week plan voor en tijdens de puppyfase.
 - [Prijzen](https://letsdog.nl/prijzen/): Twee abonnementen — Flexibel (EUR 19,99/maand) en Early Member (EUR 59/eerste jaar). Betaling via Mollie.
 - [Over ons](https://letsdog.nl/over-ons/): Achtergrond van Let's Dog en oprichtster Elien, gecertificeerd hondengedragstherapeut.
 - [Veelgestelde vragen](https://letsdog.nl/veelgestelde-vragen/): Antwoorden over de app, de trainingsmethode, het abonnement en betalingen.

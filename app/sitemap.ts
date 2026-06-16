@@ -13,7 +13,7 @@ const LAST_MODIFIED = "2026-05-30";
 const ROUTES = [
   "/",
   "/rassenkeuze/",
-  "/puppyagenda/",
+  "/puppycursus/",
   "/prijzen/",
   "/over-ons/",
   "/veelgestelde-vragen/",
