@@ -18,7 +18,7 @@ export type Tier = {
   footerNote: string;
   highlighted?: boolean;
   topBadge?: string;
-  // Annual list price (the post-launch "Daarna €99/jaar" figure), rendered
+  // Annual list price (the post-launch "Daarna €119/jaar" figure), rendered
   // struck-through above the intro price on the yearly view.
   listPriceValue?: number;
   // Analytics (begin_checkout) — kept beside ctaHref so a cutover product-ID
@@ -66,7 +66,7 @@ export const tiers: Tier[] = [
     footerNote: "7 dagen geld-terug-garantie · eerste jaar €59",
     highlighted: true,
     topBadge: "Meest gekozen",
-    listPriceValue: 99,
+    listPriceValue: 119,
     productId: 592,
     priceValue: 59,
     billingPeriod: "yearly",

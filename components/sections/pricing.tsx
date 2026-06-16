@@ -1,11 +1,10 @@
-import { ShieldCheck, Wallet, ArrowsClockwise } from "@phosphor-icons/react/dist/ssr";
+import { ShieldCheck, Wallet } from "@phosphor-icons/react/dist/ssr";
 import { Eyebrow } from "@/components/ui";
 import { PricingToggleCard } from "./pricing-toggle-card";
 
 const trustItems = [
   { icon: ShieldCheck, label: "Veilig betalen via Mollie" },
   { icon: Wallet, label: "Geen verborgen kosten" },
-  { icon: ArrowsClockwise, label: "Opzegbaar in accountinstellingen" },
 ];
 
 // Homepage pricing section. Renders the same interactive toggle card used in
@@ -39,7 +38,7 @@ export function Pricing() {
         <PricingToggleCard />
 
         {/* Trust bar */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-14 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-14 max-w-2xl mx-auto">
           {trustItems.map(({ icon: Icon, label }) => (
             <div key={label} className="flex items-center justify-center gap-3 text-[var(--ld-on-green)]/85">
               <span className="w-9 h-9 rounded-full bg-[var(--ld-on-green)]/15 flex items-center justify-center flex-shrink-0">

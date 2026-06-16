@@ -12,8 +12,8 @@ of *terms*. Plan and write with these names rather than synonyms.
   (Restyled from "Let's Dog" on 2026-06-11.)
 - **Puppycursus / Puppy Academy** — the core training product: structured modules per
   developmental phase (roughly 0–6 months). In the site nav it is labelled "Puppycursus"
-  and links to `/puppyagenda`.
-- **Puppyagenda** — the puppy-agenda product. The `/puppyagenda` page markets it; the
+  and links to `/puppycursus` (renamed from `/puppyagenda` 2026-06-16; old URL 301-redirects).
+- **Puppyagenda** — the puppy-agenda product. The `/puppycursus` page markets it; the
   live application is the separate sibling app at `agenda.letsdog.nl`.
 - **Rassenkeuze hulp** — the breed-selector quiz (`/rassenkeuze`), embedded via iframe
   from `keuzehulp.letsdog.nl`. Renamed from "Hondenkeuze" (2026-05-29); the old

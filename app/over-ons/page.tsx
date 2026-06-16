@@ -49,8 +49,8 @@ const certs = [
 ];
 
 const heroBadges = [
-  { dotClass: "bg-[var(--ld-green)]", label: "Gecertificeerd gedragstherapeut" },
-  { dotClass: "bg-[var(--ld-peach)]", label: "NVGH-erkend" },
+  { dotClass: "bg-[var(--ld-green)]", label: "Lid van de NVGH" },
+  { dotClass: "bg-[var(--ld-peach)]", label: "Lid van de Raad van Beheer" },
 ];
 
 export default function OverOns() {
@@ -122,15 +122,22 @@ export default function OverOns() {
           </h2>
           <div className="space-y-5 text-[var(--ld-text-muted)] text-[16px] leading-relaxed mb-10">
             <p>
-              Als gecertificeerde hondengedragstherapeut heb ik honderden
-              eigenaren begeleid, van wanhopige beginners tot mensen wier pup
-              al maanden problemen vertoonde. Eén ding zag ik steeds terug: ze
-              hadden niet het juiste hulpmiddel op het juiste moment.
+              Al vele hondeneigenaren heb ik geholpen om probleemgedrag van hun
+              hond in goede banen te leiden. Eén ding zag ik steeds terug: met de
+              juiste training en begeleiding op het juiste moment had veel gedrag
+              voorkomen kunnen worden. Mijn drijfveer is dan ook het overbrengen
+              van kennis, vaardigheden en inzicht aan eigenaren, om potentieel
+              probleemgedrag te voorkomen.
             </p>
             <p>
-              Let&apos;s dog is gebouwd op wat ik in de praktijk heb geleerd.
-              Structuur, duidelijkheid, en een methode die aansluit bij hoe
-              honden écht leren, zonder dwang, op basis van vertrouwen.
+              Weten hoe je jouw jonge hond traint en wat hij nodig heeft op welk
+              moment voorkomt teleurstellingen en helpt jouw hond uit te groeien
+              tot een stabiele, betrouwbare, goed luisterende volwassen hond.
+            </p>
+            <p>
+              Let&apos;s dog is gebouwd op wat ik in de praktijk heb geleerd. Het
+              geeft structuur, duidelijkheid en is een methode die aansluit bij
+              hoe honden echt leren, zonder dwang, op basis van vertrouwen.
             </p>
           </div>
           {/* Pull-quote */}

@@ -9,7 +9,7 @@ export const metadata = pageMetadata({
   title: "Puppycursus — Let's dog",
   description:
     "Alles wat je moet doen, lezen en bekijken — week voor week klaargezet. Video, leesstof en audio, afgevinkt zodra je klaar bent.",
-  path: "/puppyagenda/",
+  path: "/puppycursus/",
 });
 
 export default function PuppyagendaPage() {

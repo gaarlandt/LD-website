@@ -9,12 +9,12 @@ export function FinalCta() {
     >
       <div className="relative z-10 max-w-2xl mx-auto text-center">
         <Eyebrow tone="brand" className="block mb-5">
-          Begin vandaag
+          Begin vandaag nog
         </Eyebrow>
         <h2 className="font-heading font-bold text-4xl md:text-5xl text-[var(--ld-text)] leading-tight mb-6 tracking-tight">
           Hoe eerder je begint,
           <br />
-          hoe rustiger het wordt.
+          hoe makkelijker het gaat.
         </h2>
         <p className="text-[var(--ld-text-muted)] text-lg leading-relaxed mb-10 max-w-md mx-auto">
           Meld je aan en start direct. De puppyagenda, je eerste videoles en de community staan voor je klaar.
@@ -31,7 +31,7 @@ export function FinalCta() {
           {[
             "Gecertificeerde trainers",
             "Welzijnsgericht",
-            "Veilig via Mollie",
+            "Week voor week",
           ].map((item) => (
             <div key={item} className="flex items-center gap-2 text-sm text-[var(--ld-text-muted)]">
               <div className="w-1 h-1 rounded-full bg-[var(--ld-green)]" />

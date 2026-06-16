@@ -81,12 +81,12 @@ export function PuppyAgendaTeaser() {
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
         <div>
           <Eyebrow tone="brand" className="block mb-4">
-            De puppyagenda
+            De puppycursus
           </Eyebrow>
           <h2 className="font-heading font-bold text-3xl md:text-4xl text-[var(--ld-text)] leading-tight">
             Van geboorte
             <br />
-            tot pubertijd
+            tot en met puberteit
           </h2>
           <span className="inline-flex items-center gap-2 mt-5 px-4 py-1.5 rounded-full bg-[var(--ld-green)]/10 text-[var(--ld-green-ink)] text-sm font-semibold">
             <Sparkle size={15} weight="fill" className="text-[var(--ld-green)]" />
@@ -94,7 +94,7 @@ export function PuppyAgendaTeaser() {
           </span>
         </div>
         <Button variant="peach" pill asChild>
-          <Link href="/puppyagenda">
+          <Link href="/puppycursus">
             Bekijk de cursus
             <ArrowRight size={16} />
           </Link>

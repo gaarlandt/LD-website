@@ -48,7 +48,7 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 │   ├── rassenkeuze/        # Rassenkeuze hulp — breed selector quiz (iframe to keuzehulp.letsdog.nl)
 │   ├── over-ons/           # About page
 │   ├── prijzen/            # Pricing page
-│   ├── puppyagenda/        # Puppy agenda page
+│   ├── puppycursus/        # Puppycursus page (route renamed from /puppyagenda)
 │   ├── veelgestelde-vragen/ # FAQ page
 │   ├── privacybeleid/      # Privacy policy
 │   ├── ai-gebruiksvoorwaarden/ # AI terms of use
@@ -123,7 +123,11 @@ The 5 legal pages (`privacybeleid`, `ai-gebruiksvoorwaarden`, `cookieverklaring`
 - **Supported markdown**: standard CommonMark + GFM tables (via `remark-gfm`). H2 = section, H3 = subsection, `-` = brand-green bullet, `[text](url)` = brand-green underlined link, `| col | col |` table = renders inside a beige `#EFE8E4` rounded card.
 - **Shared layout**: `components/shared/legal-page-layout.tsx` owns the green hero band + react-markdown component overrides that map each markdown node to the existing Tailwind brand classes. Add a new legal page by writing `content/<slug>.md` + creating a 15-line `app/<slug>/page.tsx` using the same shape.
 - **Build-time read only**: `lib/content.ts` does `fs.readFileSync` at module scope (Next.js static export resolves at build time). No client bundle impact; `react-markdown` is server-only.
-- **Not in scope (yet)**: homepage and marketing pages (over-ons, prijzen, contact, faq, puppyagenda) stay in TSX. Re-evaluate after a month of real editing — see `docs/brainstorms/markdown-content-refactor-requirements.md`.
+- **Not in scope (yet)**: homepage and marketing pages (over-ons, prijzen, contact, faq, puppycursus) stay in TSX. Re-evaluate after a month of real editing — see `docs/brainstorms/markdown-content-refactor-requirements.md`.
+
+## Bulk copy edits — the copy-deck workflow
+
+For a large batch of text changes across several marketing pages, **don't** edit page-by-page in the browser (slow — one round-trip per string) and don't have the user dictate each change live. Instead, extract every visible string into one editable **copy deck** (`COPY-DECK.md` at the repo root): organised page → section, each block labelled with its role and a `· source:` file pointer. The user rewrites the prose freely in that single document; then Claude diffs it against the original, maps every change back to the source `.tsx`/`.ts` in one pass (re-encoding `&apos;`/`&ldquo;` entities to match the surrounding code), and verifies on the preview. This is the fastest path for volume copy work and the user prefers it. The deck from the 2026-06-16 refresh is kept in-repo as a working template — reuse its shape for the next pass.
 
 ## On-page SEO, metadata & spec compliance
 

@@ -7,19 +7,19 @@ const problems = [
     icon: MagnifyingGlass,
     title: "De een zegt dit, de ander dat.",
     description:
-      "Je zoekt online en krijgt tien verschillende antwoorden. Welk advies klopt, is betrouwbaar en werkt echt?",
+      "Iedereen geeft een ander advies en ook online krijg je tien verschillende antwoorden op jouw vragen. Welk advies is betrouwbaar en werkt echt?",
   },
   {
     icon: Moon,
-    title: "Je pup bijt, blaft veel of slaapt slecht.",
+    title: "Je pup bijt alleen maar, blaft enorm of slaapt slecht?",
     description:
-      "Je doet je best, maar het lukt niet. Je bent moe, twijfelt aan jezelf, en vraagt je af of het ooit beter wordt.",
+      "Je doet zo je best, maar je krijgt het gedrag niet onder controle. Je bent moe en twijfelt aan jezelf en vraagt je af of het wel goed gaat komen.",
   },
   {
     icon: Question,
     title: "Je weet niet of je het goed doet.",
     description:
-      "Niemand heeft je verteld wat normaal is. Je twijfelt bij élke stap. Is dit gedrag oké? Moet ik ingrijpen? Wanneer?",
+      "Je twijfelt bij elke stap. Is dit gedrag wel oké? Wat kan ik het beste doen?",
   },
 ];
 
@@ -32,12 +32,12 @@ export function Problem() {
       </Eyebrow>
 
       <h2 className="font-heading font-bold text-3xl md:text-4xl text-[var(--ld-text)] leading-tight mb-4 max-w-xl">
-        Een nieuwe pup is geweldig.
+        Een pup is superschattig.
         <br />
-        En soms ook uitdagend.
+        Maar kan ook overweldigend zijn.
       </h2>
       <p className="text-[var(--ld-text-muted)] text-lg mb-14 max-w-xl">
-        Je bent niet de enige. Bijna elke puppy-eigenaar herkent dit.
+        Heel herkenbaar. Door goede begeleiding wordt het echt weer overzichtelijk en komt er rust.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

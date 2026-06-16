@@ -9,17 +9,17 @@ const steps = [
   {
     Icon: NumberCircleOne,
     title: "Kies je startpunt",
-    body: "Vóór de komst of midden in de puppyfase, de agenda begint waar jij bent.",
+    body: "De puppyagenda groeit mee met de leeftijd van jouw pup.",
   },
   {
     Icon: NumberCircleTwo,
     title: "Werk je week af",
-    body: "Korte video’s, leesstof en audio. Vink af wat je hebt gedaan.",
+    body: "Korte video’s, leesstof en audio documenten. Vink af wat je al hebt gedaan.",
   },
   {
     Icon: NumberCircleThree,
-    title: "Zie je voortgang groeien",
-    body: "Elke afgeronde les telt mee. Je ziet rustig hoe ver je al bent.",
+    title: "Voortgang",
+    body: "Elke afgeronde les telt mee. Begeleiding voor elke fase.",
   },
 ];
 

@@ -100,9 +100,26 @@ export function ContactContent() {
               Consult met een gecertificeerde trainer
             </h2>
             <p className="text-[var(--ld-text-muted)] text-[16px] leading-relaxed mb-4">
-              Boek een persoonlijk videogesprek met onze gedragstherapeut. Bespreek
-              het gedrag van je hond en krijg een concreet plan van aanpak.
+              Wil je graag persoonlijk advies voor bijvoorbeeld:
             </p>
+            <ul className="text-[var(--ld-text-muted)] text-[15px] leading-relaxed mb-6 space-y-2">
+              <li className="flex gap-2.5">
+                <span className="mt-[9px] w-1.5 h-1.5 rounded-full bg-[var(--ld-green)] flex-shrink-0" aria-hidden="true" />
+                De keuze van het ras binnen jouw gezin
+              </li>
+              <li className="flex gap-2.5">
+                <span className="mt-[9px] w-1.5 h-1.5 rounded-full bg-[var(--ld-green)] flex-shrink-0" aria-hidden="true" />
+                Specifieke vragen over jouw pup
+              </li>
+              <li className="flex gap-2.5">
+                <span className="mt-[9px] w-1.5 h-1.5 rounded-full bg-[var(--ld-green)] flex-shrink-0" aria-hidden="true" />
+                Probleemgedrag bij jouw hond, zoals niet alleen kunnen zijn of verlatingsangst, overmatig blaffen, angstgedrag, agressief gedrag of uitvalgedrag
+              </li>
+              <li className="flex gap-2.5">
+                <span className="mt-[9px] w-1.5 h-1.5 rounded-full bg-[var(--ld-green)] flex-shrink-0" aria-hidden="true" />
+                Maatwerk trainingsadvies voor jouw hond
+              </li>
+            </ul>
             <p className="text-[var(--ld-text)] font-bold text-2xl mb-6">
               €39,50{" "}
               <span className="text-sm font-normal text-[var(--ld-text-subtle)]">incl. BTW</span>
