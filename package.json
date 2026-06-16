@@ -22,7 +22,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "gray-matter": "^4.0.3",
-    "next": "16.2.1",
+    "next": "16.2.9",
     "posthog-js": "^1.374.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -36,9 +36,16 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.1",
+    "eslint-config-next": "16.2.9",
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "postcss": "^8.5.15",
+    "js-yaml": "^4.2.0",
+    "gray-matter": {
+      "js-yaml": "^3.13.1"
+    }
   }
 }
