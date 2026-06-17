@@ -30,6 +30,7 @@ Curated from BreedSelector (BS) and Puppy Agenda V2 (PA). Only items that genuin
 
 - **PostHog cross-product identity** — the WP/marketing surface must follow the shared identity rules (`wp:<id>`, lowercased-email join, per-app `aud`). → `…/contracts/posthog-cross-product-identity.md`
 - **Blocking/empty states in embedded iframes** — when the Website embeds an app via iframe (e.g. BreedSelector), keep the `<iframe>` a **plain in-flow block**; do **NOT** pin it (`position:sticky` / `fixed`) to stop the embedded app's overlays clipping (corrected 2026-06-04 — pinning fixes the overlay but breaks the embedded app's *normal* in-flow view). The embedded app owns this: it should render blocking / empty / error states as in-flow content + a structural gate, not a `position:fixed` overlay. → `…/contracts/iframe-fixed-overlay-positioning.md`
+- **BreedSelector results-email deep-link** — BreedSelector's results email links visitors back to `/rassenkeuze/?q1=…`; the Website forwards its **whole** query string into the embedded iframe `src` plus a forced `source=website`, so BS deep-links straight to the saved results (no fresh quiz, no re-submitted lead). Keep `/rassenkeuze/` forwarding the query and reachable; the `q1…qN` schema + the deep-link / no-re-submit behavior are **BS's** to change, not ours. WS-local how-to (static-export client-side read): `docs/solutions/design-patterns/client-side-query-params-static-export.md`. → `…/contracts/breedselector-results-email-deeplink.md`
 
 ## UI / UX patterns
 
