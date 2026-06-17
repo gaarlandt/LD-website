@@ -16,6 +16,8 @@ tags: [postmark, transactional-email, cloudflare-pages-functions, email-batch, h
 
 # Transactional confirmation email from a Cloudflare Pages Function (Postmark batch, best-effort)
 
+> ↑ **Promoted to a cross-project contract** — the portable rules live in the shared hub: `ldcoding/LD - project cross knowledge/contracts/postmark-transactional-email.md` (repo `gaarlandt/ld-project-cross-knowledge`). This doc stays as the detailed origin rationale.
+
 ## Context
 
 The contact form (`functions/api/contact.ts`) needed to send the submitter a confirmation copy *in addition to* the existing support notification, both through Postmark, from the Workers runtime. Doing it safely surfaced several non-obvious rules that no prior `docs/solutions/` doc covered: how to add a second send without endangering the critical one, how to escape user input in email HTML, why an embedded logo silently 404s, and the verification reality of `functions/`. Implemented in PR #40.
