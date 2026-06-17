@@ -4,6 +4,7 @@ import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { Button, Card, Badge, Eyebrow } from "@/components/ui";
 import { ArrowRight, Sparkle } from "@phosphor-icons/react/dist/ssr";
+import { RassenkeuzeEmbed } from "./rassenkeuze-embed";
 
 export const metadata = pageMetadata({
   title: "Rassenkeuze hulp — Welk ras past bij jou? | Let's dog",
@@ -156,27 +157,7 @@ export default function Rassenkeuze() {
           </p>
         </div>
 
-        <div className="rounded-[var(--ld-r-lg)] overflow-hidden border border-[var(--ld-border)] bg-white shadow-[var(--ld-sh-3)]">
-          <iframe
-            src="https://keuzehulp.letsdog.nl"
-            title="Let's dog Rassenkeuze hulp — rasadvies quiz"
-            className="w-full min-h-[700px] border-0"
-            loading="lazy"
-            allow="clipboard-write"
-          />
-        </div>
-
-        <p className="text-center text-sm text-[var(--ld-text-subtle)] mt-6">
-          Laadt de rassenkeuze hulp niet?{" "}
-          <a
-            href="https://keuzehulp.letsdog.nl"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[var(--ld-green)] underline hover:text-[var(--ld-green-ink)]"
-          >
-            Open in een nieuw tabblad
-          </a>
-        </p>
+        <RassenkeuzeEmbed />
       </SectionWrapper>
 
       {/* Nog geen hond? Kijk gerust rond */}
