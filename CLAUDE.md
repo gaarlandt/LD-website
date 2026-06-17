@@ -11,7 +11,7 @@ Marketing website for Let's Dog, a puppy training platform. Built as a static Ne
 - **Icons**: Phosphor (`@phosphor-icons/react/dist/ssr`) + inline SVGs (WhatsApp, TikTok)
 - **Fonts**: National2 (headings, local OTF), DM Sans (body, Google Fonts)
 - **Images**: photographic JPEGs served as AVIF/WebP via the `OptimizedImage` `<picture>` component; variants generated at build-time by `sharp` ^0.34 (`scripts/optimize-images.mjs`) — see "On-page SEO, metadata & spec compliance" below
-- **Content (legal pages)**: Markdown via `gray-matter` ^4 + `react-markdown` ^10 + `remark-gfm` ^4 — see "Markdown-driven legal pages" below
+- **Content (legal pages)**: Markdown via a small front-matter splitter (`lib/content.ts`, YAML parsed by `js-yaml` ^4) + `react-markdown` ^10 + `remark-gfm` ^4 — see "Markdown-driven legal pages" below
 - **Analytics**: GA4 (`G-0FCGXJHMMY`, fires immediately) + PostHog (EU project 143695, browser-only) — both dual-fired via `lib/analytics.ts` `trackEvent`; Cookiebot banner (display-only, does not gate tracking)
 - **Deployment**: Cloudflare Pages (project: `website-letsdog`, production URL: `website-letsdog.pages.dev`, custom domains flip in at cutover)
 
@@ -65,7 +65,7 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 │   ├── utils.ts            # Asset path helper
 │   ├── seo.ts              # SITE_URL/SITE_NAME + pageMetadata() (per-page canonical/og/twitter)
 │   ├── structured-data.ts  # JSON-LD builders (Organization, WebSite, FAQPage, Product, Person)
-│   ├── content.ts          # loadLegalContent(slug) — reads content/<slug>.md at build time via gray-matter
+│   ├── content.ts          # loadLegalContent(slug) — reads content/<slug>.md at build time (front-matter via js-yaml)
 │   ├── analytics.ts        # trackEvent (dual-fire GA4+PostHog) + identifyLead
 │   └── prod-hosts.ts        # PROD_HOSTS allowlist (shared by ga4.tsx + posthog-provider)
 ├── public/                 # Static assets (images, fonts, _headers, _redirects, llms.txt, .well-known/security.txt, og/, images/optimized/)
@@ -122,7 +122,7 @@ The 5 legal pages (`privacybeleid`, `ai-gebruiksvoorwaarden`, `cookieverklaring`
 - **Frontmatter** (all optional except `title`/`description`): `title`, `description`, `eyebrow` (default `"Juridisch"`), `lead` (white subhead under the green hero H1), `signature_form: true` (only ip-overdracht — appends the printable Naam/Datum/Handtekening form after the markdown body).
 - **Supported markdown**: standard CommonMark + GFM tables (via `remark-gfm`). H2 = section, H3 = subsection, `-` = brand-green bullet, `[text](url)` = brand-green underlined link, `| col | col |` table = renders inside a beige `#EFE8E4` rounded card.
 - **Shared layout**: `components/shared/legal-page-layout.tsx` owns the green hero band + react-markdown component overrides that map each markdown node to the existing Tailwind brand classes. Add a new legal page by writing `content/<slug>.md` + creating a 15-line `app/<slug>/page.tsx` using the same shape.
-- **Build-time read only**: `lib/content.ts` does `fs.readFileSync` at module scope (Next.js static export resolves at build time). No client bundle impact; `react-markdown` is server-only.
+- **Build-time read only**: `lib/content.ts` does `fs.readFileSync` at module scope (Next.js static export resolves at build time). No client bundle impact; `react-markdown` is server-only. Front-matter is split with a small regex and parsed by `js-yaml` directly — we dropped `gray-matter` (unmaintained, dragged in a vulnerable js-yaml 3.x); **don't reintroduce it**, the flat title/description/lead/signature_form YAML doesn't need it.
 - **Not in scope (yet)**: homepage and marketing pages (over-ons, prijzen, contact, faq, puppycursus) stay in TSX. Re-evaluate after a month of real editing — see `docs/brainstorms/markdown-content-refactor-requirements.md`.
 
 ## Bulk copy edits — the copy-deck workflow
