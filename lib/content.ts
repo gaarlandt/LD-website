@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import matter from "gray-matter";
+import { load } from "js-yaml";
 
 export interface LegalContentData {
   title: string;
@@ -15,12 +15,17 @@ export interface LegalContent {
   content: string;
 }
 
+// Leading YAML front-matter delimited by `---` lines: group 1 = YAML, group 2 = body.
+// Tolerates CRLF endings; files without front-matter pass through unchanged as body.
+const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
+
 export function loadLegalContent(slug: string): LegalContent {
   const filePath = path.join(process.cwd(), "content", `${slug}.md`);
-  const file = fs.readFileSync(filePath, "utf8");
-  const parsed = matter(file);
-  return {
-    data: parsed.data as LegalContentData,
-    content: parsed.content,
-  };
+  const raw = fs.readFileSync(filePath, "utf8");
+  // Strip a leading UTF-8 BOM (U+FEFF) so the front-matter delimiter still matches.
+  const file = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
+  const match = FRONTMATTER_RE.exec(file);
+  const data = (match ? (load(match[1]) ?? {}) : {}) as LegalContentData;
+  const content = match ? match[2] : file;
+  return { data, content };
 }

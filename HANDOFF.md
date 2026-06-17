@@ -26,7 +26,7 @@
 
 Marketing site built with Next.js 16 static export, deployed on Cloudflare Pages at `website-letsdog.pages.dev`. GA4 + Cookiebot wired in, analytics fires on every page load regardless of consent (explicit decision). DNS for `letsdog.nl` still points at the old WordPress site at SiteGround — that's the deferred cutover step, runbook at [`docs/CUTOVER.md`](docs/CUTOVER.md).
 
-The 5 legal pages now read their copy from `content/<slug>.md` (gray-matter + react-markdown + remark-gfm) — Jur can edit prose without touching TSX. Marketing/homepage stays TSX; re-evaluate after a month.
+The 5 legal pages now read their copy from `content/<slug>.md` (front-matter via js-yaml + react-markdown + remark-gfm) — Jur can edit prose without touching TSX. Marketing/homepage stays TSX; re-evaluate after a month.
 
 Next priority: **two optional/low follow-ups** — (1) swap the contact-hero placeholder photo (`public/images/training.jpeg` → the real mockup photo; update `app/contact/contact-content.tsx` `src`, run `npm run optimize:images`, commit variants); (2) National2→WOFF2 (waiting on owner-supplied subsetted files). The **contact form (PR #17) is merged + verified sending in production**; privacy email → `.nl` ✅ and the 512px image variant ✅ are both done; `*.pages.dev` noindex was **skipped** (owner decision). The big spec-compliance build (PR #15) is **done + merged**.
 
