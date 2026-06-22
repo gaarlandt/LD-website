@@ -23,6 +23,8 @@ const ROUTES = [
   "/ai-gebruiksvoorwaarden/",
   "/cookieverklaring/",
   "/retour/",
+  "/modelformulier-herroeping/",
+  "/veiligheidsdisclaimer/",
   "/ip-overdrachtsverklaring/",
 ];
 

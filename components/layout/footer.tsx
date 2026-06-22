@@ -19,7 +19,9 @@ const beleidLinks = [
   { href: "/algemene-voorwaarden", label: "Algemene voorwaarden" },
   { href: "/ai-gebruiksvoorwaarden", label: "AI-gebruiksvoorwaarden" },
   { href: "/cookieverklaring", label: "Cookieverklaring" },
-  { href: "/retour", label: "Retourbeleid" },
+  { href: "/retour", label: "Retour- en herroepingsbeleid" },
+  { href: "/modelformulier-herroeping", label: "Modelformulier herroeping" },
+  { href: "/veiligheidsdisclaimer", label: "Veiligheidsdisclaimer" },
 ];
 
 export function Footer() {

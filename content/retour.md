@@ -1,48 +1,71 @@
 ---
-title: Retour- en annuleringsbeleid
-description: Hoe je een product retourneert of een abonnement opzegt bij Let's dog. Termijnen, voorwaarden en het retourproces.
+title: Retour- en herroepingsbeleid
+description: Wanneer je recht hebt op herroeping of retour bij Let's dog, hoe het retourproces werkt en welke uitzonderingen gelden voor digitale content, abonnementen en fysieke producten.
+lead: Laatst bijgewerkt op 17 juni 2026.
 ---
 
-## 1. Herroepingsrecht voor fysieke producten
+## 1. Toepassingsgebied
 
-Klanten hebben 14 dagen bedenktijd na ontvangst van fysieke producten, mits deze ongebruikt en in originele staat blijven.
+Dit beleid geldt voor aankopen via Let's dog, waaronder:
 
-## 2. Abonnementen (digitale toegang)
+- digitale cursussen, modules, artikelen, video's en andere online content;
+- abonnementen op de app, academy, community of premium functies;
+- losse digitale producten of downloads;
+- fysieke producten die via de shop worden verkocht;
+- combinatieproducten, zoals een digitaal product met een fysiek product.
 
-Let's dog kent twee soorten abonnementen, met elk hun eigen voorwaarden:
+## 2. Herroepingsrecht voor fysieke producten
 
-### Maandabonnement (Flexibel)
+Voor fysieke producten geldt in beginsel een bedenktijd van 14 dagen na ontvangst. Binnen deze termijn kan de consument de aankoop zonder opgave van reden herroepen, tenzij een wettelijke uitzondering van toepassing is.
 
-Het maandabonnement is **niet restitueerbaar**. Er is geen proefperiode en geen bedenktijd: zodra de betaling is voltooid en je toegang krijgt tot de content, is het bedrag voor die maand definitief. Je kunt het abonnement op elk moment opzeggen via je accountinstellingen, de opzegging gaat in aan het einde van de lopende betaalperiode. Volgende maanden worden niet meer in rekening gebracht.
+Na herroeping moet het product binnen 14 dagen worden teruggestuurd. Het product moet ongebruikt, compleet en waar redelijkerwijs mogelijk in originele staat en verpakking worden geretourneerd.
 
-### Jaarabonnement (Early Member)
+## 3. Retourkosten
 
-Het jaarabonnement heeft een **proefperiode van 7 dagen**. Als je binnen 7 dagen na de start van je abonnement opzegt via je accountinstellingen, krijg je het volledige bedrag terug. Na deze 7 dagen vervalt het recht op restitutie en geldt het jaarabonnement voor de volledige looptijd. Aan het einde van de looptijd kun je opzeggen of laten doorlopen.
+De kosten voor het terugsturen van fysieke producten zijn voor rekening van de klant, tenzij Let's dog uitdrukkelijk anders communiceert of sprake is van een fout van Let's dog, bijvoorbeeld levering van een verkeerd of beschadigd product.
 
-## 3. Retourprocedure (fysieke producten)
+## 4. Uitzonderingen voor fysieke producten
 
-Deze procedure geldt alleen voor **fysieke producten**. Neem contact op via support@letsdog.nl en start de retour binnen 14 dagen na ontvangst. De kosten van het retour zenden zijn voor de klant. Digitale abonnementen worden niet fysiek geretourneerd, daarvoor gelden de regels uit sectie 2.
+Het herroepingsrecht kan onder meer zijn uitgesloten voor:
 
-## 4. Uitzonderingen
+- producten die volgens specificaties van de klant zijn gemaakt of duidelijk persoonlijk van aard zijn;
+- geopende of gebruikte hygiënegevoelige producten;
+- geopend dierenvoer, snacks of bederfelijke producten;
+- producten die na levering door hun aard onherroepelijk zijn vermengd met andere zaken;
+- beschadigde of onvolledige producten, tenzij de schade al bij levering aanwezig was.
 
-Producten op maat en geopend diervoer kunnen niet worden geretourneerd. Voor digitale abonnementen gelden de regels uit sectie 2.
+## 5. Digitale content en cursussen
 
-## 5. Terugbetaling
+Voor digitale content, zoals cursussen, modules, video's, downloads, trainingsschema's, AI-functionaliteit en online leeromgeving, geldt dat de klant het herroepingsrecht kan verliezen zodra de uitvoering is begonnen, mits de klant vooraf uitdrukkelijk heeft ingestemd met directe levering en heeft erkend dat het herroepingsrecht daardoor vervalt.
 
-**Jaarabonnement binnen 7 dagen**: opzeggen via accountinstellingen → het volledige aankoopbedrag wordt automatisch binnen 14 dagen teruggestort op de oorspronkelijke betaalmethode. Geen aparte aanvraag nodig.
+Let's dog moet dit in de checkout duidelijk laten aanvinken of bevestigen voordat de gebruiker toegang krijgt tot digitale content. Zonder deze duidelijke instemming kan het herroepingsrecht niet zomaar worden uitgesloten.
 
-**Fysieke producten**: na goedkeuring van de retour wordt het volledige aankoopbedrag binnen 14 dagen teruggestort op de oorspronkelijke betaalmethode.
+## 6. Abonnementen
 
-**Maandabonnement**: niet restitueerbaar, zie sectie 2.
+Bij abonnementen geldt dat de gebruiker een abonnement kan beëindigen volgens de voorwaarden die bij het abonnement zijn vermeld. Beëindiging voorkomt toekomstige verlengingen, maar betekent niet automatisch dat reeds betaalde bedragen worden terugbetaald.
 
-## 6. Klachtenprocedure
+Als een abonnement start met een proefperiode of introductieaanbod, gelden de voorwaarden die bij dat aanbod staan vermeld. Let's dog moet duidelijk tonen wanneer de proefperiode eindigt, welk bedrag daarna wordt afgeschreven en hoe de gebruiker kan annuleren.
 
-Ontevreden klanten kunnen contact opnemen via support@letsdog.nl over een retour. Wij reageren binnen 5 werkdagen.
+## 7. Terugbetaling
 
-## Contact
+Na een geldige herroeping van een fysiek product betaalt Let's dog het aankoopbedrag terug binnen 14 dagen nadat het herroepingsverzoek is ontvangen. Let's dog mag wachten met terugbetalen totdat het product is ontvangen of totdat de klant heeft aangetoond dat het product is teruggestuurd.
 
-Vragen over een retour of annulering? Neem contact met ons op.
+Terugbetaling vindt plaats via dezelfde betaalmethode als waarmee de oorspronkelijke transactie is gedaan, tenzij anders overeengekomen.
 
-- E-mail: [support@letsdog.nl](mailto:support@letsdog.nl)
-- Algemeen: [mail@letsdog.nl](mailto:mail@letsdog.nl)
-- Telefoon: [085 744 4161](tel:0857444161)
+## 8. Procedure voor retour of herroeping
+
+Een klant kan een retour of herroeping melden via [support@letsdog.nl](mailto:support@letsdog.nl).
+
+Vermeld bij de melding bij voorkeur: naam, e-mailadres, bestelnummer, product of abonnement, datum van aankoop en reden van retour of herroeping indien de klant die wil geven.
+
+## 9. Klachten en beschadigde producten
+
+Is een product beschadigd, verkeerd geleverd of onvolledig, dan moet de klant zo snel mogelijk contact opnemen met Let's dog. Voeg bij voorkeur foto's toe van het product, de verpakking en het verzendlabel. Let's dog beoordeelt vervolgens of vervanging, herstel, vergoeding of terugbetaling passend is.
+
+## 10. Misbruik en redelijk gebruik
+
+Let's dog mag retouren weigeren of waardevermindering in rekening brengen wanneer producten verder zijn gebruikt dan nodig is om aard, kenmerken en werking vast te stellen, of wanneer sprake is van misbruik van het retourproces.
+
+## 11. Contact
+
+Voor vragen over retouren, herroeping of abonnementen kan contact worden opgenomen via [support@letsdog.nl](mailto:support@letsdog.nl).

@@ -20,4 +20,6 @@ Let's Dog B.V. is gevestigd in Nederland en de site is Nederlandstalig. Ondersta
 - [Algemene voorwaarden](https://letsdog.nl/algemene-voorwaarden/)
 - [AI-gebruiksvoorwaarden](https://letsdog.nl/ai-gebruiksvoorwaarden/)
 - [Cookieverklaring](https://letsdog.nl/cookieverklaring/)
-- [Retour- en annuleringsbeleid](https://letsdog.nl/retour/)
+- [Retour- en herroepingsbeleid](https://letsdog.nl/retour/)
+- [Modelformulier herroeping](https://letsdog.nl/modelformulier-herroeping/)
+- [Veiligheidsdisclaimer](https://letsdog.nl/veiligheidsdisclaimer/)

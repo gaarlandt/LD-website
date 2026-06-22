@@ -1,188 +1,123 @@
 ---
-title: Algemene Voorwaarden
-description: De algemene voorwaarden voor het gebruik van de Let's dog app, webomgeving en diensten van Let's dog B.V.
-lead: Laatst bijgewerkt op 17 februari 2026.
+title: Algemene voorwaarden
+description: De algemene voorwaarden voor website, app, cursussen, community, digitale diensten, abonnementen en producten van Let's dog B.V.
+lead: Laatst bijgewerkt op 17 juni 2026.
 ---
 
-Deze Algemene Voorwaarden ("Voorwaarden") zijn van toepassing op het gebruik van de Let's dog mobiele applicatie, de webapplicatie, de website en alle bijbehorende diensten (gezamenlijk: de "Dienst").
+## 1. Definities
 
-Door een account aan te maken, een abonnement af te sluiten of anderszins gebruik te maken van de Dienst, gaat u akkoord met deze Voorwaarden.
+Let's dog: Let's dog B.V., gevestigd aan Naarderstraat 31, 1272 NK Huizen, KvK 98271814.
 
-## 1. Identiteit van de Onderneming
+Platform: De website, webapplicatie, mobiele app, community, cursussen, AI-functionaliteiten en aanverwante diensten van Let's dog.
 
-- Let's dog B.V.
-- Adres: Naarderstraat 31, 1272 NK, Huizen, Nederland
-- E-mail: mail@letsdog.nl
-- KvK-nummer: 98271814
+Gebruiker: Iedere persoon die het platform bezoekt, een account aanmaakt, content bekijkt, een abonnement afsluit of producten/diensten afneemt.
 
-## 2. Definities
+Content: Alle teksten, video's, afbeeldingen, oefeningen, lessen, schema's, AI-antwoorden, communityberichten en andere materialen binnen het platform.
 
-In deze Voorwaarden wordt verstaan onder:
+Abonnement: Een terugkerende betaalde toegang tot onderdelen van het platform.
 
-**Dienst**: de mobiele applicatie Let's dog, de webomgeving, website en alle gerelateerde functionaliteiten.
+Digitale inhoud: Digitale cursussen, video's, artikelen, templates, AI-antwoorden, downloads en andere niet-fysieke producten.
 
-**Applicatie**: de mobiele app beschikbaar via de Apple App Store en Google Play Store.
+Fysieke producten: Producten die via Let's dog worden verkocht of geleverd, zoals hondenartikelen of starterskits.
 
-**Gebruiker**: iedere natuurlijke of rechtspersoon die gebruik maakt van de Dienst.
+## 2. Toepasselijkheid
 
-**Account**: het persoonlijke gebruikersprofiel waarmee toegang wordt verkregen tot (delen van) de Dienst.
+Deze algemene voorwaarden zijn van toepassing op ieder gebruik van het platform en op iedere overeenkomst tussen Let's dog en de gebruiker, tenzij schriftelijk anders is afgesproken.
 
-**Abonnement**: een doorlopende betaalde overeenkomst die toegang geeft tot premium content.
+Door een account aan te maken, een bestelling te plaatsen, een abonnement af te sluiten of het platform te gebruiken, gaat de gebruiker akkoord met deze voorwaarden.
 
-**Gebruikerscontent**: alle door gebruikers geplaatste of geüploade inhoud, waaronder tekst, afbeeldingen, reacties en berichten.
+## 3. De dienstverlening van Let's dog
 
-**Platform**: het gehele ecosysteem van Let's dog, inclusief website, mobiele applicatie, communityomgeving, trainingscontent en aanvullende digitale diensten.
+Let's dog biedt digitale informatie, cursussen, communityfunctionaliteit, AI-ondersteuning en eventueel fysieke producten rondom puppy's, puberhonden, volwassen honden, opvoeding, gedrag en welzijn.
 
-## 3. Toepasselijkheid
+De dienstverlening is educatief en ondersteunend. Let's dog levert geen medische diagnose, dierenartsenzorg of gegarandeerde gedragsoplossing.
 
-Deze Voorwaarden zijn van toepassing op ieder gebruik van de Dienst.
+## 4. Account en toegang
 
-Indien u niet akkoord gaat met deze Voorwaarden, dient u geen gebruik te maken van de Dienst.
+De gebruiker moet juiste, actuele en volledige gegevens verstrekken.
 
-U verklaart 18 jaar of ouder te zijn. Indien de gebruiker jonger is dan 18 jaar, dient het account te worden aangemaakt en beheerd onder toezicht en met toestemming van een ouder of wettelijke vertegenwoordiger.
+De gebruiker is zelf verantwoordelijk voor het geheimhouden van inloggegevens.
 
-## 4. Accountregistratie en Beveiliging
+Een account is persoonlijk en mag niet zonder toestemming worden gedeeld, doorverkocht of commercieel gebruikt.
 
-Gebruikers kunnen een account aanmaken.
+Let's dog mag toegang tijdelijk blokkeren of beëindigen bij misbruik, fraude, veiligheidsrisico's, betalingsachterstand of ernstige overtreding van deze voorwaarden.
 
-U bent verantwoordelijk voor:
+## 5. Abonnementen, betaling en verlenging
 
-- Het verstrekken van correcte informatie
-- Het vertrouwelijk houden van uw inloggegevens
-- Alle activiteiten onder uw account
+Betaalde onderdelen kunnen worden aangeboden als maandabonnement, jaarabonnement, proefperiode, introductieaanbieding, lifetime-aanbod of eenmalige aankoop.
 
-Let's dog mag accounts opschorten of beëindigen bij misbruik, fraude of schending van deze Voorwaarden.
+De actuele prijs, looptijd, proefperiode, verlenging en belangrijkste voorwaarden worden vóór aankoop getoond in de checkout. Bij abonnementen wordt duidelijk vermeld of en wanneer automatische verlenging plaatsvindt.
 
-Let's dog behoudt zich tevens het recht voor accounts tijdelijk te blokkeren of aanvullende verificatie te verlangen indien sprake is van beveiligingsrisico's of vermoedens van ongeautoriseerde toegang bij misbruik, fraude of schending van deze Voorwaarden.
+Betalingen verlopen via externe betaalproviders of via de webomgeving. De mobiele app verwerkt geen volledige betaalkaartgegevens en biedt op dit moment geen native in-app aankoopflow.
 
-## 5. Abonnementen en Betalingen
+Bij niet-betaling, mislukte incasso of stornering mag Let's dog toegang beperken of opschorten totdat betaling is ontvangen.
 
-### 5.1 Aanschaf
+## 6. Herroepingsrecht en digitale inhoud
 
-Abonnementen worden afgesloten via de webomgeving. Binnen de mobiele app wordt de gebruiker doorgestuurd naar de webomgeving voor betaling.
+Voor consumenten geldt in beginsel een wettelijke bedenktijd van 14 dagen bij overeenkomsten op afstand, tenzij een wettelijke uitzondering van toepassing is.
 
-Er worden geen native in-app aankopen via Apple of Google verwerkt; betalingen verlopen via externe betaalprovider Mollie.
+Voor digitale inhoud kan het herroepingsrecht vervallen wanneer de gebruiker vooraf uitdrukkelijk instemt met directe levering binnen de bedenktijd en erkent dat hij of zij daarmee het herroepingsrecht verliest. Let's dog moet dit proces duidelijk vastleggen in de checkout.
 
-Abonnementen kunnen maandelijks, per module of jaarlijks worden afgesloten, afhankelijk van het gekozen abonnementstype.
+Voor fysieke producten geldt het retour- en herroepingsbeleid van Let's dog. Dat beleid maakt onderdeel uit van deze voorwaarden.
 
-### 5.2 Automatische Verlenging
+## 7. Gebruik van content en intellectuele eigendom
 
-Abonnementen worden automatisch verlengd tenzij tijdig opgezegd via het account.
+Alle rechten op het platform en de content berusten bij Let's dog of haar licentiegevers, tenzij anders vermeld.
 
-### 5.3 Opzegging
+De gebruiker krijgt een persoonlijk, beperkt, niet-exclusief en niet-overdraagbaar gebruiksrecht.
 
-Opzegging kan op ieder moment. Toegang blijft actief tot het einde van de betaalde periode.
+Kopiëren, verspreiden, doorverkopen, openbaar maken, scrapen, trainen van eigen AI-modellen met Let's dog-content of commercieel hergebruik is niet toegestaan zonder schriftelijke toestemming.
 
-### 5.4 Prijswijzigingen
+Content mag alleen worden gebruikt voor eigen privégebruik en de opvoeding of begeleiding van de eigen hond, tenzij schriftelijk anders is afgesproken.
 
-Let's dog behoudt zich het recht voor prijzen aan te passen. Wijzigingen worden vooraf aangekondigd. Prijswijzigingen zijn uitsluitend van toepassing op toekomstige abonnementsperioden en hebben geen invloed op reeds betaalde abonnementsperiodes.
+## 8. Door gebruikers geplaatste content
 
-### 5.5 Terugbetalingen
+Gebruikers behouden hun eigen rechten op content die zij zelf plaatsen, zoals berichten, foto's of reacties. Door plaatsing geeft de gebruiker Let's dog een kosteloze, wereldwijde, niet-exclusieve licentie om deze content technisch te tonen, op te slaan, te modereren en beschikbaar te maken binnen het platform.
 
-Terugbetalingen worden uitsluitend verstrekt indien wettelijk verplicht of indien expliciet door Let's dog toegekend.
+De gebruiker garandeert dat geplaatste content rechtmatig is en geen rechten van derden schendt.
 
-## 6. Digitale Content
+## 9. Community en gedragsregels
 
-De Dienst biedt digitale trainingsinformatie en educatieve content.
+Voor communitygebruik gelden aanvullende communityrichtlijnen. Let's dog mag content verwijderen, waarschuwingen geven of accounts beperken wanneer content onveilig, misleidend, intimiderend, discriminerend, commercieel ongewenst, onrechtmatig of schadelijk is.
 
-De content is informatief van aard en vormt geen veterinair medisch advies.
+## 10. AI-functionaliteiten
 
-Let's dog is niet aansprakelijk voor beslissingen die worden genomen op basis van de verstrekte informatie.
+AI-antwoorden binnen Let's dog zijn ondersteunend en informatief. AI-output is geen vervanging voor een dierenarts, gedragstherapeut of professionele trainer. Bij agressie, bijtincidenten, medische klachten, pijnsignalen of acute veiligheidsrisico's moet de gebruiker professionele hulp inschakelen.
 
-Resultaten van training kunnen variëren afhankelijk van factoren zoals ras, leeftijd, karakter van de hond en de wijze waarop de training wordt uitgevoerd. Let's dog geeft geen garantie op specifieke trainingsresultaten.
+De afzonderlijke AI-gebruiksvoorwaarden zijn van toepassing op AI-functionaliteiten en maken onderdeel uit van deze algemene voorwaarden.
 
-## 7. Gebruikerscontent
+## 11. Veiligheid, gezondheid en gedrag van honden
 
-Gebruikers kunnen content plaatsen.
+De gebruiker blijft zelf verantwoordelijk voor de veiligheid van mens, hond en omgeving. Oefeningen moeten worden aangepast aan leeftijd, gezondheid, ras, belastbaarheid, stressniveau en gedrag van de hond.
 
-Door content te plaatsen verleent u Let's dog een niet-exclusieve, wereldwijde, royaltyvrije licentie om deze content te gebruiken binnen het kader van de Dienst.
+Let's dog garandeert geen specifiek trainingsresultaat. Gedrag van honden wordt beïnvloed door gezondheid, aanleg, omgeving, opvoeding, ervaring, timing en uitvoering door de eigenaar.
 
-U garandeert dat:
+## 12. Beschikbaarheid en wijzigingen
 
-- U de rechten bezit op de geplaatste content
-- De content geen inbreuk maakt op rechten van derden
-- De content niet onrechtmatig of schadelijk is
+Let's dog spant zich in om het platform goed beschikbaar te houden, maar garandeert geen ononderbroken of foutloze werking. Onderhoud, updates, storingen of externe leveranciers kunnen tijdelijke beperkingen veroorzaken.
 
-Let's dog mag content verwijderen zonder voorafgaande kennisgeving. Let's dog mag gebruikerscontent tevens gebruiken voor promotionele of marketingdoeleinden binnen het platform, de website of sociale media, mits dit past binnen de context van de Dienst.
+Let's dog mag functies, content, prijzen, pakketten en voorwaarden aanpassen. Bij wezenlijke wijzigingen voor bestaande betaalde gebruikers informeert Let's dog de gebruiker tijdig waar dat redelijkerwijs nodig is.
 
-## 8. Intellectuele Eigendom
+## 13. Aansprakelijkheid
 
-Alle intellectuele eigendomsrechten op de Dienst, inclusief software, content, handelsmerken en logo's, berusten bij Let's dog of haar licentiegevers.
+Let's dog is niet aansprakelijk voor indirecte schade, gevolgschade, verlies van data, gemiste besparingen, gemiste inkomsten of schade door verkeerd gebruik van adviezen, tenzij sprake is van opzet of bewuste roekeloosheid van Let's dog.
 
-Zonder schriftelijke toestemming is het niet toegestaan content te kopiëren, reproduceren of commercieel te exploiteren. Het is tevens niet toegestaan de Dienst of delen daarvan te analyseren, decompileren, reverse engineeren, scrapen of geautomatiseerd gegevens te verzamelen zonder voorafgaande schriftelijke toestemming van Let's dog.
+Voor zover aansprakelijkheid niet wettelijk kan worden uitgesloten, is de aansprakelijkheid beperkt tot het bedrag dat de gebruiker in de drie maanden voorafgaand aan het schadeveroorzakende feit aan Let's dog heeft betaald, met een maximum van EUR 250 voor consumenten en EUR 1.000 voor zakelijke gebruikers, tenzij dwingend recht anders bepaalt.
 
-## 9. Feedback
+Deze beperking geldt niet voor aansprakelijkheid die wettelijk niet mag worden beperkt, zoals bepaalde consumentenrechten.
 
-Indien u suggesties of feedback verstrekt, mag Let's dog deze zonder beperking gebruiken zonder verplichting tot compensatie.
+## 14. Privacy
 
-## 10. Gedragsregels
+Let's dog verwerkt persoonsgegevens conform het privacybeleid. Het privacybeleid maakt geen onderdeel uit van de overeenkomst als contractuele beperking van wettelijke privacyrechten, maar beschrijft hoe Let's dog persoonsgegevens verwerkt.
 
-Het is niet toegestaan om:
+## 15. Klachten en support
 
-- Onrechtmatige of misleidende content te plaatsen
-- Inbreuk te maken op rechten van derden
-- De Dienst te misbruiken of te hacken
-- Virussen of schadelijke software te verspreiden
+Klachten kunnen worden gemeld via [support@letsdog.nl](mailto:support@letsdog.nl). Let's dog streeft ernaar binnen 5 werkdagen inhoudelijk te reageren.
 
-Het is tevens niet toegestaan andere gebruikers te intimideren, te misleiden of de communityomgeving te verstoren.
+## 16. Toepasselijk recht
 
-## 11. Beëindiging
+Op deze voorwaarden en overeenkomsten met Let's dog is Nederlands recht van toepassing. Voor consumenten blijft eventuele dwingendrechtelijke bescherming van het land waar zij wonen van kracht voor zover dat wettelijk vereist is.
 
-Let's dog kan toegang tot de Dienst onmiddellijk beëindigen bij schending van deze Voorwaarden.
+## 17. Slotbepaling
 
-Bij beëindiging vervalt toegang tot premium content.
-
-## 12. Aansprakelijkheid
-
-Let's dog is slechts aansprakelijk voor directe schade tot maximaal het bedrag dat de Gebruiker in de afgelopen 12 maanden heeft betaald.
-
-Let's dog is niet aansprakelijk voor indirecte schade, gevolgschade, winstderving of dataverlies.
-
-Deze beperking geldt niet indien sprake is van opzet of grove nalatigheid.
-
-Let's dog is niet aansprakelijk voor schade, letsel of incidenten die ontstaan door gedragingen van honden, noch voor schade die ontstaat door het onjuist toepassen van trainingsadviezen.
-
-## 13. Vrijwaring
-
-Gebruiker vrijwaart Let's dog tegen aanspraken van derden voortvloeiend uit schending van deze Voorwaarden of onrechtmatig gebruik van de Dienst.
-
-## 14. Overmacht
-
-Let's dog is niet aansprakelijk voor vertraging of tekortkoming door overmacht, waaronder storingen, netwerkproblemen of externe dienstverleners.
-
-## 15. Privacy
-
-Het gebruik van persoonsgegevens wordt geregeld in het Privacybeleid.
-
-Let's dog verwerkt persoonsgegevens in overeenstemming met de toepasselijke privacywetgeving, waaronder de Algemene Verordening Gegevensbescherming (AVG).
-
-In het Privacybeleid wordt uitgelegd welke persoonsgegevens wij verzamelen, voor welke doeleinden wij deze gebruiken en welke rechten gebruikers hebben met betrekking tot hun gegevens.
-
-Het Privacybeleid maakt integraal onderdeel uit van deze Voorwaarden en is beschikbaar via de website van Let's dog.
-
-## 16. Apple App Store en Google Play
-
-De Dienst kan worden aangeboden via Apple App Store en Google Play Store.
-
-Deze Voorwaarden zijn uitsluitend van toepassing tussen u en Let's dog, niet met Apple of Google.
-
-Apple en Google zijn niet verantwoordelijk voor:
-
-- Onderhoud en ondersteuning van de Applicatie
-- Claims met betrekking tot de Applicatie
-
-U verklaart dat u zich niet bevindt in een land dat onder embargo staat.
-
-## 17. Toepasselijk Recht
-
-Op deze Voorwaarden is Nederlands recht van toepassing.
-
-Geschillen worden voorgelegd aan de bevoegde rechter in het arrondissement waar Let's dog B.V. is gevestigd.
-
-## 18. Wijzigingen
-
-Let's dog kan deze Voorwaarden wijzigen. Wijzigingen worden vooraf aangekondigd indien materieel. Gebruikers worden van materiële wijzigingen op de hoogte gesteld via e-mail of via een melding binnen de applicatie.
-
-## 19. Contact
-
-Voor vragen kunt u contact opnemen via [mail@letsdog.nl](mailto:mail@letsdog.nl).
+Indien een bepaling ongeldig blijkt, blijven de overige bepalingen gelden. Let's dog zal de ongeldige bepaling vervangen door een geldige bepaling die zoveel mogelijk aansluit bij het oorspronkelijke doel.

@@ -51,16 +51,19 @@ The preview sandbox requires Node v20 (not v24) — the launch.json uses the abs
 │   ├── puppycursus/        # Puppycursus page (route renamed from /puppyagenda)
 │   ├── veelgestelde-vragen/ # FAQ page
 │   ├── privacybeleid/      # Privacy policy
+│   ├── algemene-voorwaarden/ # General terms (SaaS & app)
 │   ├── ai-gebruiksvoorwaarden/ # AI terms of use
 │   ├── cookieverklaring/   # Cookie declaration
-│   ├── retour/             # Return & cancellation policy
+│   ├── retour/             # Return & withdrawal policy
+│   ├── modelformulier-herroeping/ # EU model withdrawal form
+│   ├── veiligheidsdisclaimer/ # Safety & advice disclaimer (dog behaviour)
 │   └── ip-overdrachtsverklaring/ # IP transfer declaration
 ├── components/
 │   ├── layout/             # Navbar, Footer
 │   ├── sections/           # Homepage sections (hero, problem, hope, etc.)
 │   ├── shared/             # Reusable (WhatsApp, reveal, section-wrapper, JsonLd, OptimizedImage, legal layout)
 │   └── analytics/          # Cookiebot, GA4, CTATracker, PostHogProvider
-├── content/                # Markdown source for the 5 legal pages (privacybeleid, ai-gebruiksvoorwaarden, cookieverklaring, retour, ip-overdrachtsverklaring). Edit these to change copy without touching TSX.
+├── content/                # Markdown source for the 8 legal pages (privacybeleid, algemene-voorwaarden, ai-gebruiksvoorwaarden, cookieverklaring, retour, modelformulier-herroeping, veiligheidsdisclaimer, ip-overdrachtsverklaring). Edit these to change copy without touching TSX.
 ├── lib/
 │   ├── utils.ts            # Asset path helper
 │   ├── seo.ts              # SITE_URL/SITE_NAME + pageMetadata() (per-page canonical/og/twitter)
@@ -117,7 +120,7 @@ Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/lay
 
 ## Markdown-driven legal pages
 
-The 5 legal pages (`privacybeleid`, `ai-gebruiksvoorwaarden`, `cookieverklaring`, `retour`, `ip-overdrachtsverklaring`) read their body content from `content/<slug>.md` at build time. Each `page.tsx` is ~15 lines that loads the markdown and renders via `<LegalPageLayout>`. Edit `content/*.md` to change copy — no TSX touched.
+The 8 legal pages (`privacybeleid`, `algemene-voorwaarden`, `ai-gebruiksvoorwaarden`, `cookieverklaring`, `retour`, `modelformulier-herroeping`, `veiligheidsdisclaimer`, `ip-overdrachtsverklaring`) read their body content from `content/<slug>.md` at build time. Each `page.tsx` is ~15 lines that loads the markdown and renders via `<LegalPageLayout>`. Edit `content/*.md` to change copy — no TSX touched.
 
 - **Frontmatter** (all optional except `title`/`description`): `title`, `description`, `eyebrow` (default `"Juridisch"`), `lead` (white subhead under the green hero H1), `signature_form: true` (only ip-overdracht — appends the printable Naam/Datum/Handtekening form after the markdown body).
 - **Supported markdown**: standard CommonMark + GFM tables (via `remark-gfm`). H2 = section, H3 = subsection, `-` = brand-green bullet, `[text](url)` = brand-green underlined link, `| col | col |` table = renders inside a beige `#EFE8E4` rounded card.
