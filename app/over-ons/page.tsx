@@ -1,7 +1,5 @@
 import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
-import Image from "next/image";
-import { asset } from "@/lib/utils";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { JsonLd } from "@/components/shared/json-ld";
 import { personLd } from "@/lib/structured-data";
@@ -213,11 +211,12 @@ export default function OverOns() {
             ))}
           </div>
           <div className="flex justify-center">
-            <Image
-              src={asset("/images/NVGH Logo.jpeg")}
+            <OptimizedImage
+              src="/images/nvgh-logo.jpeg"
               alt="NVGH en Raad van Beheer certificeringslogo's"
               width={400}
               height={120}
+              sizes="(min-width: 768px) 499px, 416px"
               className="w-full max-w-[416px] md:max-w-[499px] h-auto"
             />
           </div>
