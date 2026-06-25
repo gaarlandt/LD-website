@@ -57,7 +57,7 @@ Always set a meaningful `alt` as the text fallback, and style it (color/size) so
 
 **5. Sender: a friendly From at a monitored, verified address.** Send as a person/brand (e.g. `"Elien van Let's dog" <support@letsdog.nl>`) from an inbox a human reads, and set `ReplyTo` to that same inbox, so a reply lands somewhere real (better than `noreply@`). The From address must be a **verified Postmark sender** — domain-level verification covers any address on the domain, so if one address on the domain already sends, the others work too.
 
-**Caution — abuse surface.** Sending to a *user-supplied* recipient turns the endpoint into an email-amplification vector: attacker-authored content delivered from your verified sender to any address. A hidden honeypot is a weak gate on its own — add a Cloudflare WAF rate-limit rule on the endpoint (or Turnstile) before traffic ramps.
+**Caution — abuse surface (hardened in Phase A, 2026-06-25).** Sending to a *user-supplied* recipient turns the endpoint into a **branded-email amplification vector**: attacker-authored content delivered from your verified sender to any address. A hidden honeypot + one Turnstile solve is a weak gate. **Phase A (PR #48, review finding #1) mitigations:** (1) the customer confirmation no longer **echoes** the submitted message — the support copy keeps it; (2) the retained `Hoi {name}` greeting **caps the name at 20 chars**; (3) `name` is **CR/LF-collapsed** before it lands unescaped in the plain-text body/Subject; (4) per-IP Cloudflare WAF rate-limit is the deferred volume bound (per-recipient is the real bound — see `docs/CUTOVER.md`). The portable rule is promoted to the hub contract (see Related).
 
 ## Why This Matters
 

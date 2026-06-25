@@ -22,23 +22,29 @@ The contact form (`functions/api/contact.ts` + `app/contact/contact-form-modal.t
 
 ## Guidance
 
-**1. A dev/preview test-key fallback must fail CLOSED on production.** Cloudflare publishes always-pass *test* keys so dev/preview run the full check without a real widget. The trap: `env.TURNSTILE_SECRET_KEY || TEST_SECRET` means a forgotten/typo'd prod secret silently falls back to the always-pass test secret — the gate looks healthy and protects nothing. Gate the fallback on the request host so a missing secret on a production surface fails closed (500), mirroring the existing missing-token guard:
+**1. A dev/preview test-key fallback must fail CLOSED on production AND for UNKNOWN hosts.** Cloudflare publishes always-pass *test* keys so dev/preview run the full check without a real widget. The trap: `env.TURNSTILE_SECRET_KEY || TEST_SECRET` means a forgotten/typo'd prod secret silently falls back to the always-pass test secret — the gate looks healthy and protects nothing.
+
+The **first cut** used an exact-match *enforced-hosts* `Set` (`letsdog.nl`, `www.letsdog.nl`, `website-letsdog.pages.dev`). A 2026-06-23 review (finding #8) found that brittle: any **new** production surface not in the set (a future custom domain, a vanity alias) would silently fall back to the test secret. **Invert to a fail-closed predicate** — allow the fallback ONLY on hosts that can never serve real traffic (localhost + *branch* previews), and require a real secret for **everything else** (apex, www, the prod alias, and any unforeseen host):
 
 ```ts
 const TURNSTILE_TEST_SECRET = "1x0000000000000000000000000000000AA";
-// Publicly-reachable production surfaces (apex, www, the Pages production alias).
-// Branch previews (<branch>.website-letsdog.pages.dev) + localhost are excluded
-// by exact match, so they keep the dev fallback.
-const TURNSTILE_ENFORCED_HOSTS = new Set([
-  "letsdog.nl", "www.letsdog.nl", "website-letsdog.pages.dev",
-]);
+const PROD_PAGES_ALIAS = "website-letsdog.pages.dev"; // live, publicly-reachable → ENFORCED
 
-const enforced = TURNSTILE_ENFORCED_HOSTS.has(new URL(request.url).hostname);
-const secret = env.TURNSTILE_SECRET_KEY || (enforced ? "" : TURNSTILE_TEST_SECRET);
-if (!secret) return json({ ok: false, error: "server_not_configured" }, 500);
+// Test fallback ONLY for localhost + branch *.pages.dev. The prod alias is excluded
+// (it serves real traffic); a bare `*.pages.dev` wildcard would wrongly demote it.
+function isPreviewOrLocalHost(hostname: string): boolean {
+  if (hostname === "localhost") return true;
+  return hostname.endsWith(".pages.dev") && hostname !== PROD_PAGES_ALIAS;
+}
+
+const hostname = new URL(request.url).hostname;
+const secret = env.TURNSTILE_SECRET_KEY || (isPreviewOrLocalHost(hostname) ? TURNSTILE_TEST_SECRET : "");
+if (!secret) { console.error("[contact] turnstile secret missing on enforced host", hostname); return json({ ok: false, error: "server_not_configured" }, 500); }
 ```
 
-Inline the host set — `functions/` stays dependency-free and can't import `lib/prod-hosts.ts`. Include the production `*.pages.dev` alias, not just the apex, so the *current* public surface (pre-cutover) is covered too.
+Inline the host literals — `functions/` stays dependency-free and can't import `lib/prod-hosts.ts` (note: `prod-hosts.ts` deliberately classifies the Pages alias as *non*-prod for **analytics** noise control — the opposite stance; don't unify them).
+
+**Residual (R-A — accept knowingly, or close with an env flag):** hostname classification can't separate the production deployment's *own* hash/branch aliases (`<hash>.website-letsdog.pages.dev`, `main.website-letsdog.pages.dev`) from a branch preview — both are `*.website-letsdog.pages.dev`. So those prod aliases still classify as preview and would fail OPEN **if the prod secret were unset**. Setting `TURNSTILE_SECRET_KEY` in Production (which you must) makes every alias use the real secret and closes it. The fully-robust fix gates the fallback on an explicit **Preview-scope env flag** instead of hostname — deferred (it changes the env setup and breaks zero-config preview testing). Tracked in `docs/CUTOVER.md`.
 
 **2. Cloudflare Pages key storage: public key = plaintext Variable, secret = encrypted Secret, Production scope only.**
 
