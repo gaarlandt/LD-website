@@ -13,6 +13,7 @@ Marketing website for Let's Dog, a puppy training platform. Built as a static Ne
 - **Images**: photographic JPEGs served as AVIF/WebP via the `OptimizedImage` `<picture>` component; variants generated at build-time by `sharp` ^0.34 (`scripts/optimize-images.mjs`) — see "On-page SEO, metadata & spec compliance" below
 - **Content (legal pages)**: Markdown via a small front-matter splitter (`lib/content.ts`, YAML parsed by `js-yaml` ^4) + `react-markdown` ^10 + `remark-gfm` ^4 — see "Markdown-driven legal pages" below
 - **Analytics**: GA4 (`G-0FCGXJHMMY`, fires immediately) + PostHog (EU project 143695, browser-only) — both dual-fired via `lib/analytics.ts` `trackEvent`; Cookiebot banner (display-only, does not gate tracking)
+- **Testing**: Vitest ^4 (Node env) — unit tests for the contact Pages Function (`functions/api/contact.test.ts`) + pure lib helpers. `*.test.ts` + `vitest.config.ts` are **excluded from the root `tsconfig.json`** (which `next build` typechecks across `**/*.ts`) and typechecked separately via `tsconfig.test.json`, so adding tests never breaks the production build. Run `npm test` — see "Testing" below
 - **Deployment**: Cloudflare Pages (project: `website-letsdog`, production URL: `website-letsdog.pages.dev`, custom domains flip in at cutover)
 
 ## Key Commands
@@ -20,6 +21,7 @@ Marketing website for Let's Dog, a puppy training platform. Built as a static Ne
 npm run dev             # Start dev server (Turbopack)
 npm run build           # Static export to ./out
 npm run lint            # ESLint (no config committed yet — pre-existing, don't block on it)
+npm test                # Vitest unit tests (Node env; contact Function + pure helpers)
 npm run optimize:images # Regenerate AVIF/WebP variants after adding/changing a photo
 npm run assets          # optimize:images + regenerate favicons + og image
 ```
@@ -30,6 +32,13 @@ Use `preview_start("letsdog-website")` to start the dev server via the preview t
 The preview sandbox requires Node v20 (not v24) — the launch.json uses the absolute path `/Users/jurriaan/.nvm/versions/node/v20.19.5/bin/node`. If Node versions change, update this path.
 
 **Always verify changes visually** after modifying UI components — use the preview verification workflow (snapshot, inspect, screenshot).
+
+## Testing
+Vitest (Node environment) covers the server-side + pure logic the browser preview can't exercise. Run `npm test` (`vitest run`).
+
+- **What's covered**: the contact Cloudflare Pages Function (`functions/api/contact.test.ts` — it ships straight to prod and **cannot run under `next dev`**, so unit tests are its only pre-deploy coverage) and pure `lib/` helpers. Browser/Workers round-trip behaviour (live Turnstile + Postmark, headers) is still verified manually on the Cloudflare branch preview.
+- **`next build` isolation (don't break this)**: the root `tsconfig.json` `include`s `**/*.ts`, and `next build` typechecks all of it — so `*.test.ts` and `vitest.config.ts` are listed in the root `tsconfig.json` `exclude`, and typechecked separately by `tsconfig.test.json`. Without that, the first test file's `vitest` import breaks the production build. Keep new test files under those globs (or extend the exclude) so the build stays green.
+- **Adding tests**: co-locate as `<name>.test.ts` next to the source. For the contact Function, exercise `onRequestPost` with a hand-built `Request` + an inline structurally-typed `env` and a stubbed global `fetch` (no Next/Workers harness needed). Prefer extracting pure logic (e.g. predicates, parsers) so it's unit-testable off the Workers runtime.
 
 ## Project Structure
 ```
