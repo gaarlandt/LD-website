@@ -21,7 +21,20 @@ const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 
 export function loadLegalContent(slug: string): LegalContent {
   const filePath = path.join(process.cwd(), "content", `${slug}.md`);
-  const raw = fs.readFileSync(filePath, "utf8");
+  // Build-time guard: this read happens at module scope during `next build`, so a
+  // missing or renamed content/<slug>.md otherwise fails with a bare ENOENT that
+  // names neither the slug nor which legal page is wired to the dead file. Rethrow
+  // with the slug + expected path so the build failure is self-diagnosing.
+  let raw: string;
+  try {
+    raw = fs.readFileSync(filePath, "utf8");
+  } catch (err) {
+    throw new Error(
+      `loadLegalContent: could not read legal content for slug "${slug}" — expected file at ${filePath}. ` +
+        `Ensure content/${slug}.md exists and was not renamed or removed.`,
+      { cause: err },
+    );
+  }
   // Strip a leading UTF-8 BOM (U+FEFF) so the front-matter delimiter still matches.
   const file = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
   const match = FRONTMATTER_RE.exec(file);
