@@ -100,7 +100,7 @@ The Network tab (`google-analytics.com/g/collect` requests) and the gtag debug c
 ### Verification curl on production
 
 ```bash
-# After cutover, real production hosts should NOT carry traffic_type=internal
+# On the live production hosts, real traffic must NOT carry traffic_type=internal
 curl -s https://www.example.com/ | grep -oE "gtag\('config'[^)]+\)"
 # Expected output includes the ternary; with __np=false (hostname matches
 # PROD_HOSTS), the second arg evaluates to {} — no traffic_type sent,

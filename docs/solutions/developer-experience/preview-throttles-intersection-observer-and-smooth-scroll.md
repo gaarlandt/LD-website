@@ -56,6 +56,8 @@ The headless preview browser doesn't run the rendering/compositing steps that de
 
 **Bonus gotcha — `window.posthog` is a false negative.** posthog-js (ES-module import, v1.382) does not synchronously mirror its singleton onto `window.posthog`, so `window.posthog?.__loaded` reads as `undefined`/false in `preview_eval` even when PostHog initialized fine. Confirm init via the network: `eu-assets.i.posthog.com/array/<phc_key>/config.js` → `flags/` → `/e/` batches.
 
+**Bonus — below-the-fold screenshots.** For visual checks of below-the-fold sections, the same instant-scroll fix applies before `preview_screenshot`; or skip the screenshot and assert content via `preview_eval` / `preview_inspect`, which see the DOM regardless of paint/compositing state. For an image-only check, navigate straight to the asset (`window.location.href = "/images/x.png"`) — no scroll needed. (Historically these frames came back blank on Framer-Motion scroll-reveal sections; Framer was removed 2026-06-25, so the blank-frame cause is gone — but DOM assertions remain the reliable below-the-fold check.)
+
 ## Why This Matters
 
 Without the control test, a scroll-triggered feature that "doesn't fire in the preview" reads as a bug — you burn time tweaking correct code (we briefly changed an `IntersectionObserver` threshold chasing a non-bug). Knowing the preview throttles IO + rAF turns a dead-end into a one-line confirmation and routes the real verification to a real browser. It also stops the `window.posthog` false-negative from masking a working integration.
@@ -67,7 +69,5 @@ Without the control test, a scroll-triggered feature that "doesn't fire in the p
 - When probing whether a client SDK initialized in the preview.
 
 ## Related
-
-- [`preview-screenshots-blank-on-scroll-reveal.md`](preview-screenshots-blank-on-scroll-reveal.md) — same environment, sibling symptom (scroll-reveal content missing from screenshots); verify via DOM geometry / built HTML.
 - [`ga4-filter-staging-traffic-by-hostname.md`](ga4-filter-staging-traffic-by-hostname.md) — GA4 preview traffic is tagged `traffic_type=internal`; the Internal Traffic filter (when Active) also hides events from DebugView, so use the Network tab to confirm GA4 fires on the preview.
 - Origin: funnel-analytics work (PR #35 — PostHog + dual-fire GA4/PostHog).

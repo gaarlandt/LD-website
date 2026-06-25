@@ -55,7 +55,7 @@ Inline the host literals — `functions/` stays dependency-free and can't import
 
 The `NEXT_PUBLIC_` site key must be inlined into the client bundle at build time, so it has to be a **plaintext Variable** — storing it as an encrypted Secret risks it not reaching the build, the client then falls back to the *test* site key, and its token mismatches the real server Secret → the form errors. Leave the **Preview** scope unset: branch previews use the always-pass test keys (real keys would fail Turnstile's hostname check on `<branch>.pages.dev`, which isn't in the widget's allowed-hostname list).
 
-**3. CSP doesn't block Turnstile here.** The site's CSP is `frame-ancestors 'self'` only (no `script-src`/`frame-src`), so the widget's script + challenge iframe load fine — no `public/_headers` change. A *future* `script-src` directive would have to allow `https://challenges.cloudflare.com`.
+**3. CSP doesn't block Turnstile here.** The site's CSP has no `script-src`/`frame-src` (only `frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'`), so the widget's script + challenge iframe load fine — no `public/_headers` change. A *future* `script-src` directive would have to allow `https://challenges.cloudflare.com`.
 
 **4. Server verify is authoritative and fails closed.** POST to `siteverify` (form-encoded `secret` + `response` + `remoteip` from the edge `CF-Connecting-IP` header); trust only `success === true`; return `false` on any network error / non-2xx / parse failure. Client gating is UX only.
 

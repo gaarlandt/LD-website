@@ -23,9 +23,13 @@ of *terms*. Plan and write with these names rather than synonyms.
   AI-generated.
 - **Pre-Puppy voorbereiding** — checklist and exercises for the weeks before the pup
   comes home.
-- **Launch price** — the year subscription is €99/jaar, currently offered at the launch
-  price of €59/jaar. State it calmly ("nu €59 per jaar, in plaats van €99"); no
-  discount-percentage drama.
+- **Plannen** — two membership plans: **Flexibel** (maandelijks opzegbaar, €19,99/maand)
+  and **Early Member** (jaarlijks; intro €59 het eerste jaar, daarna €119/jaar). "Early
+  Member" is the launch offer on the year plan; "Flexibel" is the no-commitment monthly
+  option.
+- **Launch price** — the Early Member intro price on the year plan (€59 het eerste jaar,
+  daarna €119/jaar). State it calmly ("Early Member prijs zolang we lanceren" / "€59 het
+  eerste jaar"); no discount-percentage drama.
 
 ## The Let's dog app ecosystem (sibling surfaces)
 

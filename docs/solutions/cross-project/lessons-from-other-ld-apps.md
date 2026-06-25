@@ -7,7 +7,7 @@ problem_type: knowledge
 severity: medium
 applies_when:
   - "Working on the Cloudflare Pages Function (contact form / Postmark) or any secret"
-  - "Using Phosphor icons, framer-motion, or building first-visit / nav-strip UI"
+  - "Using Phosphor icons or building first-visit / nav-strip UI"
   - "Adding tests, or wiring PostHog/identity"
   - "Before debugging a 'works locally, breaks on deploy' symptom"
 tags: [cross-project, lets-dog, shared-knowledge, breed-selector, puppy-agenda, cloudflare-pages, posthog, testing]
@@ -21,10 +21,10 @@ Curated from BreedSelector (BS) and Puppy Agenda V2 (PA). Only items that genuin
 
 ## Pages Functions run on the Workers runtime — PA's Worker lessons apply
 
-- **Curl-smoketest the Pages Function secret.** Your contact Function holds `POSTMARK_SERVER_TOKEN`; a wrong/unset secret returns a generic error. Smoketest right after setting it (and remember secrets only apply to builds *after* the change). → `…/PuppyAgenda/Puppy Agenda V2/Puppy Agenda V2 Code/docs/solutions/conventions/curl-smoketest-new-cf-worker-secrets-2026-05-29.md`
-- **Prefer browser-only over `isomorphic-*` packages.** Pages Functions are the Workers runtime — isomorphic packages with a Node fallback throw at runtime despite a clean build. → `…/Puppy Agenda V2 Code/docs/solutions/tooling-decisions/prefer-browser-only-packages-over-isomorphic-on-workers-2026-05-15.md`
-- **Phosphor icons: import from `/dist/ssr`, use the `*Icon` names.** You use Phosphor — the SSR entry is Workers-safe and dodges the deprecated-name lint. → `…/Puppy Agenda V2 Code/docs/solutions/tooling-decisions/phosphor-icons-on-cloudflare-workers-2026-06-01.md`
-- **An HTTP 2xx is not a JSON guarantee — guard any upstream `res.json()`.** Your `functions/api/contact.ts` already plays it safe (it checks `postmarkRes.ok` and never parses the body) — keep it that way, and *if* a Function ever parses an upstream JSON response, read `res.text()` + `JSON.parse` in a `try/catch` and return a structured error rather than trusting that a 2xx is JSON (a proxy / CDN / error page can return `200 text/html`). PA hit exactly this calling SiteGround WP from a Worker. → `…/PuppyAgenda/Puppy Agenda V2/Puppy Agenda V2 Code/docs/solutions/integrations/ld-lesson-lookup-2xx-non-json-body-2026-06-07.md`
+- **Curl-smoketest the Pages Function secret.** Your contact Function holds `POSTMARK_SERVER_TOKEN`; a wrong/unset secret returns a generic error. Smoketest right after setting it (and remember secrets only apply to builds *after* the change). → `…/PuppyAgenda/code_puppyagenda/docs/solutions/conventions/curl-smoketest-new-cf-worker-secrets-2026-05-29.md`
+- **Prefer browser-only over `isomorphic-*` packages.** Pages Functions are the Workers runtime — isomorphic packages with a Node fallback throw at runtime despite a clean build. → `…/PuppyAgenda/code_puppyagenda/docs/solutions/tooling-decisions/prefer-browser-only-packages-over-isomorphic-on-workers-2026-05-15.md`
+- **Phosphor icons: import from `/dist/ssr`, use the `*Icon` names.** You use Phosphor — the SSR entry is Workers-safe and dodges the deprecated-name lint. → `…/PuppyAgenda/code_puppyagenda/docs/solutions/tooling-decisions/phosphor-icons-on-cloudflare-workers-2026-06-01.md`
+- **An HTTP 2xx is not a JSON guarantee — guard any upstream `res.json()`.** Your `functions/api/contact.ts` already plays it safe (it checks `postmarkRes.ok` and never parses the body) — keep it that way, and *if* a Function ever parses an upstream JSON response, read `res.text()` + `JSON.parse` in a `try/catch` and return a structured error rather than trusting that a 2xx is JSON (a proxy / CDN / error page can return `200 text/html`). PA hit exactly this calling SiteGround WP from a Worker. → `…/PuppyAgenda/code_puppyagenda/docs/solutions/integrations/ld-lesson-lookup-2xx-non-json-body-2026-06-07.md`
 - **⚠️ SiteGround *proxy-caches* anonymous WP REST GETs — cache-bust any read that must be fresh.** Distinct from the 2xx-≠-JSON guard ↑: SiteGround's proxy serves an anonymous `GET` to `app.letsdog.nl/wp-json/...` **stale for minutes** (`x-proxy-cache: HIT`) even with **no `Cache-Control`** header, so a content read can silently show yesterday's data. **If a WS Pages Function (or build/ISR step) ever reads WP REST anonymously**, append a **unique cache-bust query param** (`?_cb=<ts-rand>` → forces a proxy MISS; the proxy keys on the full URL) + `cache:'no-store'`; a `Cache-Control` *request* header dies on CORS preflight if it's not in the route's `Access-Control-Allow-Headers`. Detect via `curl -D -` twice (plain vs `?_cb=$RANDOM`) + compare `x-proxy-cache`. → PA `…/PuppyAgenda/code_puppyagenda/docs/solutions/integrations/siteground-proxy-caches-anonymous-wp-rest-get-2026-06-22.md`
 
 ## Contracts you participate in
@@ -36,9 +36,9 @@ Curated from BreedSelector (BS) and Puppy Agenda V2 (PA). Only items that genuin
 
 ## UI / UX patterns
 
-- **Consolidate first-visit gates into ONE surface** — don't stack cookie-consent + welcome/promo modals; gate them through one decision. → `…/Puppy Agenda V2 Code/docs/solutions/design-patterns/consolidate-first-visit-modals-into-one-surface-2026-05-29.md`
-- **Pinned + scrollable horizontal strip with mask-fade** — for category/nav strips with always-visible + overflow items (two-flex-child split, not `position: sticky`). → `…/Puppy Agenda V2 Code/docs/solutions/design-patterns/pinned-scroll-strip-with-mask-fade-2026-05-15.md`
-- **Selector-keyed DOM caches go stale across route transitions — key on pathname.** Relevant for multi-page + scroll-spy/anchor behaviour where a hook caches `querySelector` results. → `…/Puppy Agenda V2 Code/docs/solutions/architecture-patterns/route-transition-stale-target-cache-2026-05-27.md`
+- **Consolidate first-visit gates into ONE surface** — don't stack cookie-consent + welcome/promo modals; gate them through one decision. → `…/PuppyAgenda/code_puppyagenda/docs/solutions/design-patterns/consolidate-first-visit-modals-into-one-surface-2026-05-29.md`
+- **Pinned + scrollable horizontal strip with mask-fade** — for category/nav strips with always-visible + overflow items (two-flex-child split, not `position: sticky`). → `…/PuppyAgenda/code_puppyagenda/docs/solutions/design-patterns/pinned-scroll-strip-with-mask-fade-2026-05-15.md`
+- **Selector-keyed DOM caches go stale across route transitions — key on pathname.** Relevant for multi-page + scroll-spy/anchor behaviour where a hook caches `querySelector` results. → `…/PuppyAgenda/code_puppyagenda/docs/solutions/architecture-patterns/route-transition-stale-target-cache-2026-05-27.md`
 
 ## Testing
 
@@ -46,7 +46,7 @@ Curated from BreedSelector (BS) and Puppy Agenda V2 (PA). Only items that genuin
 
 ## Dependencies & supply-chain
 
-- **Transitive-only vulns need an `overrides` block, not Dependabot.** Patch a CVE in a buried sub-dependency via a `package.json` `overrides` floor (you're on **npm**); Dependabot can't bump one in isolation. Triage `npm audit` by dependency *path* first — your CF-Pages build toolchain and any local CLIs aren't runtime exposure, so size urgency by where the code runs, not the severity badge. → `…/PuppyAgenda/Puppy Agenda V2/Puppy Agenda V2 Code/docs/solutions/tooling-decisions/transitive-dep-vulns-need-overrides-not-dependabot-2026-06-03.md`
+- **Transitive-only vulns need an `overrides` block, not Dependabot.** Patch a CVE in a buried sub-dependency via a `package.json` `overrides` floor (you're on **npm**); Dependabot can't bump one in isolation. Triage `npm audit` by dependency *path* first — your CF-Pages build toolchain and any local CLIs aren't runtime exposure, so size urgency by where the code runs, not the severity badge. → `…/PuppyAgenda/code_puppyagenda/docs/solutions/tooling-decisions/transitive-dep-vulns-need-overrides-not-dependabot-2026-06-03.md`
 
 ---
 *Maintained via the `cross-project-learnings-letsdog` skill. To add an entry, say "this is a cross-project learning."*

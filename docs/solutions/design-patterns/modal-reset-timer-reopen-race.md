@@ -82,6 +82,6 @@ inside the window and confirming the token survives and submit stays enabled
 (the full open→close→reopen cycle on a hard reload, not just "does it open").
 
 ## Related
-- [Framer Motion modal won't close — AnimatePresence stable key](../ui-bugs/framer-motion-animatepresence-stable-key.md) — same modal file; the "verify the full open→close→reopen cycle" discipline.
+- The "verify the full open→close→reopen cycle on a hard reload" discipline (not just "does it open") — this race only surfaces on the reopen leg.
 - [Turnstile on a Cloudflare Pages Function](../conventions/turnstile-on-cloudflare-pages-function.md) — the single-use token lifecycle this race wipes.
 - Pairs with [Map a server's field-error codes onto field-level UI](server-field-error-to-field-ui-mapping.md) (same hardening PR).

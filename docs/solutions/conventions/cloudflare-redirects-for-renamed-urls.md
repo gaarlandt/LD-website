@@ -70,9 +70,11 @@ curl -sI https://<branch-slug>.website-letsdog.pages.dev/hondenkeuze
 /privacy-policy/             /privacybeleid/    301
 /hondenkeuze/                /rassenkeuze/      301
 /hondenkeuze                 /rassenkeuze/      301
+/puppyagenda/                /puppycursus/      301
+/puppyagenda                 /puppycursus/      301
 ```
 
-Note the existing `/test/` and `/privacy-policy/` entries follow the same shape — slash-included form only, because those legacy WP URLs always shipped with the trailing slash. The dual-form pattern is only required when the old URL might exist without a slash in the wild.
+The `/puppyagenda/ → /puppycursus/` pair (route renamed 2026-06) is the dual-form pattern reused exactly as prescribed. Note the existing `/test/` and `/privacy-policy/` entries follow the same shape — slash-included form only, because those legacy WP URLs always shipped with the trailing slash. The dual-form pattern is only required when the old URL might exist without a slash in the wild.
 
 **What the working tree looks like post-rename:**
 

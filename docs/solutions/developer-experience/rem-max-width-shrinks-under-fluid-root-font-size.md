@@ -72,6 +72,6 @@ Debugging tip — **reproduce at the user's actual viewport, not a convenient on
 ## Related
 
 - [tailwind-utilities-vs-unlayered-ds-classes.md](../developer-experience/tailwind-utilities-vs-unlayered-ds-classes.md) — sibling Tailwind-vs-design-system cascade gotcha
-- [preview-screenshots-blank-on-scroll-reveal.md](../developer-experience/preview-screenshots-blank-on-scroll-reveal.md) — why to verify layout via computed styles, not raw screenshots
+- [preview-throttles-intersection-observer-and-smooth-scroll.md](../developer-experience/preview-throttles-intersection-observer-and-smooth-scroll.md) — why to verify layout/visibility via computed styles & DOM, not raw screenshots, in the headless preview
 - Source: `components/sections/rassenkeuze-strip.tsx` (the fix), `app/globals.css` (the 85%/100% root font-size), `components/ui/layout.tsx` + `app/ld-tokens.css` (`.ld-container` fixed 1200px). Origin: PR #32.
 - **Cross-project candidate:** if other Let's Dog apps use a fluid root font-size, the same rem-vs-fixed-px alignment drift applies — worth promoting to the cross-knowledge hub.

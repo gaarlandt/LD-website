@@ -32,10 +32,10 @@ Insert an explicit JSX whitespace expression `{" "}` between the `{expression}` 
 
 ```tsx
 // Before — space silently collapsed by SWC/Turbopack:
-© {new Date().getFullYear()} Let&apos;s Dog. Alle rechten voorbehouden.
+© {new Date().getFullYear()} Let&apos;s dog. Alle rechten voorbehouden.
 
 // After — explicit, always-rendered space:
-© {new Date().getFullYear()}{" "}Let&apos;s Dog. Alle rechten voorbehouden.
+© {new Date().getFullYear()}{" "}Let&apos;s dog. Alle rechten voorbehouden.
 ```
 
 Verify the fix in the rendered DOM, not the source or a screenshot:

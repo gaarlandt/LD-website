@@ -63,5 +63,5 @@ Dropping a delivered shadcn-style (CVA + Radix) component library + `.ld-*` toke
 - Treat `next build`, not the Turbopack dev overlay, as the integration source of truth.
 
 ## Related Issues
-- PR #19 (`gaarlandt/LD-website`) — design-system trial / Pricing page conversion.
-- Hand-off + brand-skill amendments: `~/Desktop/letsdog-design-system-HANDOFF.md` (incl. the accent-CTA rule change and the `peach` Button variant).
+- PR #19 (`gaarlandt/LD-website`) — design-system trial / Pricing page conversion; full v2 migration in `docs/plans/2026-06-01-001-feat-brand-guide-v2-site-migration-plan.md`.
+- Brand-system rules (accent-CTA + `peach` Button variant): the `brand-guide-letsdog` skill.

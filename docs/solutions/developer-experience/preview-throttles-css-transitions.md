@@ -56,7 +56,5 @@ A correct variant / toggle / theme change reads as a styling bug when the comput
 
 ## Related
 
-- [`preview-throttles-intersection-observer-and-smooth-scroll.md`](preview-throttles-intersection-observer-and-smooth-scroll.md) — same throttled-rAF root cause; sibling manifestation (scroll/visibility events + smooth scroll don't fire/move).
-- [`preview-screenshots-blank-on-scroll-reveal.md`](preview-screenshots-blank-on-scroll-reveal.md) — same environment; scroll-reveal content missing from screenshots; verify via DOM.
-- [`tailwind-utilities-vs-unlayered-ds-classes.md`](tailwind-utilities-vs-unlayered-ds-classes.md) — the `.ld-*` variant cascade these buttons use (why the variant prop, not a utility, drives `--_bg`).
+- [`preview-throttles-intersection-observer-and-smooth-scroll.md`](preview-throttles-intersection-observer-and-smooth-scroll.md) — same throttled-rAF root cause; sibling manifestation (scroll/visibility events + smooth scroll don't fire/move).- [`tailwind-utilities-vs-unlayered-ds-classes.md`](tailwind-utilities-vs-unlayered-ds-classes.md) — the `.ld-*` variant cascade these buttons use (why the variant prop, not a utility, drives `--_bg`).
 - Origin: pricing-toggle redesign (PR #37 — interactive Maandelijks/Jaarlijks card + €19,99 monthly).
