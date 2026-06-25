@@ -1,15 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { loadLegalContent } from "./content";
+import { loadLegalContent, parseFrontMatter } from "./content";
 
-// U5: the module-scope fs read in loadLegalContent() is guarded so a missing or
-// renamed content/<slug>.md fails the build with a slug-named, path-named error
-// instead of a bare ENOENT. Build-time-only logic, so this pure-logic test is its
-// only automated coverage (it runs off the Workers/Next runtime, cwd = repo root).
-//
-// Pulled forward from Phase F/U16 since the Vitest infra already exists. The fuller
-// front-matter scenarios (BOM, CRLF, no front-matter, title-only) still belong to
-// U16 — extend this file there rather than recreating it.
+// U5/U16 — pure-logic coverage for the legal-content loader. loadLegalContent
+// reads at build time (off the Workers/Next runtime; cwd = repo root); the
+// front-matter split is extracted to parseFrontMatter so the parsing variants
+// are testable from strings without disk fixtures.
+
 describe("loadLegalContent (U5 — build-time content guard)", () => {
   it("loads a known legal slug", () => {
     // privacybeleid.md is a committed legal page; reading it exercises the happy path.
@@ -28,5 +25,38 @@ describe("loadLegalContent (U5 — build-time content guard)", () => {
     expect(() => loadLegalContent("definitely-not-a-real-slug")).toThrow(
       /content[/\\]definitely-not-a-real-slug\.md/,
     );
+  });
+});
+
+describe("parseFrontMatter (U16 — front-matter split)", () => {
+  it("parses standard LF front-matter and separates the body", () => {
+    const { data, content } = parseFrontMatter("---\ntitle: Hoi\ndescription: d\n---\n# Body\n");
+    expect(data.title).toBe("Hoi");
+    expect(data.description).toBe("d");
+    expect(content.trim()).toBe("# Body");
+  });
+
+  it("tolerates CRLF line endings", () => {
+    const { data, content } = parseFrontMatter("---\r\ntitle: Hoi\r\n---\r\nBody\r\n");
+    expect(data.title).toBe("Hoi");
+    expect(content).toContain("Body");
+  });
+
+  it("strips a leading UTF-8 BOM before the delimiter", () => {
+    const { data } = parseFrontMatter("﻿---\ntitle: Hoi\n---\nBody");
+    expect(data.title).toBe("Hoi");
+  });
+
+  it("no front-matter → whole input is the body with empty data", () => {
+    const { data, content } = parseFrontMatter("# Just a body\nno front-matter");
+    expect(data).toEqual({});
+    expect(content).toContain("Just a body");
+  });
+
+  it("title-only front-matter", () => {
+    const { data, content } = parseFrontMatter("---\ntitle: Alleen\n---\nB");
+    expect(data.title).toBe("Alleen");
+    expect(data.description).toBeUndefined();
+    expect(content).toContain("B");
   });
 });

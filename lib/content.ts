@@ -35,7 +35,14 @@ export function loadLegalContent(slug: string): LegalContent {
       { cause: err },
     );
   }
-  // Strip a leading UTF-8 BOM (U+FEFF) so the front-matter delimiter still matches.
+  return parseFrontMatter(raw);
+}
+
+// Pure front-matter split (no fs) — exported for direct unit testing. Strips a
+// leading UTF-8 BOM (U+FEFF) so the delimiter still matches, splits the leading
+// `---`-delimited YAML, tolerates CRLF; input without front-matter passes through
+// unchanged as the body with empty data.
+export function parseFrontMatter(raw: string): LegalContent {
   const file = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
   const match = FRONTMATTER_RE.exec(file);
   const data = (match ? (load(match[1]) ?? {}) : {}) as LegalContentData;
