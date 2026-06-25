@@ -18,6 +18,19 @@ type Status = "idle" | "submitting" | "success" | "error";
 
 const EMPTY = { name: "", email: "", message: "", company: "" };
 
+// Server-side field-validation copy. functions/api/contact.ts returns
+// { ok:false, error:"name"|"email"|"message" } with 400 when a field fails its
+// stricter server checks (length caps, a tighter email regex) that the lighter
+// client validation lets through — surface those on the matching field instead of
+// the generic banner. On-brand Dutch; deliberately distinct from validate()'s
+// empty-field prompts ("Vul je naam in.") — these signal a length/format reject,
+// not a blank field. Re-tone both together if you change the field copy.
+const FIELD_ERROR_COPY: Record<"name" | "email" | "message", string> = {
+  name: "Controleer je naam.",
+  email: "Vul een geldig e-mailadres in.",
+  message: "Controleer je bericht.",
+};
+
 // Cloudflare's always-passes TEST site key — used when the real key is unset so
 // dev/preview render a working widget without a real Turnstile config. The real
 // key is inlined at build time from NEXT_PUBLIC_TURNSTILE_SITE_KEY in production.
@@ -58,6 +71,18 @@ function loadTurnstile(): Promise<void> {
   return turnstileScript;
 }
 
+// Read the Function's `error` code from a non-OK response, defensively: a 5xx/502
+// can return a non-JSON body (e.g. a gateway page) and res.json() would throw —
+// swallow that so the caller falls through to the generic banner.
+async function readErrorCode(res: Response): Promise<string | undefined> {
+  try {
+    const data = (await res.json()) as { error?: unknown };
+    return typeof data.error === "string" ? data.error : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function ContactFormModal({
   open,
   onClose,
@@ -72,6 +97,10 @@ export function ContactFormModal({
   const [turnstileError, setTurnstileError] = useState(false);
   const widgetRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+  // Handle for the post-close reset timer (see handleOpenChange). Held in a ref so
+  // a close→reopen within the 250ms window can cancel it; otherwise the stale timer
+  // wipes the freshly-rendered widget's token and disables submit on a live dialog.
+  const resetTimerRef = useRef<number | null>(null);
 
   // Render the Turnstile widget while the form is visible. Radix unmounts dialog
   // content on close, so each open paints a fresh widget; keying the effect on a
@@ -111,6 +140,26 @@ export function ContactFormModal({
     };
   }, [formVisible]);
 
+  // Cancel a pending post-close reset when the dialog reopens within the 250ms
+  // window — the #9 race. Guarded on `open` so it only fires on (re)open and never
+  // clears the timer that handleOpenChange arms on the *closing* render (a
+  // [open]-keyed cleanup would clobber that). Reopen is parent-driven (the `open`
+  // prop), so it does NOT route through handleOpenChange — this effect is the fix.
+  useEffect(() => {
+    if (open && resetTimerRef.current !== null) {
+      window.clearTimeout(resetTimerRef.current);
+      resetTimerRef.current = null;
+    }
+  }, [open]);
+
+  // Don't let a pending reset fire after the modal unmounts entirely.
+  useEffect(
+    () => () => {
+      if (resetTimerRef.current !== null) window.clearTimeout(resetTimerRef.current);
+    },
+    [],
+  );
+
   function resetTurnstile() {
     if (widgetIdRef.current && window.turnstile) {
       window.turnstile.reset(widgetIdRef.current);
@@ -125,7 +174,11 @@ export function ContactFormModal({
     if (next) return;
     onClose();
     // Reset transient state after the close transition, so a re-open is clean.
-    window.setTimeout(() => {
+    // Clear any prior pending reset first (re-entry guard), stash the handle so the
+    // [open] effect above can cancel it if the dialog reopens within the window.
+    if (resetTimerRef.current !== null) window.clearTimeout(resetTimerRef.current);
+    resetTimerRef.current = window.setTimeout(() => {
+      resetTimerRef.current = null;
       setStatus("idle");
       setErrors({});
       setToken("");
@@ -159,7 +212,21 @@ export function ContactFormModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, turnstileToken: token }),
       });
-      if (!res.ok) throw new Error("send failed");
+      if (!res.ok) {
+        // The Function validates name/email/message BEFORE Turnstile, so a field
+        // 400 leaves the token unconsumed and still valid — surface the error on
+        // the field, focus it, and keep the armed token so a fix can resubmit
+        // straight away. captcha / invalid_json / 500 / 502 / network fall through
+        // to the generic banner + token reset in catch.
+        const code = await readErrorCode(res);
+        if (code === "name" || code === "email" || code === "message") {
+          setErrors({ [code]: FIELD_ERROR_COPY[code] });
+          setStatus("idle");
+          document.getElementById(`cf-${code}`)?.focus();
+          return;
+        }
+        throw new Error("send failed");
+      }
       trackEvent("contact_form_submitted");
       // The one PostHog identify on the site — lowercased email is the
       // cross-product join key (see lib/analytics.ts + the identity contract).
