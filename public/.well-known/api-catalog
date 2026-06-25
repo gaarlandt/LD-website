@@ -11,6 +11,12 @@
       "terms-of-service": [
         { "href": "https://letsdog.nl/algemene-voorwaarden/", "type": "text/html" }
       ]
+    },
+    {
+      "anchor": "https://letsdog.nl/api/contact",
+      "service-doc": [
+        { "href": "https://letsdog.nl/contact/", "type": "text/html", "title": "Contact endpoint — POST application/json {name, email, message, turnstileToken}; human-only, gated by Cloudflare Turnstile" }
+      ]
     }
   ]
 }
