@@ -21,10 +21,10 @@ const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 
 export function loadLegalContent(slug: string): LegalContent {
   const filePath = path.join(process.cwd(), "content", `${slug}.md`);
-  // Build-time guard: this read happens at module scope during `next build`, so a
-  // missing or renamed content/<slug>.md otherwise fails with a bare ENOENT that
-  // names neither the slug nor which legal page is wired to the dead file. Rethrow
-  // with the slug + expected path so the build failure is self-diagnosing.
+  // Build-time guard: each legal page calls this at its module scope, so the read
+  // runs during `next build`. A missing or renamed content/<slug>.md otherwise
+  // fails with a bare ENOENT that names neither the slug nor which page is wired
+  // to the dead file. Rethrow with the slug + expected path so it self-diagnoses.
   let raw: string;
   try {
     raw = fs.readFileSync(filePath, "utf8");

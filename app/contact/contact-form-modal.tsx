@@ -22,7 +22,9 @@ const EMPTY = { name: "", email: "", message: "", company: "" };
 // { ok:false, error:"name"|"email"|"message" } with 400 when a field fails its
 // stricter server checks (length caps, a tighter email regex) that the lighter
 // client validation lets through — surface those on the matching field instead of
-// the generic banner. On-brand Dutch, consistent with the client validate() strings.
+// the generic banner. On-brand Dutch; deliberately distinct from validate()'s
+// empty-field prompts ("Vul je naam in.") — these signal a length/format reject,
+// not a blank field. Re-tone both together if you change the field copy.
 const FIELD_ERROR_COPY: Record<"name" | "email" | "message", string> = {
   name: "Controleer je naam.",
   email: "Vul een geldig e-mailadres in.",
