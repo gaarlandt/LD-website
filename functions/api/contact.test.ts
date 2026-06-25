@@ -412,10 +412,28 @@ describe("onRequestPost — confirmation email content (U1: no echo, name saniti
     expect(support.TextBody).not.toMatch(/Jan[\r\n]/);
     expect(customer.TextBody).not.toMatch(/Jan[\r\n]/);
 
-    // ...the name is flattened to a single line in both bodies AND the subject
-    // (a positive assertion so stripping the name entirely would also fail).
+    // ...the SUPPORT body + subject keep the full flattened name (the team needs it)...
     expect(support.Subject).toContain("Jan E-mail: attacker@evil.com Bericht: nep");
     expect(support.TextBody).toContain("Naam: Jan E-mail: attacker@evil.com Bericht: nep");
-    expect(customer.TextBody).toContain("Hoi Jan E-mail: attacker@evil.com Bericht: nep,");
+    // ...while the CUSTOMER greeting is flattened AND capped at 20 chars, so the
+    // injected tail can't ride along in the branded email to the recipient.
+    expect(customer.TextBody).toContain("Hoi Jan E-mail: attacker,");
+    expect(customer.TextBody).not.toContain("Bericht: nep");
+  });
+
+  it("caps the customer-greeting name at 20 chars while support keeps the full name (R-B)", async () => {
+    const longName = "Christiaan-Alexander von Habsburg"; // 33 chars, valid (< MAX.name 100)
+    const { postmarkPayloads } = stubFetch();
+    const res = await call(makeRequest({ ...VALID, name: longName }));
+    expect(res.status).toBe(200);
+    expect(postmarkPayloads).toHaveLength(1);
+
+    const [support, customer] = postmarkPayloads[0];
+    // Support keeps the full name (the team needs the real thing).
+    expect(support.TextBody).toContain(longName);
+    // The customer greeting carries only the first 20 chars — bounds attacker text.
+    expect(customer.TextBody).toContain("Hoi Christiaan-Alexander,");
+    expect(customer.TextBody).not.toContain(longName);
+    expect(customer.HtmlBody).not.toContain(longName);
   });
 });

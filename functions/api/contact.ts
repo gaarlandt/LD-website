@@ -186,8 +186,15 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
   // bounced confirmation must never regress the support send (see batch handling).
   const customerSubject = "We hebben je bericht ontvangen";
 
+  // The greeting still personalizes with the visitor's name, but capped at 20
+  // chars: enough for a real first name, while bounding how much attacker-controlled
+  // text can ride along in this branded email to a user-supplied recipient
+  // (defense-in-depth alongside the removed message echo, #1). The support email
+  // keeps the full name.
+  const greetingName = name.slice(0, 20).trimEnd();
+
   const customerText =
-    `Hoi ${name},\n\n` +
+    `Hoi ${greetingName},\n\n` +
     `Bedankt voor je bericht. We hebben het goed ontvangen en je hoort binnen ` +
     `1 werkdag van ons.\n\n` +
     `Tot snel,\n` +
@@ -209,7 +216,7 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
           `<img src="${logoOrigin}/images/logo-white.png" alt="Let's dog" width="130" height="38" style="display:block;border:0;line-height:1;width:130px;height:auto;color:#ffffff;font-size:20px;font-weight:600;" />` +
         `</div>` +
         `<div style="padding:28px;color:#141414;">` +
-          `<p style="margin:0 0 16px;font-size:16px;line-height:1.7;">Hoi ${escapeHtml(name)},</p>` +
+          `<p style="margin:0 0 16px;font-size:16px;line-height:1.7;">Hoi ${escapeHtml(greetingName)},</p>` +
           `<p style="margin:0 0 16px;font-size:16px;line-height:1.7;">Bedankt voor je bericht. We hebben het goed ontvangen en je hoort binnen 1 werkdag van ons.</p>` +
           `<p style="margin:0;font-size:16px;line-height:1.7;">Tot snel,<br>Elien</p>` +
         `</div>` +
