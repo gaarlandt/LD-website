@@ -8,7 +8,7 @@ export const Accordion = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Root>
 >(({ className, ...props }, ref) => (
-  <AccordionPrimitive.Root ref={ref as any} className={cn('ld-accordion', className)} {...props} />
+  <AccordionPrimitive.Root ref={ref} className={cn('ld-accordion', className)} {...props} />
 ));
 Accordion.displayName = 'Accordion';
 

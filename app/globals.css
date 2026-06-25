@@ -32,7 +32,7 @@
 
 @font-face {
   font-family: "National2";
-  src: url("../public/fonts/National2-Bold.otf") format("opentype");
+  src: url("/fonts/National2-Bold.otf") format("opentype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -40,7 +40,7 @@
 
 @font-face {
   font-family: "National2";
-  src: url("../public/fonts/National2-Medium.otf") format("opentype");
+  src: url("/fonts/National2-Medium.otf") format("opentype");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -82,31 +82,6 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.02em;
-}
-
-/* Fade in up animation for scroll reveals */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.5s ease-out forwards;
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
 }
 
 /* Respect reduced motion */

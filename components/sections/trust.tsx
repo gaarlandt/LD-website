@@ -1,6 +1,5 @@
 import type { ElementType } from "react";
-import Image from "next/image";
-import { asset } from "@/lib/utils";
+import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { Card, Eyebrow } from "@/components/ui";
 import { Quotes, Medal, Star } from "@phosphor-icons/react/dist/ssr";
@@ -148,11 +147,12 @@ export function Trust() {
 
       {/* NVGH Logo */}
       <div className="flex justify-center">
-        <Image
-          src={asset("/images/NVGH Logo.jpeg")}
+        <OptimizedImage
+          src="/images/nvgh-logo.jpeg"
           alt="NVGH en Raad van Beheer certificeringslogo's"
           width={400}
           height={120}
+          sizes="(min-width: 768px) 499px, 416px"
           className="w-full max-w-[416px] md:max-w-[499px] h-auto"
         />
       </div>

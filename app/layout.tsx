@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { preload } from "react-dom";
 import { SITE_URL, OG_IMAGE } from "@/lib/seo";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
@@ -58,6 +59,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Preload the National2 heading font (local OTF — next/font doesn't manage it)
+  // so the hero H1 weight is ready before first paint instead of FOUTing. Served
+  // at a stable /fonts/ URL the @font-face in globals.css matches, so it's one
+  // fetch. preload() (React 19) injects a single deduped <link> into <head> —
+  // a raw <link> in <head> here gets double-emitted by the App Router. Only Bold
+  // (700) is rendered by headings (Medium 500 is declared but unused).
+  preload("/fonts/National2-Bold.otf", {
+    as: "font",
+    type: "font/otf",
+    crossOrigin: "anonymous",
+  });
+
   return (
     <html lang="nl" className={dmSans.variable}>
       <head suppressHydrationWarning>

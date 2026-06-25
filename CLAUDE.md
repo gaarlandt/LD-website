@@ -7,7 +7,7 @@ Marketing website for Let's Dog, a puppy training platform. Built as a static Ne
 - **Framework**: Next.js 16 (static export via `output: "export"`)
 - **React**: 19
 - **Styling**: Tailwind CSS v4 (utility-first, no CSS modules)
-- **Animations**: Framer Motion
+- **Animations**: CSS transitions + Radix primitive animations (Framer Motion removed 2026-06-25 — its only consumer was an unused `Reveal` component)
 - **Icons**: Phosphor (`@phosphor-icons/react/dist/ssr`) + inline SVGs (WhatsApp, TikTok)
 - **Fonts**: National2 (headings, local OTF), DM Sans (body, Google Fonts)
 - **Images**: photographic JPEGs served as AVIF/WebP via the `OptimizedImage` `<picture>` component; variants generated at build-time by `sharp` ^0.34 (`scripts/optimize-images.mjs`) — see "On-page SEO, metadata & spec compliance" below
