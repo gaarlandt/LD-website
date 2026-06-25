@@ -101,6 +101,10 @@ export function ContactFormModal({
   // a close→reopen within the 250ms window can cancel it; otherwise the stale timer
   // wipes the freshly-rendered widget's token and disables submit on a live dialog.
   const resetTimerRef = useRef<number | null>(null);
+  // AbortController for the in-flight /api/contact submit: bounds a stalled request
+  // (10s timeout) and lets a dialog close cancel it, so the orphaned fetch's
+  // continuation can't paint a stale success/error onto a closed dialog.
+  const abortRef = useRef<AbortController | null>(null);
 
   // Render the Turnstile widget while the form is visible. Radix unmounts dialog
   // content on close, so each open paints a fresh widget; keying the effect on a
@@ -152,10 +156,12 @@ export function ContactFormModal({
     }
   }, [open]);
 
-  // Don't let a pending reset fire after the modal unmounts entirely.
+  // Don't let a pending reset fire — or an in-flight submit resolve — after the
+  // modal unmounts entirely.
   useEffect(
     () => () => {
       if (resetTimerRef.current !== null) window.clearTimeout(resetTimerRef.current);
+      abortRef.current?.abort();
     },
     [],
   );
@@ -173,6 +179,10 @@ export function ContactFormModal({
   function handleOpenChange(next: boolean) {
     if (next) return;
     onClose();
+    // Cancel any in-flight submit so its continuation can't paint a stale
+    // success/error onto the now-closed dialog (the catch treats a close-initiated
+    // abort as benign and just settles to idle).
+    abortRef.current?.abort();
     // Reset transient state after the close transition, so a re-open is clean.
     // Clear any prior pending reset first (re-entry guard), stash the handle so the
     // [open] effect above can cancel it if the dialog reopens within the window.
@@ -206,11 +216,21 @@ export function ContactFormModal({
     }
     setErrors({});
     setStatus("submitting");
+    // Bound the request: abort after 10s so a stalled upstream can't leave the
+    // button stuck on "Versturen…"; handleOpenChange also aborts it on close.
+    const controller = new AbortController();
+    abortRef.current = controller;
+    let timedOut = false;
+    const timeout = window.setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 10000);
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, turnstileToken: token }),
+        signal: controller.signal,
       });
       if (!res.ok) {
         // The Function validates name/email/message BEFORE Turnstile, so a field
@@ -234,9 +254,20 @@ export function ContactFormModal({
       setForm(EMPTY);
       setStatus("success");
     } catch {
+      // A close-initiated abort (not the timeout) is benign: the dialog is gone
+      // and handleOpenChange already reset it — settle to idle so a fast reopen
+      // (where the [open] effect cancels the reset timer) isn't stuck "submitting".
+      // A timeout or a real network/parse failure shows the generic banner.
+      if (controller.signal.aborted && !timedOut) {
+        setStatus("idle");
+        return;
+      }
       setStatus("error");
       // Turnstile tokens are single-use; get a fresh one for the retry.
       resetTurnstile();
+    } finally {
+      window.clearTimeout(timeout);
+      if (abortRef.current === controller) abortRef.current = null;
     }
   }
 
