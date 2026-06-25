@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "typecheck:test": "tsc -p tsconfig.test.json --noEmit",
     "optimize:images": "node scripts/optimize-images.mjs",
     "generate:icons": "node scripts/generate-icons.mjs",
     "generate:og": "node scripts/generate-og-image.mjs",

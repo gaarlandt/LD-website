@@ -287,7 +287,11 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
       );
     }
   } catch (err) {
-    console.error("[contact] postmark batch parse failed", String(err));
+    // Either a malformed/non-JSON 200 body, or AbortSignal.timeout firing during
+    // the body read (headers arrived, body then stalled) — both fail closed. The
+    // label covers both so ops triage isn't sent chasing a malformed body when the
+    // real cause was a timeout (String(err) carries the actual SyntaxError/TimeoutError).
+    console.error("[contact] postmark batch result unreadable (parse or timeout)", String(err));
     supportOk = false;
   }
 

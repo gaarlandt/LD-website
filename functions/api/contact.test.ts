@@ -44,7 +44,26 @@ function call(request: Request, env: EnvLike = { POSTMARK_SERVER_TOKEN: "pm-toke
 
 type FetchScenario = {
   turnstile?: { ok?: boolean; status?: number; success?: boolean; abort?: boolean };
-  postmark?: { ok?: boolean; status?: number; body?: unknown; raw?: string; abort?: boolean };
+  postmark?: {
+    ok?: boolean;
+    status?: number;
+    body?: unknown;
+    raw?: string;
+    abort?: boolean;
+    bodyReadThrows?: boolean;
+  };
+};
+
+// Minimal shape of the Postmark message objects the Function builds, so the U1
+// content assertions are typed — a source rename (e.g. TextBody) is a tsc error,
+// not a silent pass.
+type PostmarkMessage = {
+  From: string;
+  To: string;
+  ReplyTo?: string;
+  Subject: string;
+  TextBody: string;
+  HtmlBody: string;
 };
 
 // Route the global fetch stub by URL. Captures every Postmark batch payload so the
@@ -58,9 +77,10 @@ function stubFetch(scenario: FetchScenario = {}) {
     body: [{ ErrorCode: 0, Message: "OK" }] as unknown,
     raw: undefined as string | undefined,
     abort: false,
+    bodyReadThrows: false,
     ...scenario.postmark,
   };
-  const postmarkPayloads: any[] = [];
+  const postmarkPayloads: PostmarkMessage[][] = [];
 
   const fetchMock = vi.fn(async (input: unknown, init?: { body?: unknown }) => {
     const url = String(input);
@@ -72,6 +92,11 @@ function stubFetch(scenario: FetchScenario = {}) {
     if (url.includes("api.postmarkapp.com")) {
       if (typeof init?.body === "string") postmarkPayloads.push(JSON.parse(init.body));
       if (pm.abort) throw timeoutError();
+      if (pm.bodyReadThrows) {
+        // Headers arrive, but the body read throws — e.g. AbortSignal.timeout
+        // firing during res.json(), or a torn body. Exercises the inner catch.
+        return { ok: true, status: 200, json: async () => { throw timeoutError(); } } as unknown as Response;
+      }
       if (!pm.ok) return new Response("upstream error", { status: pm.status });
       if (pm.raw !== undefined) return new Response(pm.raw, { status: 200 });
       return jsonResponse(pm.body);
@@ -174,6 +199,20 @@ describe("onRequestPost — input validation", () => {
   it("missing message → 400 message", async () => {
     stubFetch();
     const res = await call(makeRequest({ ...VALID, message: "" }));
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: "message" });
+  });
+
+  it("over-long email → 400 email", async () => {
+    stubFetch();
+    const res = await call(makeRequest({ ...VALID, email: `${"a".repeat(200)}@example.nl` }));
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: "email" });
+  });
+
+  it("over-long message → 400 message", async () => {
+    stubFetch();
+    const res = await call(makeRequest({ ...VALID, message: "a".repeat(5001) }));
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ ok: false, error: "message" });
   });
@@ -319,6 +358,14 @@ describe("onRequestPost — Postmark batch result handling (U2)", () => {
     expect(await res.json()).toEqual({ ok: false, error: "send_failed" });
     expect(errorSpy).toHaveBeenCalled();
   });
+
+  it("body read throws (post-headers timeout / torn body) → 502 send_failed, logged", async () => {
+    stubFetch({ postmark: { bodyReadThrows: true } });
+    const res = await call(makeRequest(VALID));
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ ok: false, error: "send_failed" });
+    expect(errorSpy).toHaveBeenCalled();
+  });
 });
 
 describe("onRequestPost — confirmation email content (U1: no echo, name sanitized)", () => {
@@ -327,6 +374,7 @@ describe("onRequestPost — confirmation email content (U1: no echo, name saniti
     const { postmarkPayloads } = stubFetch();
     const res = await call(makeRequest({ ...VALID, message: marker }));
     expect(res.status).toBe(200);
+    expect(postmarkPayloads).toHaveLength(1);
 
     const [support, customer] = postmarkPayloads[0];
 
@@ -355,6 +403,7 @@ describe("onRequestPost — confirmation email content (U1: no echo, name saniti
     const { postmarkPayloads } = stubFetch();
     const res = await call(makeRequest({ ...VALID, name: injecting }));
     expect(res.status).toBe(200);
+    expect(postmarkPayloads).toHaveLength(1);
 
     const [support, customer] = postmarkPayloads[0];
 
@@ -363,7 +412,9 @@ describe("onRequestPost — confirmation email content (U1: no echo, name saniti
     expect(support.TextBody).not.toMatch(/Jan[\r\n]/);
     expect(customer.TextBody).not.toMatch(/Jan[\r\n]/);
 
-    // ...the name is flattened to a single line in both bodies.
+    // ...the name is flattened to a single line in both bodies AND the subject
+    // (a positive assertion so stripping the name entirely would also fail).
+    expect(support.Subject).toContain("Jan E-mail: attacker@evil.com Bericht: nep");
     expect(support.TextBody).toContain("Naam: Jan E-mail: attacker@evil.com Bericht: nep");
     expect(customer.TextBody).toContain("Hoi Jan E-mail: attacker@evil.com Bericht: nep,");
   });
