@@ -6,9 +6,10 @@ export const dynamic = "force-static";
 
 // Canonical, indexable public + legal routes only — absolute apex URLs
 // with trailing slash (trailingSlash: true). No redirects, no /card-styles
-// (deleted), no 404. A single honest lastmod avoids churning the file on
-// every build; bump it when site content materially changes.
-const LAST_MODIFIED = "2026-05-30";
+// (deleted), no 404. lastmod = the build/deploy date: the site rebuilds from
+// main only when content changes, so this self-maintains instead of going
+// stale like the prior hand-bumped constant did (it sat at 2026-05-30).
+const LAST_MODIFIED = new Date().toISOString().slice(0, 10);
 
 const ROUTES = [
   "/",

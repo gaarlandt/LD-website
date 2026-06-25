@@ -4,13 +4,15 @@ import { asset } from "@/lib/utils";
 import { Container, Eyebrow } from "@/components/ui";
 import { AppStoreComingSoon } from "./app-store-coming-soon";
 
+// Canonical order (matches components/layout/navbar.tsx + CLAUDE.md), with the
+// footer-only Homepage link kept first.
 const navLinks = [
   { href: "/", label: "Homepage" },
-  { href: "/puppycursus", label: "Puppycursus" },
   { href: "/rassenkeuze", label: "Rassenkeuze hulp" },
+  { href: "/puppycursus", label: "Puppycursus" },
   { href: "/prijzen", label: "Prijzen" },
-  { href: "/veelgestelde-vragen", label: "FAQ" },
   { href: "/over-ons", label: "Over ons" },
+  { href: "/veelgestelde-vragen", label: "FAQ" },
   { href: "/contact", label: "Contact" },
 ];
 

@@ -17,7 +17,14 @@ const organization = {
   "@id": ORG_ID,
   name: SITE_NAME,
   url: `${SITE_URL}/`,
-  logo: `${SITE_URL}/images/logo-black.svg`,
+  // Raster logo (not the SVG) — Google's logo rich result requires a raster
+  // image. icon-512.png is the square brand mark on an opaque white field.
+  logo: {
+    "@type": "ImageObject",
+    url: `${SITE_URL}/icons/icon-512.png`,
+    width: 512,
+    height: 512,
+  },
   sameAs: SAME_AS,
   contactPoint: {
     "@type": "ContactPoint",
