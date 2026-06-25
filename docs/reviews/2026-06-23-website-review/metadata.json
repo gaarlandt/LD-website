@@ -1,0 +1,18 @@
+{
+  "run_id": "20260623-185746-wholesite",
+  "scope": "full-codebase audit (not a diff)",
+  "branch": "main",
+  "head_sha": "859771e8252b99d90c4cf782bc50b2de7fbcb2dd",
+  "reviewers": [
+    "correctness", "security", "adversarial", "testing", "maintainability",
+    "project-standards", "api-contract", "reliability", "performance",
+    "frontend-races", "agent-native", "learnings-researcher"
+  ],
+  "verdict": "Ready with fixes — resolve F1 (contact-endpoint abuse) before cutover to real traffic",
+  "findings_total": 22,
+  "p1": 1, "p2": 10, "p3": 11,
+  "applied": 0,
+  "apply_skipped_reason": "User explicitly requested review + plan only, no execution (Stage 5c skipped)",
+  "validation_method": "orchestrator direct verification of disputed/factual claims (reveal.tsx dead-code, VARIANT_WIDTHS parity, JSON-LD logo type, _blank rel pairing, navbar/footer drift, analytics call-site leakage) in lieu of a full per-finding validator wave, given the review-and-plan-only deliverable",
+  "completed_at": "2026-06-23"
+}
