@@ -1,0 +1,6 @@
+{
+  "//": "Type-checks the test surface (*.test.ts + vitest.config.ts), which the root tsconfig.json excludes so `next build` stays green. Vitest runs tests via esbuild and does not use this file; it exists for editor IntelliSense and an optional `tsc -p tsconfig.test.json --noEmit`.",
+  "extends": "./tsconfig.json",
+  "include": ["**/*.test.ts", "vitest.config.ts"],
+  "exclude": ["node_modules"]
+}

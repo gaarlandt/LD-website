@@ -52,20 +52,27 @@ function escapeHtml(s: string): string {
 // real secret is unset, so dev/preview run the full check without real keys.
 const TURNSTILE_TEST_SECRET = "1x0000000000000000000000000000000AA";
 
-// Publicly-reachable production surfaces (apex, www, and the Pages production
-// alias). On these the TEST-secret fallback is NOT allowed: a missing real secret
-// fails closed (500) rather than silently disabling Turnstile. Branch previews
-// (<branch>.website-letsdog.pages.dev) and localhost are excluded by exact match,
-// so they keep the dev fallback.
-const TURNSTILE_ENFORCED_HOSTS = new Set([
-  "letsdog.nl",
-  "www.letsdog.nl",
-  "website-letsdog.pages.dev",
-]);
+// The production Pages alias. It is a live, publicly-reachable surface serving
+// real pre-cutover production traffic (alongside the apex/www in
+// lib/prod-hosts.ts PROD_HOSTS), so it must stay ENFORCED — never demoted to the
+// always-pass test secret.
+const PROD_PAGES_ALIAS = "website-letsdog.pages.dev";
+
+// Fail-closed host posture (#8). The always-pass TEST-secret fallback is allowed
+// ONLY on hosts that can never serve real traffic: localhost and *branch* previews
+// (<branch>.website-letsdog.pages.dev). EVERY other host — the apex, www, and the
+// production Pages alias above — requires a real TURNSTILE_SECRET_KEY and fails
+// closed (500) if it is unset, so a forgotten prod secret can never silently
+// disable Turnstile. A bare `*.pages.dev` wildcard must NOT be used here: it would
+// match PROD_PAGES_ALIAS and demote the live deployment. Exported for unit tests.
+export function isPreviewOrLocalHost(hostname: string): boolean {
+  if (hostname === "localhost") return true;
+  return hostname.endsWith(".pages.dev") && hostname !== PROD_PAGES_ALIAS;
+}
 
 // Verify a Turnstile token against Cloudflare's siteverify endpoint. Returns
-// false on any failure (network, non-2xx, success:false) so the caller fails
-// closed — a missing or invalid token never sends mail.
+// false on any failure (network, timeout, non-2xx, success:false) so the caller
+// fails closed — a missing or invalid token never sends mail.
 async function verifyTurnstile(token: string, secret: string, ip: string): Promise<boolean> {
   const body = new URLSearchParams();
   body.set("secret", secret);
@@ -76,11 +83,21 @@ async function verifyTurnstile(token: string, secret: string, ip: string): Promi
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body,
+      // Fail closed if siteverify hangs — a stalled upstream must not tie up the
+      // Worker invocation until the platform limit.
+      signal: AbortSignal.timeout(5000),
     });
-    if (!res.ok) return false;
+    if (!res.ok) {
+      console.error("[contact] turnstile siteverify non-2xx", res.status);
+      return false;
+    }
     const data = (await res.json()) as { success?: boolean };
     return data.success === true;
-  } catch {
+  } catch (err) {
+    // Network error, timeout/abort, or unparseable body — all fail closed. A
+    // normal success:false (bad-token) rejection does NOT reach here, so this log
+    // marks an actual siteverify infrastructure problem, not bot traffic.
+    console.error("[contact] turnstile siteverify failed", String(err));
     return false;
   }
 }
@@ -101,7 +118,13 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
   const honeypot = typeof data.company === "string" ? data.company.trim() : "";
   if (honeypot) return json({ ok: true });
 
-  const name = typeof data.name === "string" ? data.name.trim() : "";
+  // Collapse any CR/LF run in `name` to a single space at the source so it can
+  // never be used for field-injection: `name` is interpolated UNESCAPED into the
+  // plain-text support body and the support email Subject, where an embedded
+  // newline could forge extra fields. (`email` is already whitespace-free via
+  // EMAIL_RE; `message` stays multi-line by design and is escaped/quoted wherever
+  // it is shown.)
+  const name = (typeof data.name === "string" ? data.name.trim() : "").replace(/[\r\n]+/g, " ");
   const email = typeof data.email === "string" ? data.email.trim() : "";
   const message = typeof data.message === "string" ? data.message.trim() : "";
 
@@ -113,13 +136,16 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
 
   // Turnstile: confirm the visitor is human before sending anything. Always on —
   // a missing/invalid token (or a verify failure) returns 400 and sends no mail.
-  // A real secret is required on production hosts; the always-pass TEST-secret
-  // fallback is allowed ONLY on non-production hosts (previews, localhost), so a
-  // forgotten prod secret fails closed (500) instead of silently disabling the gate.
+  // A real secret is required on every production-reachable host; the always-pass
+  // TEST-secret fallback is allowed ONLY on previews/localhost (see
+  // isPreviewOrLocalHost), so a forgotten prod secret fails closed (500) instead
+  // of silently disabling the gate.
   const turnstileToken = typeof data.turnstileToken === "string" ? data.turnstileToken : "";
-  const enforced = TURNSTILE_ENFORCED_HOSTS.has(new URL(request.url).hostname);
-  const turnstileSecret = env.TURNSTILE_SECRET_KEY || (enforced ? "" : TURNSTILE_TEST_SECRET);
+  const hostname = new URL(request.url).hostname;
+  const turnstileSecret =
+    env.TURNSTILE_SECRET_KEY || (isPreviewOrLocalHost(hostname) ? TURNSTILE_TEST_SECRET : "");
   if (!turnstileSecret) {
+    console.error("[contact] turnstile secret missing on enforced host", hostname);
     return json({ ok: false, error: "server_not_configured" }, 500);
   }
   const ip = request.headers.get("CF-Connecting-IP") || "";
@@ -131,6 +157,7 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
   if (!token) {
     // Misconfiguration — surface clearly so an unset Preview/Prod secret is
     // obvious during verification rather than failing silently.
+    console.error("[contact] postmark token missing");
     return json({ ok: false, error: "server_not_configured" }, 500);
   }
 
@@ -138,7 +165,7 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
   const from = env.CONTACT_FROM || "noreply@letsdog.nl";
 
   // Support notification — unchanged. This is the source of truth: the team must
-  // receive every submission.
+  // receive every submission, with the full message intact.
   const supportText =
     `Nieuw contactbericht via de website\n\n` +
     `Naam: ${name}\n` +
@@ -151,16 +178,25 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
     `<strong>E-mail:</strong> ${escapeHtml(email)}</p>` +
     `<p><strong>Bericht:</strong><br>${escapeHtml(message).replace(/\n/g, "<br>")}</p>`;
 
-  // Customer confirmation — a copy of their own message back to the submitter.
+  // Customer confirmation — a NEUTRAL acknowledgement back to the submitter. It
+  // deliberately does NOT echo the submitted message: the recipient (To) is
+  // user-supplied, so replaying user-supplied content from our verified sender
+  // would turn this into a branded-email amplification / phishing vector (#1).
   // Dutch, on-brand (lowercase "Let's dog"), plain-text + HTML. Best-effort: a
   // bounced confirmation must never regress the support send (see batch handling).
   const customerSubject = "We hebben je bericht ontvangen";
 
+  // The greeting still personalizes with the visitor's name, but capped at 20
+  // chars: enough for a real first name, while bounding how much attacker-controlled
+  // text can ride along in this branded email to a user-supplied recipient
+  // (defense-in-depth alongside the removed message echo, #1). The support email
+  // keeps the full name.
+  const greetingName = name.slice(0, 20).trimEnd();
+
   const customerText =
-    `Hoi ${name},\n\n` +
+    `Hoi ${greetingName},\n\n` +
     `Bedankt voor je bericht. We hebben het goed ontvangen en je hoort binnen ` +
-    `1 werkdag van ons. Hieronder staat een kopie van wat je ons stuurde.\n\n` +
-    `Jouw bericht:\n${message}\n\n` +
+    `1 werkdag van ons.\n\n` +
     `Tot snel,\n` +
     `Elien\n\n` +
     `Je ontvangt deze e-mail omdat je het contactformulier op letsdog.nl hebt ingevuld.\n` +
@@ -180,12 +216,8 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
           `<img src="${logoOrigin}/images/logo-white.png" alt="Let's dog" width="130" height="38" style="display:block;border:0;line-height:1;width:130px;height:auto;color:#ffffff;font-size:20px;font-weight:600;" />` +
         `</div>` +
         `<div style="padding:28px;color:#141414;">` +
-          `<p style="margin:0 0 16px;font-size:16px;line-height:1.7;">Hoi ${escapeHtml(name)},</p>` +
-          `<p style="margin:0 0 16px;font-size:16px;line-height:1.7;">Bedankt voor je bericht. We hebben het goed ontvangen en je hoort binnen 1 werkdag van ons. Hieronder staat een kopie van wat je ons stuurde.</p>` +
-          `<div style="background:#EFE8E4;border-radius:8px;padding:16px 18px;margin:0 0 20px;">` +
-            `<div style="color:#75876D;font-size:12px;font-weight:600;margin-bottom:8px;">Jouw bericht</div>` +
-            `<div style="color:#141414;font-size:15px;line-height:1.7;">${escapeHtml(message).replace(/\n/g, "<br>")}</div>` +
-          `</div>` +
+          `<p style="margin:0 0 16px;font-size:16px;line-height:1.7;">Hoi ${escapeHtml(greetingName)},</p>` +
+          `<p style="margin:0 0 16px;font-size:16px;line-height:1.7;">Bedankt voor je bericht. We hebben het goed ontvangen en je hoort binnen 1 werkdag van ons.</p>` +
           `<p style="margin:0;font-size:16px;line-height:1.7;">Tot snel,<br>Elien</p>` +
         `</div>` +
         `<div style="background:#162A0E;padding:20px 28px;">` +
@@ -228,13 +260,18 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
           MessageStream: "outbound",
         },
       ]),
+      // Fail closed if Postmark hangs — a stalled upstream must not tie up the
+      // Worker invocation until the platform limit.
+      signal: AbortSignal.timeout(10000),
     });
-  } catch {
+  } catch (err) {
+    console.error("[contact] postmark batch fetch failed", String(err));
     return json({ ok: false, error: "send_failed" }, 502);
   }
 
   // A non-2xx means Postmark rejected the whole batch (auth/payload) — nothing sent.
   if (!postmarkRes.ok) {
+    console.error("[contact] postmark batch non-2xx", postmarkRes.status);
     return json({ ok: false, error: "send_failed" }, 502);
   }
 
@@ -247,9 +284,21 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
   // (index 1) is intentionally ignored — a bounced confirmation is fine.
   let supportOk = false;
   try {
-    const results = (await postmarkRes.json()) as Array<{ ErrorCode?: number }>;
+    const results = (await postmarkRes.json()) as Array<{ ErrorCode?: number; Message?: string }>;
     supportOk = Array.isArray(results) && results[0]?.ErrorCode === 0;
-  } catch {
+    if (!supportOk) {
+      console.error(
+        "[contact] postmark support message not accepted",
+        results?.[0]?.ErrorCode,
+        results?.[0]?.Message,
+      );
+    }
+  } catch (err) {
+    // Either a malformed/non-JSON 200 body, or AbortSignal.timeout firing during
+    // the body read (headers arrived, body then stalled) — both fail closed. The
+    // label covers both so ops triage isn't sent chasing a malformed body when the
+    // real cause was a timeout (String(err) carries the actual SyntaxError/TimeoutError).
+    console.error("[contact] postmark batch result unreadable (parse or timeout)", String(err));
     supportOk = false;
   }
 
