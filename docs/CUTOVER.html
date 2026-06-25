@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNS Cutover Runbook — letsdog.nl → Cloudflare Pages</title>
+<style>
+  :root{
+    --green:#75876D; --beige:#EFE8E4; --black:#141414; --peach:#FFA580;
+    --dark-green:#162A0E; --blue:#A5C3E2;
+    --paper:#fbfaf8; --line:#e2dcd6; --muted:#6b675f;
+    --ok:#3f7d4e; --warn:#b9762f; --danger:#9e3b2f; --legal:#5b4b8a;
+    --radius:14px; --maxw:1040px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--black);font-family:var(--sans);
+    line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased}
+
+  /* ---------- top bar ---------- */
+  .topbar{position:sticky;top:0;z-index:50;background:var(--dark-green);color:#fff;
+    border-bottom:3px solid var(--green)}
+  .topbar .inner{max-width:var(--maxw);margin:0 auto;padding:.7rem 1.25rem;
+    display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+  .topbar h1{font-size:1.02rem;margin:0;font-weight:650;letter-spacing:.2px}
+  .topbar h1 span{opacity:.7;font-weight:400}
+  .progwrap{flex:1;min-width:160px;display:flex;align-items:center;gap:.6rem}
+  .progbar{flex:1;height:9px;background:rgba(255,255,255,.18);border-radius:99px;overflow:hidden}
+  .progfill{height:100%;width:0;background:var(--peach);transition:width .35s ease}
+  .progtxt{font-variant-numeric:tabular-nums;font-size:.82rem;opacity:.92;min-width:96px;text-align:right}
+  .btn{font:inherit;font-size:.8rem;border:1px solid rgba(255,255,255,.35);background:transparent;
+    color:#fff;padding:.32rem .7rem;border-radius:8px;cursor:pointer}
+  .btn:hover{background:rgba(255,255,255,.12)}
+
+  /* ---------- layout ---------- */
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:2rem 1.25rem 5rem;
+    display:grid;grid-template-columns:230px 1fr;gap:2.4rem;align-items:start}
+  nav.toc{position:sticky;top:74px;font-size:.86rem;border-right:1px solid var(--line);padding-right:1rem}
+  nav.toc strong{display:block;text-transform:uppercase;letter-spacing:.08em;font-size:.68rem;
+    color:var(--muted);margin:1.1rem 0 .35rem}
+  nav.toc a{display:block;color:var(--black);text-decoration:none;padding:.18rem .4rem;border-radius:6px;opacity:.85}
+  nav.toc a:hover{background:var(--beige);opacity:1}
+  main{min-width:0}
+
+  /* ---------- hero ---------- */
+  .hero{background:var(--dark-green);color:#fff;border-radius:var(--radius);padding:1.8rem 1.9rem;margin-bottom:1.6rem}
+  .hero h2{margin:.1rem 0 .5rem;font-size:1.7rem;line-height:1.2}
+  .hero p{margin:.4rem 0;opacity:.92}
+  .hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:.72rem;color:var(--peach);font-weight:600}
+  .hero code{background:rgba(255,255,255,.14);color:#fff;padding:.05em .4em;border-radius:5px}
+
+  h3.sec{font-size:1.32rem;margin:2.4rem 0 .4rem;padding-top:.6rem;scroll-margin-top:80px;
+    border-top:2px solid var(--line)}
+  h3.sec .num{display:inline-block;background:var(--green);color:#fff;border-radius:8px;
+    font-size:.85rem;padding:.05em .55em;margin-right:.55em;vertical-align:.12em}
+  h4{font-size:1.06rem;margin:1.5rem 0 .3rem;scroll-margin-top:80px}
+  p.lead{color:var(--muted);margin-top:.2rem}
+
+  /* ---------- cards / callouts ---------- */
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+    padding:1.1rem 1.25rem;margin:1rem 0;box-shadow:0 1px 0 rgba(20,20,20,.03)}
+  .callout{border-radius:var(--radius);padding:.95rem 1.15rem;margin:1rem 0;border:1px solid;
+    display:flex;gap:.75rem;align-items:flex-start}
+  .callout .ico{font-size:1.15rem;line-height:1.5;flex-shrink:0}
+  .callout p{margin:.2rem 0}
+  .callout.info{background:#f3f6fb;border-color:#cdddf0}
+  .callout.warn{background:#fbf3ea;border-color:#eac9a3}
+  .callout.danger{background:#fbeeec;border-color:#e6b7af}
+  .callout.legal{background:#f2eefb;border-color:#cabfe9}
+  .callout.ok{background:#eef6f0;border-color:#bcd9c4}
+  .callout strong.lbl{display:block;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.1rem}
+  .warn strong.lbl{color:var(--warn)} .danger strong.lbl{color:var(--danger)}
+  .legal strong.lbl{color:var(--legal)} .info strong.lbl{color:#2c6cb0} .ok strong.lbl{color:var(--ok)}
+
+  /* ---------- where-to-click breadcrumb ---------- */
+  .where{background:var(--beige);border-radius:10px;padding:.7rem .9rem;margin:.8rem 0;font-size:.92rem}
+  .where .crumbs{font-family:var(--mono);font-size:.86rem;margin-top:.25rem;line-height:1.9}
+  .where .crumbs b{background:#fff;border:1px solid var(--line);border-radius:6px;padding:.12em .5em;white-space:nowrap;display:inline-block}
+  .where .crumbs .arr{color:var(--green);font-weight:700;padding:0 .15em}
+  .where .tag{display:inline-block;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;
+    background:var(--green);color:#fff;border-radius:5px;padding:.1em .45em;margin-right:.4em;vertical-align:.08em}
+
+  /* ---------- field table ---------- */
+  table.fields{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:.92rem}
+  table.fields th,table.fields td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--line);vertical-align:top}
+  table.fields thead th{background:var(--dark-green);color:#fff;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
+  table.fields thead th:first-child{border-top-left-radius:9px}
+  table.fields thead th:last-child{border-top-right-radius:9px}
+  table.fields tbody tr:nth-child(even){background:#faf8f6}
+  table.fields td:first-child{font-weight:600;white-space:nowrap}
+  table.fields code{white-space:normal}
+
+  /* ---------- code ---------- */
+  code{font-family:var(--mono);font-size:.88em;background:var(--beige);padding:.08em .38em;border-radius:5px}
+  .cmd{position:relative;margin:.8rem 0}
+  .cmd pre{background:var(--black);color:#f4f1ec;border-radius:10px;padding:.9rem 1rem;overflow-x:auto;
+    font-family:var(--mono);font-size:.84rem;line-height:1.7;margin:0}
+  .cmd pre code{background:transparent;color:inherit;padding:0;font-size:inherit}
+  .cmd .copy{position:absolute;top:.5rem;right:.5rem;font:inherit;font-size:.72rem;
+    background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);
+    border-radius:6px;padding:.2rem .55rem;cursor:pointer}
+  .cmd .copy:hover{background:rgba(255,255,255,.22)}
+  .cmd .copy.done{background:var(--green);border-color:var(--green)}
+  .expect{color:var(--muted);font-size:.85rem;margin:.3rem 0 0}
+  .expect b{color:var(--ok)}
+
+  /* ---------- checklist steps ---------- */
+  ul.steps{list-style:none;padding:0;margin:.6rem 0}
+  ul.steps li{display:flex;gap:.65rem;align-items:flex-start;padding:.5rem .2rem;border-bottom:1px dashed var(--line)}
+  ul.steps li:last-child{border-bottom:none}
+  ul.steps input[type=checkbox]{margin-top:.35rem;width:1.05rem;height:1.05rem;accent-color:var(--green);flex-shrink:0;cursor:pointer}
+  ul.steps label{cursor:pointer}
+  ul.steps input:checked + label{opacity:.55;text-decoration:line-through;text-decoration-color:var(--green)}
+  ol.sub{margin:.5rem 0 .5rem 1.2rem;padding:0}
+  ol.sub li{margin:.3rem 0}
+
+  .gatebadge{display:inline-block;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+    border-radius:5px;padding:.12em .5em;margin-left:.4em;vertical-align:.1em}
+  .gatebadge.decision{background:#f2eefb;color:var(--legal);border:1px solid #cabfe9}
+  .gatebadge.dash{background:#eef6f0;color:var(--ok);border:1px solid #bcd9c4}
+
+  a{color:var(--green);text-decoration-color:#bcc7b4;text-underline-offset:2px}
+  hr{border:none;border-top:1px solid var(--line);margin:2rem 0}
+  footer{max-width:var(--maxw);margin:0 auto;padding:1rem 1.25rem 3rem;color:var(--muted);font-size:.82rem}
+  .pill{display:inline-block;font-size:.72rem;background:var(--beige);border:1px solid var(--line);
+    border-radius:99px;padding:.12em .7em;margin:.1em .2em .1em 0}
+
+  @media (max-width:820px){
+    .wrap{grid-template-columns:1fr;padding-top:1.2rem}
+    nav.toc{display:none}
+  }
+  @media print{
+    .topbar,nav.toc,.cmd .copy,.btn{display:none!important}
+    body{font-size:12px;background:#fff}
+    .wrap{display:block;padding:0}
+    .card,.callout,.hero{break-inside:avoid;box-shadow:none}
+    .cmd pre{background:#f3f1ec;color:#111;border:1px solid #ccc}
+    a{color:#111;text-decoration:underline}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="inner">
+    <h1>DNS Cutover <span>· letsdog.nl → Cloudflare Pages</span></h1>
+    <div class="progwrap">
+      <div class="progbar"><div class="progfill" id="progfill"></div></div>
+      <div class="progtxt" id="progtxt">0 / 0 done</div>
+    </div>
+    <button class="btn" onclick="window.print()">Print / PDF</button>
+    <button class="btn" id="resetbtn">Reset ticks</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <nav class="toc">
+    <strong>Runbook</strong>
+    <a href="#preflight">0 · Pre-flight gates</a>
+    <a href="#setup">1 · Dashboard setup</a>
+    <a href="#ratelimit">↳ Rate-limit rule</a>
+    <a href="#turnstile">↳ Turnstile</a>
+    <a href="#cutover">2 · The cutover</a>
+    <a href="#rollback">3 · Rollback</a>
+    <a href="#post">4 · Post-cutover</a>
+    <a href="#scope">5 · Out of scope</a>
+  </nav>
+
+  <main>
+    <div class="hero">
+      <div class="eyebrow">Operator runbook · keep this open while you work</div>
+      <h2>Flipping <code>letsdog.nl</code> + <code>www.letsdog.nl</code> to Cloudflare Pages</h2>
+      <p>Move both domains off the old WordPress site (SiteGround, <code>A 35.214.137.79</code>) onto the new Next.js site on Cloudflare Pages (<code>website-letsdog.pages.dev</code>).</p>
+      <p style="font-size:.86rem;opacity:.8;margin-top:.8rem">Your ticks are saved in this browser automatically. Every <b style="color:var(--peach)">dashboard</b> action below tells you exactly where to click and what to type. Source of truth for the prose is <code>docs/CUTOVER.md</code> in the repo — this page is the click-by-click version.</p>
+    </div>
+
+    <div class="callout info">
+      <div class="ico">🧭</div>
+      <div>
+        <strong class="lbl">Cloudflare changed its dashboard</strong>
+        <p>Cloudflare is rolling out a redesigned dashboard. Where the path differs, this runbook gives both: <span class="pill">New</span> the current “Security rules” layout and <span class="pill">Old</span> the classic “WAF” layout. Use whichever your account shows — the rule you create is identical.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h3 class="sec" id="preflight"><span class="num">0</span>Pre-flight gates — green before you touch DNS</h3>
+    <p class="lead">If any box here is unticked, stop and fix it before flipping DNS. Three items need a real decision or a dashboard action — they’re flagged.</p>
+
+    <div class="card">
+      <ul class="steps">
+        <li><input type="checkbox" id="pf-deploy"><label for="pf-deploy"><b>Production deploy is green.</b> The homepage renders on <code>website-letsdog.pages.dev</code>.
+          <div class="cmd"><button class="copy">Copy</button><pre><code>curl -sI https://website-letsdog.pages.dev/ | head -3   # HTTP/2 200</code></pre></div></label></li>
+
+        <li><input type="checkbox" id="pf-pages"><label for="pf-pages"><b>All new pages serve 200:</b> <code>/retour/</code>, <code>/ip-overdrachtsverklaring/</code>, <code>/privacybeleid/</code>, <code>/cookieverklaring/</code>, <code>/ai-gebruiksvoorwaarden/</code>.</label></li>
+
+        <li><input type="checkbox" id="pf-redir"><label for="pf-redir"><b>Legacy redirect works.</b>
+          <div class="cmd"><button class="copy">Copy</button><pre><code>curl -sI https://website-letsdog.pages.dev/privacy-policy/   # 301 → Location: /privacybeleid/</code></pre></div></label></li>
+
+        <li><input type="checkbox" id="pf-rename"><label for="pf-rename"><b>Renamed-route redirect works.</b> <code>/puppyagenda/</code> (and bare <code>/puppyagenda</code>) → <code>301</code> → <code>/puppycursus/</code>.</label></li>
+
+        <li><input type="checkbox" id="pf-ga4"><label for="pf-ga4"><b>GA4 fires on production.</b> GA4 → Realtime shows <code>hostname=website-letsdog.pages.dev</code> with <code>debug_mode=true</code>.</label></li>
+
+        <li><input type="checkbox" id="pf-postmark"><label for="pf-postmark"><b>Contact form delivers.</b> <code>POSTMARK_SERVER_TOKEN</code> is set in Cloudflare Pages (Production <em>and</em> Preview) and <code>CONTACT_FROM</code> is a Postmark-verified sender. Submit the form on production and confirm it lands at <code>support@letsdog.nl</code> (Postmark → Activity). Without the token, <code>/api/contact</code> returns 500.</label></li>
+
+        <li><input type="checkbox" id="pf-turnstile"><label for="pf-turnstile"><b>Turnstile is live</b> on the contact form. <a href="#turnstile">Full steps below ↓</a> <span class="gatebadge dash">dashboard</span></label></li>
+
+        <li><input type="checkbox" id="pf-ratelimit"><label for="pf-ratelimit"><b>Rate-limit rule is created</b> on the contact endpoint. <a href="#ratelimit">Full steps below ↓</a> <span class="gatebadge dash">dashboard</span></label></li>
+
+        <li><input type="checkbox" id="pf-failclosed"><label for="pf-failclosed"><b>Turnstile fail-closed covers all production aliases.</b> Setting <code>TURNSTILE_SECRET_KEY</code> in the Production scope (in the Turnstile step) makes every <code>*.website-letsdog.pages.dev</code> hash/branch alias use the real secret. After cutover, a tokenless <code>POST</code> to the apex must return <code>400 captcha</code>, not <code>200</code>.</label></li>
+
+        <li><input type="checkbox" id="pf-cookiebot"><label for="pf-cookiebot"><b>Cookiebot Domain Group</b> includes both <code>www.letsdog.nl</code> and <code>letsdog.nl</code>. Verify at <code>manage.cookiebot.com</code> → Settings → Domain Groups.</label></li>
+
+        <li><input type="checkbox" id="pf-zone"><label for="pf-zone"><b>You have the Cloudflare dashboard</b> and the <code>letsdog.nl</code> zone is in your account.</label></li>
+      </ul>
+    </div>
+
+    <div class="callout legal">
+      <div class="ico">⚖️</div>
+      <div>
+        <strong class="lbl">Decision gate — legal sign-off on pre-consent analytics</strong>
+        <p>GA4 + PostHog fire on <em>every</em> visit <strong>without</strong> Cookiebot consent gating (deliberate — see the “consent theater” note in <code>components/analytics/ga4.tsx</code>). The product owner accepted this operationally, but firing non-essential analytics before consent implicates <strong>ePrivacy Directive Art. 5(3)</strong> + <strong>GDPR Art. 6</strong> — that’s a <em>legal</em> call, not a product one.</p>
+        <p>Get explicit, dated sign-off from someone with <strong>legal authority</strong> before the domains flip. If legal says “gate it,” restore gating via the one-line change in <code>ga4.tsx</code> first.</p>
+        <p style="margin-top:.5rem"><label style="cursor:pointer"><input type="checkbox" id="pf-legal" style="accent-color:var(--legal)"> <b>Signed off</b> → Outcome: ______________________ &nbsp; Date: __________</label></p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h3 class="sec" id="setup"><span class="num">1</span>Dashboard setup — do these in Cloudflare before the flip</h3>
+    <p class="lead">Two configuration tasks must exist before (or at) the moment you bind the domains: the abuse <strong>rate-limit rule</strong> and the <strong>Turnstile</strong> keys. The <code>www → apex</code> redirect and HSTS/CAA are in <a href="#post">§4 Post-cutover</a>.</p>
+
+    <!-- ---------- RATE LIMIT (the flagged one) ---------- -->
+    <h4 id="ratelimit">🛡️ Rate-limiting rule on <code>/api/contact</code></h4>
+    <div class="callout warn">
+      <div class="ico">💡</div>
+      <div>
+        <strong class="lbl">Why this rule exists</strong>
+        <p>The contact Function sends one branded confirmation email per Turnstile solve to an <em>attacker-chosen</em> address. Turnstile stops headless bots; this rule bounds how fast a <em>single IP</em> can hammer the endpoint even with valid tokens. It is the per-IP ceiling on a branded-email amplifier.</p>
+      </div>
+    </div>
+
+    <div class="where">
+      <span class="tag">New dashboard</span> Where to click:
+      <div class="crumbs"><b>dash.cloudflare.com</b> <span class="arr">→</span> <b>select the letsdog.nl zone</b> <span class="arr">→</span> <b>Security</b> <span class="arr">→</span> <b>Security rules</b> <span class="arr">→</span> <b>Create rule</b> <span class="arr">→</span> <b>Rate limiting rules</b></div>
+      <div class="crumbs" style="margin-top:.5rem"><span class="tag">Old dashboard</span> <b>letsdog.nl zone</b> <span class="arr">→</span> <b>Security</b> <span class="arr">→</span> <b>WAF</b> <span class="arr">→</span> <b>Rate limiting rules</b> <span class="arr">→</span> <b>Create rule</b></div>
+    </div>
+
+    <div class="callout ok">
+      <div class="ico">✅</div>
+      <div>
+        <strong class="lbl">Your zone is on the Free plan — confirmed from billing</strong>
+        <p>So the recipe below is <em>your</em> exact recipe. The Free plan gives <strong>exactly one</strong> rate-limiting rule and locks the matching field, period, timeout, and counting — already accounted for here. (The <code>Workers Paid · $5/mo</code> line on your bill is the Workers <em>platform</em> add-on, <strong>not</strong> a zone upgrade — the <code>letsdog.nl</code> zone plan itself is Free. A paid <em>zone</em> plan would unlock 60&nbsp;s+ periods, IP-with-NAT, and a <code>method</code> clause — none of which you need here.)</p>
+      </div>
+    </div>
+
+    <p>Fill the form top to bottom:</p>
+    <table class="fields">
+      <thead><tr><th>Form field</th><th>What to enter</th></tr></thead>
+      <tbody>
+        <tr><td>Rule name</td><td><code>contact-endpoint-abuse-limit</code></td></tr>
+        <tr><td>If incoming requests match</td><td>Field = <b>URI Path</b>, Operator = <b>equals</b>, Value = <code>/api/contact</code><br><span style="color:var(--muted);font-size:.86rem">Free matches on <b>Path</b> only, so you can’t add a <code>method = POST</code> clause — that’s fine, only POST is meaningful to this path.</span></td></tr>
+        <tr><td>With the same characteristics</td><td><b>IP</b> (fixed on Free — groups the request counter per visitor)</td></tr>
+        <tr><td>When rate exceeds → Requests</td><td><code>5</code></td></tr>
+        <tr><td>When rate exceeds → Period</td><td><b>10 seconds</b> <span style="color:var(--muted);font-size:.86rem">(the only period Free offers)</span></td></tr>
+        <tr><td>Then take action</td><td><b>Managed Challenge</b> (recommended — lets real humans through, stops bots). Use <b>Block</b> for a hard stop.</td></tr>
+        <tr><td>Duration (mitigation timeout)</td><td><b>10 seconds</b> (fixed on Free) — how long the action sticks after the threshold trips</td></tr>
+      </tbody>
+    </table>
+    <p>Then <b>Deploy</b> (or <b>Save and Deploy</b>). <b>5 requests / 10&nbsp;s / IP</b> is a tight burst ceiling — ample headroom for a human (who submits once or twice), and it shuts down rapid-fire amplification from a single address.</p>
+
+    <div class="callout danger">
+      <div class="ico">⚠️</div>
+      <div>
+        <strong class="lbl">What this rule does NOT cover</strong>
+        <p>A per-IP limit can’t see a <strong>distributed</strong> campaign — many IPs, one email each, all aimed at one victim’s inbox. The real per-recipient bound (a KV / Durable-Object counter keyed on the lowercased recipient address) is a deferred follow-up, not this rule. Don’t treat this as full protection against a determined distributed attacker.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <b>Verify it works</b> — <em>after</em> the domain is bound &amp; proxied (the rule lives on the <code>letsdog.nl</code> zone, so it only applies once traffic flows through the orange-cloud proxy; it will <em>not</em> fire on <code>*.pages.dev</code>). Fire a rapid burst and watch the status codes change:
+      <div class="cmd"><button class="copy">Copy</button><pre><code>for i in $(seq 1 15); do
+  curl -s -o /dev/null -w "%{http_code}\n" -X POST https://letsdog.nl/api/contact \
+    -H 'content-type: application/json' --data '{}'
+done</code></pre></div>
+      <p class="expect">Normal validation rejects return <code>400</code>. Once the rule trips you should see <b>403</b> (Managed Challenge interstitial) or <b>429</b> (Block) within the window. Counting has a few-seconds lag, so fire all 15 quickly. <b>Then untrip it</b> by waiting out the duration before real traffic arrives.</p>
+      <ul class="steps" style="margin-top:.6rem">
+        <li><input type="checkbox" id="rl-created"><label for="rl-created">Rule created and deployed on the <code>letsdog.nl</code> zone</label></li>
+        <li><input type="checkbox" id="rl-verified"><label for="rl-verified">Verified the burst gets challenged/blocked (post-bind)</label></li>
+      </ul>
+    </div>
+
+    <div class="callout info">
+      <div class="ico">🔔</div>
+      <div>
+        <strong class="lbl">Optional — alert on abnormal contact traffic</strong>
+        <p>Granular per-path alerting needs higher plans / Logpush, so on Free/Pro the practical monitor is manual: <b>letsdog.nl zone → Security → Events</b> (new dashboard: <b>Security → Analytics</b>), filter on <code>Path = /api/contact</code>. Watch for <code>200</code> spikes (successful amplification) and <code>400</code>/<code>captcha</code> spikes (token farming). The Function’s <code>[contact] …</code> structured logs are the audit trail. If your plan exposes it, add a push alert under account <b>Notifications → Add</b>. Postmark → Activity is your second signal — a sudden confirmation-email spike means abuse.</p>
+        <ul class="steps" style="margin-top:.4rem">
+          <li><input type="checkbox" id="rl-monitor"><label for="rl-monitor">Know where to watch: Security → Events filtered to <code>/api/contact</code> + Postmark Activity</label></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ---------- TURNSTILE ---------- -->
+    <h4 id="turnstile">🧩 Turnstile widget + Pages env vars</h4>
+    <div class="where">
+      <span class="tag">Step A — make the widget</span>
+      <div class="crumbs"><b>dash.cloudflare.com</b> <span class="arr">→</span> <b>Turnstile</b> <span class="arr">→</span> <b>Add widget</b></div>
+    </div>
+    <ol class="sub">
+      <li>Widget mode: <b>Managed</b>.</li>
+      <li>Hostnames: add <code>letsdog.nl</code>, <code>www.letsdog.nl</code>, and <code>website-letsdog.pages.dev</code>.</li>
+      <li>Create — copy the <b>Site Key</b> (public) and <b>Secret Key</b> (private).</li>
+    </ol>
+    <div class="where">
+      <span class="tag">Step B — wire the keys into Pages</span>
+      <div class="crumbs"><b>Workers &amp; Pages</b> <span class="arr">→</span> <b>website-letsdog</b> <span class="arr">→</span> <b>Settings</b> <span class="arr">→</span> <b>Variables and secrets</b></div>
+    </div>
+    <table class="fields">
+      <thead><tr><th>Variable</th><th>Type</th><th>Scope</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td><code>NEXT_PUBLIC_TURNSTILE_SITE_KEY</code></td><td><b>Plaintext</b> (must be inlined into the client bundle at build)</td><td>Production</td><td>the Site Key</td></tr>
+        <tr><td><code>TURNSTILE_SECRET_KEY</code></td><td><b>Secret</b> (encrypted, server-only)</td><td>Production</td><td>the Secret Key</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warn">
+      <div class="ico">🧪</div>
+      <div>
+        <strong class="lbl">Leave the Preview scope unset</strong>
+        <p>Don’t set these in the Preview scope — branch previews fall back to Cloudflare’s always-pass <b>test</b> keys (the real keys would fail on <code>&lt;branch&gt;.pages.dev</code> hosts). A production host with the secret unset <b>fails closed</b> (form returns 500), so set the Production keys before/at merge. After setting, re-deploy and confirm the widget renders and a real submission succeeds.</p>
+        <ul class="steps" style="margin-top:.4rem">
+          <li><input type="checkbox" id="ts-widget"><label for="ts-widget">Managed widget created with all three hostnames</label></li>
+          <li><input type="checkbox" id="ts-keys"><label for="ts-keys">Both Production vars set (site key plaintext, secret encrypted); Preview left unset</label></li>
+          <li><input type="checkbox" id="ts-verified"><label for="ts-verified">Widget renders + real submission succeeds on production</label></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h3 class="sec" id="cutover"><span class="num">2</span>The cutover — bind the domains &amp; verify</h3>
+
+    <h4>Step 2.1 — Bind both custom domains to the Pages project</h4>
+    <div class="where">
+      <div class="crumbs"><b>Workers &amp; Pages</b> <span class="arr">→</span> <b>website-letsdog</b> <span class="arr">→</span> <b>Custom domains</b> <span class="arr">→</span> <b>Set up a custom domain</b></div>
+    </div>
+    <ol class="sub">
+      <li>Enter <code>letsdog.nl</code> → Continue.</li>
+      <li>Cloudflare detects the existing DNS record on the zone and prompts you to <b>update it</b> (replacing the WordPress <code>A</code> record with a CNAME to Pages). Confirm.</li>
+      <li>Repeat: <b>Set up a custom domain</b> → <code>www.letsdog.nl</code> → Continue → confirm the DNS update.</li>
+    </ol>
+    <div class="callout info"><div class="ico">🟠</div><div><p>Both records should be <b>Proxied</b> (orange cloud) by default — keep them proxied for SSL, caching, DDoS protection, <em>and</em> so your rate-limit rule applies.</p></div></div>
+    <ul class="steps"><li><input type="checkbox" id="cut-bind"><label for="cut-bind">Both <code>letsdog.nl</code> and <code>www.letsdog.nl</code> bound &amp; proxied</label></li></ul>
+
+    <h4>Step 2.2 — Wait for SSL provisioning</h4>
+    <p>Both custom domains move <code>Initializing</code> → <code>Verifying</code> → <code>Active</code>. Usually under 30 s, occasionally up to 2 min. <b>Do not proceed</b> until both show <code>Active</code>.</p>
+    <ul class="steps"><li><input type="checkbox" id="cut-ssl"><label for="cut-ssl">Both domains show <code>Active</code></label></li></ul>
+
+    <h4>Step 2.3 — Verify HTTP responses</h4>
+    <div class="cmd"><button class="copy">Copy</button><pre><code># Both should return HTTP/2 200 with server: cloudflare
+curl -sI https://www.letsdog.nl/ | head -5
+curl -sI https://letsdog.nl/ | head -5
+
+# Should return 301 with Location: /privacybeleid/
+curl -sI https://www.letsdog.nl/privacy-policy/ | grep -iE "^(HTTP|location):"
+
+# Should return 200
+curl -sI https://www.letsdog.nl/retour/ | head -3
+curl -sI https://www.letsdog.nl/ip-overdrachtsverklaring/ | head -3</code></pre></div>
+    <p class="expect">If any fail, jump to <a href="#rollback">§3 Rollback</a>.</p>
+    <ul class="steps"><li><input type="checkbox" id="cut-http"><label for="cut-http">All HTTP checks pass on the real domains</label></li></ul>
+
+    <h4>Step 2.4 — Verify GA4 firing on the real domain</h4>
+    <ol class="sub">
+      <li>Open <code>https://www.letsdog.nl/</code> in an <b>incognito</b> window.</li>
+      <li>DevTools → Network → filter <code>g/collect</code>. Reload — you should see <code>https://www.google-analytics.com/g/collect?...&amp;en=page_view</code>.</li>
+      <li><b>Important:</b> that request must <b>NOT</b> carry a <code>debug_mode</code> param — production hostnames are in the <code>PROD_HOSTS</code> allow-list, so events fire normally (not as debug).</li>
+      <li>GA4 → Realtime → confirm your session with hostname <code>www.letsdog.nl</code>. Click “Start gratis” and check Realtime for a <code>cta_clicked</code> event.</li>
+    </ol>
+    <ul class="steps"><li><input type="checkbox" id="cut-ga4"><label for="cut-ga4">GA4 fires on the real domain with no <code>debug_mode</code></label></li></ul>
+
+    <h4>Step 2.5 — Tidy GA4 cross-domain config (only if you added a staging subdomain)</h4>
+    <p>Skip if you used <code>*.pages.dev</code> only. Otherwise: <b>GA4 → Admin → Data Streams → “Website The Brink” → Configure tag settings → Configure your domains</b> → remove anything that isn’t <code>www.letsdog.nl</code>, <code>keuzehulp.letsdog.nl</code>, <code>agenda.letsdog.nl</code>, or <code>app.letsdog.nl</code>.</p>
+    <ul class="steps"><li><input type="checkbox" id="cut-ga4clean"><label for="cut-ga4clean">GA4 cross-domain list contains only real LD hosts</label></li></ul>
+
+    <h4>Step 2.6 — Notify the dev agency about WordPress retirement</h4>
+    <p>Project decision: <b>we do not sunset the old WordPress site ourselves</b> — that’s the dev agency’s job. Tell them: <code>letsdog.nl</code> + <code>www.letsdog.nl</code> now resolve to Cloudflare Pages; the WP instance at <code>35.214.137.79</code> no longer receives DNS traffic for those domains; they can retire/archive it at their convenience.</p>
+    <ul class="steps"><li><input type="checkbox" id="cut-notify"><label for="cut-notify">Dev agency notified</label></li></ul>
+
+    <!-- ============================================================ -->
+    <h3 class="sec" id="rollback"><span class="num">3</span>Rollback</h3>
+    <div class="callout danger">
+      <div class="ico">🚨</div>
+      <div>
+        <strong class="lbl">If something breaks after Step 2.3/2.4 and you can’t fix forward fast</strong>
+        <ol class="sub" style="margin-top:.2rem">
+          <li>Cloudflare → <b>DNS</b> → find the records for <code>letsdog.nl</code> and <code>www.letsdog.nl</code>.</li>
+          <li>Edit each → change back to an <b><code>A</code> record</b> pointing to <code>35.214.137.79</code> (the old WordPress IP).</li>
+          <li>DNS propagation inside Cloudflare is near-instant — within ~60 s, <code>www.letsdog.nl</code> serves WordPress again.</li>
+          <li>In <b>Custom domains</b> for the Pages project, remove <code>www.letsdog.nl</code> and <code>letsdog.nl</code> so future deploys don’t re-claim them.</li>
+        </ol>
+        <p style="margin-top:.5rem">The Firebase backup is gone (deleted after migration), so WordPress is the <b>only</b> fallback. Don’t delete the WP install until you’re confident in Cloudflare for at least <b>2 weeks</b>.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h3 class="sec" id="post"><span class="num">4</span>Post-cutover — redirect, HSTS, CAA, search, cleanup</h3>
+    <p class="lead">These are DNS- or live-domain-gated, so they happen at/after the flip. Canonical host is the apex <code>letsdog.nl</code> (the build bakes <code>metadataBase = https://letsdog.nl</code>), so make <code>www</code> bounce to it.</p>
+
+    <h4>4.1 — Redirect rule: <code>www</code> → apex (301) <span class="gatebadge dash">dashboard</span></h4>
+    <div class="where">
+      <div class="crumbs"><b>letsdog.nl zone</b> <span class="arr">→</span> <b>Rules</b> <span class="arr">→</span> <b>Redirect Rules</b> <span class="arr">→</span> <b>Create rule</b></div>
+    </div>
+    <table class="fields">
+      <thead><tr><th>Field</th><th>What to enter</th></tr></thead>
+      <tbody>
+        <tr><td>Rule name</td><td><code>www-to-apex</code></td></tr>
+        <tr><td>If incoming requests match</td><td><b>Custom filter expression</b> → Field <b>Hostname</b>, Operator <b>equals</b>, Value <code>www.letsdog.nl</code></td></tr>
+        <tr><td>Then → Type</td><td><b>Dynamic</b></td></tr>
+        <tr><td>Expression (URL)</td><td><code>concat("https://letsdog.nl", http.request.uri.path)</code></td></tr>
+        <tr><td>Status code</td><td><b>301</b></td></tr>
+        <tr><td>Preserve query string</td><td><b>On</b></td></tr>
+      </tbody>
+    </table>
+    <p><code>_redirects</code> can’t match on hostname, so this must be a zone rule. Verify:</p>
+    <div class="cmd"><button class="copy">Copy</button><pre><code>curl -sI https://www.letsdog.nl/prijzen/ | grep -iE '^(HTTP|location)'   # 301 → https://letsdog.nl/prijzen/</code></pre></div>
+    <ul class="steps">
+      <li><input type="checkbox" id="post-redirect"><label for="post-redirect"><code>www → apex</code> redirect rule created &amp; verified</label></li>
+      <li><input type="checkbox" id="post-gsc"><label for="post-gsc">Register <b>both</b> properties in Google Search Console (<code>https://letsdog.nl</code> + <code>https://www.letsdog.nl</code>), then submit <code>https://letsdog.nl/sitemap.xml</code> to the apex property</label></li>
+    </ul>
+
+    <h4>4.2 — HSTS upgrade (effectively irreversible — gate on an audit) <span class="gatebadge dash">dashboard</span></h4>
+    <div class="callout warn">
+      <div class="ico">🔒</div>
+      <div>
+        <strong class="lbl">Confirm every subdomain is HTTPS-only first</strong>
+        <p>Make sure <b>every</b> <code>*.letsdog.nl</code> subdomain that must stay reachable is HTTPS-only (<code>app</code>, <code>keuzehulp</code>, <code>agenda</code>, …). <b>Only then</b> enable the zone-wide toggle with <b><code>includeSubDomains; preload</code></b>: <b>letsdog.nl zone → SSL/TLS → Edge Certificates → HTTP Strict Transport Security (HSTS)</b>. RFC 6797 preload is hard to undo. The basic <code>max-age=31536000</code> already ships via <code>public/_headers</code>.</p>
+      </div>
+    </div>
+    <ul class="steps">
+      <li><input type="checkbox" id="post-hsts"><label for="post-hsts">Subdomains audited HTTPS-only, then HSTS <code>includeSubDomains; preload</code> enabled</label></li>
+      <li><input type="checkbox" id="post-caa"><label for="post-caa">Add <b>CAA</b> DNS records (zone → <b>DNS → Records → Add record → Type CAA</b>) so only your CAs can issue certs — pick the CAs Cloudflare uses</label></li>
+    </ul>
+
+    <h4>4.3 — Verify the spec artifacts on the real domain</h4>
+    <div class="cmd"><button class="copy">Copy</button><pre><code>U="https://letsdog.nl"
+curl -sI $U/ | grep -iE 'strict-transport|x-frame|content-security|permissions-policy|^link'
+curl -s  $U/robots.txt | grep -i sitemap          # Sitemap: https://letsdog.nl/sitemap.xml
+curl -s  $U/sitemap.xml | grep -c '&lt;loc&gt;'          # 12
+curl -sI $U/.well-known/security.txt | head -1     # 200
+curl -sI $U/manifest.webmanifest | head -1         # 200
+curl -sI $U/llms.txt | head -1                     # 200
+curl -s  $U/prijzen/ | grep -oE 'rel="canonical" href="[^"]*"'   # apex, trailing slash</code></pre></div>
+    <ul class="steps">
+      <li><input type="checkbox" id="post-spec"><label for="post-spec">Spec curls pass; ran the spec MCP <code>audit_url("https://letsdog.nl")</code> + required-items checklist</label></li>
+      <li><input type="checkbox" id="post-index"><label for="post-index">Apex is <b>indexable</b> (no stray <code>X-Robots-Tag: noindex</code> on <code>letsdog.nl</code>)</label></li>
+    </ul>
+
+    <h4>4.4 — Funnel analytics at go-live (GA4 + PostHog)</h4>
+    <ul class="steps">
+      <li><input type="checkbox" id="fa-crossdomain"><label for="fa-crossdomain">Add <code>app.letsdog.nl</code> (+ the production checkout host) to GA4 cross-domain “Configure your domains” so www→app→checkout counts as one session</label></li>
+      <li><input type="checkbox" id="fa-keyevents"><label for="fa-keyevents">Mark GA4 <b>key events</b> (<code>begin_checkout</code>, <code>contact_form_submitted</code>, optionally <code>cta_clicked</code>) + map the Google Ads conversion actions</label></li>
+      <li><input type="checkbox" id="fa-internal"><label for="fa-internal">Set the GA4 “Internal Traffic” data filter to <b>Active</b> (pairs with the <code>traffic_type:"internal"</code> sent off non-prod hostnames)</label></li>
+      <li><input type="checkbox" id="fa-posthog"><label for="fa-posthog">Confirm the PostHog cross-subdomain cookie has <code>Domain=.letsdog.nl</code> on the apex; coordinate <code>app.letsdog.nl</code> to init the same project (143695) and <code>identify('wp:&lt;id&gt;', { email })</code> on login</label></li>
+    </ul>
+
+    <h4>4.5 — Cleanup (T+2–4 weeks)</h4>
+    <ul class="steps">
+      <li><input type="checkbox" id="cl-pagesdev"><label for="cl-pagesdev">Remove the <code>*.pages.dev</code> URL from internal docs / Slack where it was shared during staging</label></li>
+      <li><input type="checkbox" id="cl-cookiebot"><label for="cl-cookiebot">If you added a staging hostname to the Cookiebot Domain Group, remove it (avoid license-cost surprises)</label></li>
+      <li><input type="checkbox" id="cl-consent"><label for="cl-consent">Re-confirm the consent posture matches the legal sign-off from §0 (gating off vs on, via the one-liner in <code>ga4.tsx</code>)</label></li>
+      <li><input type="checkbox" id="cl-audit"><label for="cl-audit">Audit GA4 Realtime + standard reports for odd traffic from the migration window</label></li>
+      <li><input type="checkbox" id="cl-stream"><label for="cl-stream">Delete the orphaned <code>Website</code> GA4 data stream (ID <code>14274309491</code>) ~24h after Firebase site deletion</label></li>
+    </ul>
+
+    <!-- ============================================================ -->
+    <h3 class="sec" id="scope"><span class="num">5</span>Out of scope (intentionally)</h3>
+    <div class="card">
+      <ul style="margin:0;padding-left:1.2rem">
+        <li><b>Firebase teardown</b> — the <code>website-letsdog</code> Firebase Hosting site was deleted right after the Pages prod deploy went green.</li>
+        <li><b>WordPress decommission</b> — handed to the dev agency.</li>
+        <li><b>UTM-source params on CTAs</b> — separate follow-up PR after cutover.</li>
+        <li><b>Markdown content refactor</b> — separate follow-up PR after cutover.</li>
+        <li><b><code>*.pages.dev</code> indexing</b> — no dashboard rule; the baked apex canonical consolidates it once the apex is live.</li>
+      </ul>
+    </div>
+  </main>
+</div>
+
+<footer>
+  Generated from <code>docs/CUTOVER.md</code> · open this file in any browser · your progress is stored locally in this browser only.
+  Dashboard nav verified against Cloudflare docs. The <code>letsdog.nl</code> zone is on the <b>Free</b> plan (confirmed from billing 2026-06-25): 1 rate-limit rule, 10&nbsp;s period/timeout, IP counting, Path-only matching.
+</footer>
+
+<script>
+(function(){
+  var KEY = "ld-cutover-v1";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('input[type=checkbox]'));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e){ saved = {}; }
+
+  function persist(){
+    var state = {};
+    boxes.forEach(function(b){ if(b.checked) state[b.id] = 1; });
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){}
+  }
+  function updateProgress(){
+    var total = boxes.length;
+    var done = boxes.filter(function(b){ return b.checked; }).length;
+    var pct = total ? Math.round(done/total*100) : 0;
+    document.getElementById('progfill').style.width = pct + "%";
+    document.getElementById('progtxt').textContent = done + " / " + total + " done";
+  }
+  boxes.forEach(function(b){
+    if(saved[b.id]) b.checked = true;
+    b.addEventListener('change', function(){ persist(); updateProgress(); });
+  });
+  updateProgress();
+
+  document.getElementById('resetbtn').addEventListener('click', function(){
+    if(!confirm("Clear all ticked steps in this browser?")) return;
+    boxes.forEach(function(b){ b.checked = false; });
+    try { localStorage.removeItem(KEY); } catch(e){}
+    updateProgress();
+  });
+
+  // copy buttons
+  Array.prototype.slice.call(document.querySelectorAll('.cmd .copy')).forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var code = btn.parentElement.querySelector('code');
+      var text = code ? code.innerText : "";
+      navigator.clipboard.writeText(text).then(function(){
+        var old = btn.textContent; btn.textContent = "Copied ✓"; btn.classList.add('done');
+        setTimeout(function(){ btn.textContent = old; btn.classList.remove('done'); }, 1400);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
