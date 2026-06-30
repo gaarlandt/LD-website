@@ -39,7 +39,7 @@ const faqs = [
   },
   {
     q: "Krijg ik mijn geld terug als ik snel opzeg?",
-    a: "Bij een jaarabonnement (Early Member): ja, binnen 7 dagen. Je zegt op via de accountinstellingen en wij storten het volledige bedrag automatisch binnen 14 dagen terug. Bij het maandabonnement (Flexibel) is geen restitutie mogelijk, je kunt wel elke maand opzeggen zodat de volgende maand niet wordt afgeschreven.",
+    a: "Bij een jaarabonnement (Early Member) wordt het volledige bedrag pas na 7 dagen automatisch afgeschreven. Zeg je binnen die 7 dagen op via de accountinstellingen? Dan gaat die afschrijving niet door — je betaalt dus niets en er valt ook niets terug te storten. Bij het maandabonnement (Flexibel) is geen restitutie mogelijk, je kunt wel elke maand opzeggen zodat de volgende maand niet wordt afgeschreven.",
   },
 ];
 
