@@ -34,12 +34,16 @@ const faqs = [
     a: "Betaling verloopt via Mollie. Je kunt betalen met iDEAL en creditcard.",
   },
   {
+    q: "Waarom wordt er eerst €0,10 afgeschreven?",
+    a: "Om je abonnement automatisch te kunnen verlengen, zetten we via Mollie een doorlopende machtiging op. iDEAL ondersteunt zelf geen automatische incasso, daarom doen we een eenmalige verificatiebetaling van €0,10 om je betaalmethode te activeren. Daarna wordt het abonnementsbedrag automatisch afgeschreven — bij Early Member pas na 7 dagen.",
+  },
+  {
     q: "Wat als het toch niet bij jullie past?",
-    a: "Je kunt je abonnement op elk moment opzeggen via de accountinstellingen in de app, geen omweg, geen ingewikkelde procedure. Bij een jaarabonnement geldt bovendien 7 dagen geld-terug-garantie: zeg je binnen 7 dagen op, dan krijg je het volledige bedrag automatisch terug. Het maandabonnement is niet restitueerbaar, maar je kunt elke maand opzeggen.",
+    a: "Je kunt je abonnement op elk moment opzeggen via de accountinstellingen in de app. Bij een jaarabonnement (Early Member) wordt het volledige bedrag pas na 7 dagen afgeschreven: zeg je binnen die 7 dagen op, dan gaat de afschrijving niet door en betaal je niets. Het maandabonnement is niet restitueerbaar, maar je kunt elke maand opzeggen.",
   },
   {
     q: "Krijg ik mijn geld terug als ik snel opzeg?",
-    a: "Bij een jaarabonnement (Early Member) wordt het volledige bedrag pas na 7 dagen automatisch afgeschreven. Zeg je binnen die 7 dagen op via de accountinstellingen? Dan gaat die afschrijving niet door — je betaalt dus niets en er valt ook niets terug te storten. Bij het maandabonnement (Flexibel) is geen restitutie mogelijk, je kunt wel elke maand opzeggen zodat de volgende maand niet wordt afgeschreven.",
+    a: "Bij een jaarabonnement (Early Member) wordt het volledige bedrag pas na 7 dagen automatisch afgeschreven. Zeg je binnen die 7 dagen op via de accountinstellingen? Dan gaat die afschrijving niet door — je betaalt dus niets en er valt ook niets terug te storten. Bij het maandabonnement (Flexibel) is geen restitutie mogelijk, je kunt wel elke maand opzeggen zodat er de volgende maand niets wordt afgeschreven.",
   },
 ];
 
