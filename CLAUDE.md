@@ -96,6 +96,7 @@ Vitest (Node environment) covers the server-side + pure logic the browser previe
 - **Tailwind ignores Markdown** (`@source not "../**/*.md"` in `app/globals.css`): Tailwind v4 auto-scans the repo for class candidates, so class-like prose in docs (e.g. a literal `bg-[var(--ld-*)]` in a plan) generates a malformed utility — a **fatal 500 in `next dev`**, only a warning in `next build`. Keep real classes in `.tsx`/`.ts`; don't drop that `@source not` line.
 - **Responsive**: Mobile-first, `md:` and `lg:` breakpoints
 - **Nav hover**: Brand green underline animates on hover via `after:` pseudo-element
+- **Interactive overlays — prefer native invoker commands.** For a `<button>` that opens/closes/toggles another element (popover, `<dialog>`, disclosure), reach for the HTML `command`/`commandfor` attributes + the Popover API / native `<dialog>` before hand-rolling a `useState` toggle + `onClick` + ARIA — the browser wires keyboard activation, focus, `aria-expanded`, and light-dismiss (outside-click + Esc) for free. Spec-`recommended` (Baseline end-2025 → keep a JS fallback; React 19 renders the attrs but may need a TS cast). Best local candidate: the hand-rolled popover in `components/layout/app-store-coming-soon.tsx`. Cross-project contract: `…/LD - project cross knowledge/contracts/invoker-commands.md`.
 
 ## Navigation Order
 ```
@@ -196,6 +197,7 @@ Lessons that span the Let's Dog apps (BreedSelector, Puppy Agenda, Website) live
 - **WordPress iframe embedding** (CSP-only vs shortcode+JWT) → read `contracts/wordpress-iframe-embedding.md`. **Owner: BreedSelector** (origin: BS `docs/solutions/architecture-patterns/wordpress-iframe-embedding-pattern-selection-2026-05-21.md`).
 - **JWT / cookie / eTLD+1 auth** → read `contracts/jwt-cookie-auth-conventions.md`. **Owner: Puppy Agenda** (origin: PA's `env-driven-cookie-config`, `staging-dev-impersonation`, `cookie-deletion-…` docs).
 - **Dog passport data** — dog name, date of birth, breed, … and medical data → **Owner: Puppy Agenda.** PA holds the canonical record, synced from WordPress → PA (design: PA `docs/plans/2026-05-27-001-feat-wp-dog-data-sync-plan.md`). This site will read these fields at later stages — coordinate with PA before depending on them.
+- **HTML invoker commands** (button→overlay wiring — `command`/`commandfor` for popover/`<dialog>` toggle; prefer over hand-rolled `useState`+`onClick`+ARIA) → read `contracts/invoker-commands.md`. **Owner: Website Redesign** (this repo — spec-driven; grounded in Styling Conventions above + `docs/website-spec-maintenance.md`). Best local swap: `components/layout/app-store-coming-soon.tsx`.
 - **Workers / Pages, Supabase, Next.js, design-system gotchas** → `index.md` (per-cluster origin docs listed there).
 
 **Lessons from the other apps that apply *here*:** [docs/solutions/cross-project/lessons-from-other-ld-apps.md](docs/solutions/cross-project/lessons-from-other-ld-apps.md)
