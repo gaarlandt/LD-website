@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { asset } from "@/lib/utils";
 import { Container, Eyebrow } from "@/components/ui";
-import { AppStoreComingSoon } from "./app-store-coming-soon";
 
 // Canonical order (matches components/layout/navbar.tsx + CLAUDE.md), with the
 // footer-only Homepage link kept first.
@@ -72,7 +71,7 @@ export function Footer() {
               </a>
             </div>
 
-            {/* App download — Google Play live, App Store binnenkort.
+            {/* App download — both stores live (iOS app launched 2026-07-02).
                 Both official badges are kept untouched, but they don't render at equal
                 visual size at the same CSS height: Apple's artwork fills its SVG canvas,
                 while Google's PNG bakes in a symmetric ~33% transparent clear-space margin
@@ -102,7 +101,21 @@ export function Footer() {
                     className="h-[4.09rem] w-auto"
                   />
                 </a>
-                <AppStoreComingSoon />
+                <a
+                  href="https://apps.apple.com/nl/app/lets-dog/id6759001260"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Download de Let's dog app in de App Store"
+                  className="opacity-90 hover:opacity-100 transition-opacity duration-200"
+                >
+                  <Image
+                    src={asset("/images/app-store-badge.svg")}
+                    alt="Download in de App Store"
+                    width={140}
+                    height={42}
+                    className="h-11 w-auto"
+                  />
+                </a>
               </div>
             </div>
           </div>

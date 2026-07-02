@@ -5,9 +5,14 @@ import Image from "next/image";
 import { asset } from "@/lib/utils";
 
 /**
- * App Store badge — the iOS app isn't live yet. Clicking the badge pops a small
- * "Binnenkort beschikbaar" bubble instead of navigating anywhere. Isolated as a
- * client component so the rest of the footer stays a server component.
+ * Hand-rolled "Binnenkort beschikbaar" popover for the App Store badge.
+ *
+ * NO LONGER RENDERED: the iOS app launched 2026-07-02, so the footer now links
+ * straight to the App Store (see components/layout/footer.tsx). Kept on purpose
+ * as the canonical local example for the invoker-commands convention — a
+ * useState + onClick + ARIA popover that should be refactored to native
+ * command/commandfor + the Popover API (CLAUDE.md "Interactive overlays" and
+ * the cross-project invoker-commands contract point here).
  */
 export function AppStoreComingSoon() {
   const [open, setOpen] = useState(false);
