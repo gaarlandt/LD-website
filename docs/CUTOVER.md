@@ -8,6 +8,30 @@ This is a self-contained playbook for flipping `www.letsdog.nl` and `letsdog.nl`
 
 ---
 
+## ✅ Post-cutover status — executed 2026-07-02
+
+The flip is **done and live**: `letsdog.nl` + `www` are proxied to Cloudflare Pages and serving the new site. The sections below are the historical record. Verified + decided at go-live:
+
+| Item | Outcome |
+|---|---|
+| Both domains proxied + SSL Active | ✅ live (`server: cloudflare`) |
+| www → apex 301 redirect | ✅ deployed & verified (path + query preserved) |
+| Rate-limit rule (`/api/contact`) | ✅ Free-plan rule live; burst blocks from the 6th request (5 / 10s, Block) |
+| Contact form + Turnstile | ✅ delivers; tokenless POST → `400` (fail-closed on the apex) |
+| GA4 on real domain | ✅ fires `page_view`/`user_engagement`, **no** `debug_mode` |
+| sitemap.xml | ✅ 15 apex URLs; robots advertises it — **resubmit in GSC (pending)** |
+| CAA records | ✅ `letsencrypt.org` + `pki.goog` + `ssl.com` + iodef; Cloudflare auto-augments (comodoca/digicert/issuewild) |
+| Lighthouse (mobile) | Perf 81 · A11y 97 · BP 96 · SEO 92; hero-LCP preload fix in PR #57 |
+
+**Decisions logged:**
+- **HSTS `includeSubDomains` — NOT enabled.** `app.letsdog.nl` is the agency-managed WordPress box on SiteGround; don't bet an irreversible policy on a cert we don't control. The apex keeps the basic `max-age` from `_headers`. Revisit only if every subdomain becomes ours.
+- **robots.txt — welcoming LLM crawlers.** Disable Cloudflare's *managed robots.txt* (Security → Settings → Bot traffic → "block training in robots.txt" = OFF) so the site's own `Allow: /` is served; AI Crawl Control crawlers set to Allow. Setting crawler actions to Allow does **not** remove the robots.txt injection — the managed-robots toggle is a separate setting.
+- **Cookie consent + colour contrast — deferred.** Pre-consent analytics stays (legal sign-off still open); brand-green small-text contrast (~3.86:1) is a brand decision. Both consciously left.
+
+**Open follow-ups:** resubmit sitemap in Search Console · turn off the managed-robots.txt toggle · merge PR #57.
+
+---
+
 ## Before you start — pre-flight checklist
 
 Tick these off **before** touching DNS:

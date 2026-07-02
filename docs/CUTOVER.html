@@ -184,6 +184,34 @@
       </div>
     </div>
 
+    <div class="callout ok" style="border-width:2px">
+      <div class="ico">🎉</div>
+      <div>
+        <strong class="lbl">Post-cutover status — executed 2026-07-02</strong>
+        <p>The flip is <strong>done and live</strong>: <code>letsdog.nl</code> + <code>www</code> are proxied to Pages and serving the new site. The sections below are kept as the historical record. Verified &amp; decided at go-live:</p>
+        <table class="fields" style="margin-top:.6rem">
+          <thead><tr><th>Item</th><th>Outcome</th></tr></thead>
+          <tbody>
+            <tr><td>Both domains proxied + SSL Active</td><td>✅ live (<code>server: cloudflare</code>)</td></tr>
+            <tr><td>www → apex 301 redirect</td><td>✅ deployed &amp; verified (path + query preserved)</td></tr>
+            <tr><td>Rate-limit rule (<code>/api/contact</code>)</td><td>✅ Free-plan rule live; burst blocks from the 6th request (5&nbsp;/&nbsp;10s, Block)</td></tr>
+            <tr><td>Contact form + Turnstile</td><td>✅ delivers; tokenless POST returns <code>400</code> (fail-closed on the apex)</td></tr>
+            <tr><td>GA4 on real domain</td><td>✅ fires <code>page_view</code>/<code>user_engagement</code>, <strong>no</strong> <code>debug_mode</code></td></tr>
+            <tr><td>sitemap.xml</td><td>✅ 15 apex URLs; robots advertises it — <strong>resubmit in GSC (pending)</strong></td></tr>
+            <tr><td>CAA records</td><td>✅ <code>letsencrypt.org</code> + <code>pki.goog</code> + <code>ssl.com</code> + iodef; Cloudflare auto-augments (comodoca/digicert/issuewild)</td></tr>
+            <tr><td>Lighthouse (mobile)</td><td>Perf <b>81</b> · A11y <b>97</b> · BP <b>96</b> · SEO <b>92</b>; hero-LCP preload fix in <a href="https://github.com/gaarlandt/LD-website/pull/57">PR&nbsp;#57</a></td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:.6rem"><strong>Decisions logged:</strong></p>
+        <ul style="margin:.2rem 0 0 1.1rem">
+          <li><strong>HSTS <code>includeSubDomains</code> — NOT enabled.</strong> <code>app.letsdog.nl</code> is the agency-managed WordPress box on SiteGround; we won't bet an irreversible policy on a cert we don't control. The apex keeps the basic <code>max-age</code> from <code>_headers</code>. Revisit only if every subdomain becomes ours.</li>
+          <li><strong>robots.txt — welcoming LLM crawlers.</strong> Disable Cloudflare's <em>managed robots.txt</em> (Security → Settings → Bot traffic → “block training in robots.txt” = OFF) so the site's own <code>Allow: /</code> is served. AI Crawl Control crawlers set to Allow. (Setting crawler actions to Allow does <em>not</em> remove the robots.txt injection — the managed-robots toggle is separate.)</li>
+          <li><strong>Cookie consent + colour contrast — deferred.</strong> Pre-consent analytics stays (legal sign-off still open) and the brand-green small-text contrast (~3.86:1) is a brand decision — both consciously left.</li>
+        </ul>
+        <p style="margin-top:.6rem"><strong>Open follow-ups:</strong> resubmit the sitemap in Search Console · turn off the managed-robots.txt toggle · merge PR&nbsp;#57 · (optional) re-check hero LCP on the preview.</p>
+      </div>
+    </div>
+
     <!-- ============================================================ -->
     <h3 class="sec" id="preflight"><span class="num">0</span>Pre-flight gates — green before you touch DNS</h3>
     <p class="lead">If any box here is unticked, stop and fix it before flipping DNS. Three items need a real decision or a dashboard action — they’re flagged.</p>
