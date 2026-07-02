@@ -22,6 +22,14 @@ type OptimizedImageProps = {
   width?: number;
   height?: number;
   priority?: boolean;
+  /**
+   * Emit a `<link rel="preload">` for the AVIF variant so the browser starts
+   * fetching this image during head parse instead of on element discovery.
+   * Use for the LCP image only. Pair with `priority`.
+   */
+  preload?: boolean;
+  /** Scope the preload to a media query (e.g. mobile-only hero variant). */
+  preloadMedia?: string;
   ariaHidden?: boolean;
 };
 
@@ -34,6 +42,8 @@ export function OptimizedImage({
   width,
   height,
   priority = false,
+  preload = false,
+  preloadMedia,
   ariaHidden,
 }: OptimizedImageProps) {
   const file = src.slice(src.lastIndexOf("/") + 1);
@@ -49,23 +59,36 @@ export function OptimizedImage({
     : undefined;
 
   return (
-    <picture style={{ display: "contents" }}>
-      <source type="image/avif" srcSet={srcSet("avif")} sizes={sizes} />
-      <source type="image/webp" srcSet={srcSet("webp")} sizes={sizes} />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={asset(src)}
-        alt={alt}
-        aria-hidden={ariaHidden}
-        className={className}
-        sizes={sizes}
-        width={fill ? undefined : width}
-        height={fill ? undefined : height}
-        loading={priority ? "eager" : "lazy"}
-        fetchPriority={priority ? "high" : undefined}
-        decoding="async"
-        style={fillStyle}
-      />
-    </picture>
+    <>
+      {preload && (
+        <link
+          rel="preload"
+          as="image"
+          type="image/avif"
+          imageSrcSet={srcSet("avif")}
+          imageSizes={sizes}
+          media={preloadMedia}
+          fetchPriority="high"
+        />
+      )}
+      <picture style={{ display: "contents" }}>
+        <source type="image/avif" srcSet={srcSet("avif")} sizes={sizes} />
+        <source type="image/webp" srcSet={srcSet("webp")} sizes={sizes} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={asset(src)}
+          alt={alt}
+          aria-hidden={ariaHidden}
+          className={className}
+          sizes={sizes}
+          width={fill ? undefined : width}
+          height={fill ? undefined : height}
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : undefined}
+          decoding="async"
+          style={fillStyle}
+        />
+      </picture>
+    </>
   );
 }

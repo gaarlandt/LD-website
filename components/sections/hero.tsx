@@ -15,6 +15,8 @@ export function Hero() {
           alt="Twee vrouwen lachen met hun honden"
           fill
           priority
+          preload
+          preloadMedia="(max-width: 1023px)"
           sizes="100vw"
           className="object-cover object-center"
         />
@@ -28,6 +30,8 @@ export function Hero() {
           alt="Twee vrouwen lachen met hun honden"
           fill
           priority
+          preload
+          preloadMedia="(min-width: 1024px)"
           sizes="55vw"
           className="object-cover object-center opacity-70"
         />
