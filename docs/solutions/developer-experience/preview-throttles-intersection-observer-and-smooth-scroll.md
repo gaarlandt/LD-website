@@ -9,9 +9,10 @@ severity: medium
 applies_when:
   - Verifying scroll- or visibility-triggered behavior (IntersectionObserver, lazy reveal, in-view analytics events) on the preview_* tools
   - An event or callback that should fire on scroll never fires during preview verification
+  - A plain `window.addEventListener("scroll", ...)` handler (e.g. a fixed navbar's scrolled-state toggle) never fires after preview_eval scrolls the page
   - window.scrollTo appears to do nothing (scrollY stuck) inside preview_eval
   - Probing whether posthog-js initialized via window.posthog in the preview
-tags: [preview, intersection-observer, requestanimationframe, smooth-scroll, verification, analytics, posthog, gotcha]
+tags: [preview, intersection-observer, requestanimationframe, smooth-scroll, scroll-event, verification, analytics, posthog, gotcha]
 ---
 
 # Headless preview throttles IntersectionObserver and smooth scroll — verify scroll-triggered events another way
@@ -30,6 +31,7 @@ The headless preview browser doesn't run the rendering/compositing steps that de
    window.scrollTo({ top: y, left: 0, behavior: "auto" });
    ```
 2. **`IntersectionObserver` callbacks never fire** — even with the target genuinely in the viewport. This is the environment, not your code.
+3. **Plain `scroll` event listeners are equally silent, for the same root cause.** A component that toggles state from a bare `window.addEventListener("scroll", ...)` (no IntersectionObserver — e.g. a fixed navbar's `scrollY > N` check) will never see its handler fire after a `preview_eval` call to `window.scrollTo(...)`, because point 1 already established that `scrollY` never actually changes — no scroll happened, so no `scroll` event was ever dispatched. It isn't a *third*, separate throttling mechanism; it's the direct consequence of point 1. Apply the same fix (force instant scroll first), then, if you still need to prove the listener itself is wired correctly without waiting on a real scroll, dispatch a synthetic event directly: `window.dispatchEvent(new Event('scroll'))` after the `scrollTo` — this bypasses the question of whether a "real" scroll occurred and just exercises the handler.
 
 **Confirm it's the environment (not a bug) with a control test.** Spawn a throwaway plain observer in `preview_eval`; if *it* doesn't fire while the element is in view, IO delivery is throttled here:
    ```js
