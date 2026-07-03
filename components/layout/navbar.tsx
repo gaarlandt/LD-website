@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { List, X } from "@phosphor-icons/react/dist/ssr";
 import { asset } from "@/lib/utils";
 import { Button } from "@/components/ui";
@@ -21,6 +22,10 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
+  const pathname = usePathname();
+  // Only the homepage opens on the photo hero — every other page opens on a
+  // plain beige section, where the default dark icon/logo already reads fine.
+  const whiteHeader = pathname === "/" && !scrolled;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 16);
@@ -74,18 +79,30 @@ export function Navbar() {
         className="max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-between h-16 lg:h-20"
         aria-label="Hoofdnavigatie"
       >
-        {/* Logo */}
+        {/* Logo — order-2 + ml-2 nudges it right of the hamburger on mobile only.
+            Two marks: mobile swaps color with the header state (the mobile hero
+            is a full-width photo); desktop always stays dark (the desktop hero
+            only covers the right 55%, left side is solid green — see hero.tsx —
+            so the existing dark mark already reads fine there, unchanged). */}
         <Link
           href="/"
-          className="flex-shrink-0 hover:opacity-80 transition-opacity duration-200"
+          className="order-2 md:order-none ml-2 md:ml-0 flex-shrink-0 hover:opacity-80 transition-opacity duration-200"
           aria-label="Let's dog — terug naar homepage"
         >
+          <Image
+            src={asset(whiteHeader ? "/images/logo-white.svg" : "/images/logo-black.svg")}
+            alt="Let's dog"
+            width={120}
+            height={35}
+            className={`md:hidden h-8 w-auto ${whiteHeader ? "drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]" : ""}`}
+            priority
+          />
           <Image
             src={asset("/images/logo-black.svg")}
             alt="Let's dog"
             width={120}
             height={35}
-            className="h-8 w-auto"
+            className="hidden md:block h-8 w-auto"
             priority
           />
         </Link>
@@ -116,17 +133,39 @@ export function Navbar() {
           </Button>
         </div>
 
-        {/* Mobile menu button */}
+        {/* Mobile menu button — order-1 pins it to the far left on mobile */}
         <button
           ref={toggleRef}
           onClick={() => setOpen((v) => !v)}
-          className="md:hidden inline-flex items-center justify-center w-[44px] h-[44px] rounded-lg text-[var(--ld-text)] hover:bg-[var(--ld-text)]/10 transition-colors duration-200 cursor-pointer"
+          className={`order-1 md:hidden inline-flex items-center justify-center w-[44px] h-[44px] rounded-lg transition-colors duration-200 cursor-pointer ${
+            whiteHeader
+              ? "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] hover:bg-white/10"
+              : "text-[var(--ld-text)] hover:bg-[var(--ld-text)]/10"
+          }`}
           aria-label={open ? "Sluit menu" : "Open menu"}
           aria-expanded={open}
           aria-controls="mobile-menu"
         >
           {open ? <X size={24} aria-hidden="true" /> : <List size={24} aria-hidden="true" />}
         </button>
+
+        {/* Mobile spacer — absorbs the free space so the login pill pins right */}
+        <div className="order-3 flex-1 md:hidden" aria-hidden="true" />
+
+        {/* Mobile login pill — glass fill flips with scrolled, not whiteHeader: it
+            needs to render on every route, not just the homepage's photo hero. */}
+        <a
+          href="https://app.letsdog.nl"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`order-4 md:hidden inline-flex items-center justify-center rounded-full px-[15px] py-2 text-[12.5px] font-semibold transition-colors duration-200 ${
+            scrolled
+              ? "bg-[var(--ld-text)]/[0.07] text-[var(--ld-text)] border border-[var(--ld-text)]/[0.14]"
+              : "bg-black/[0.34] text-white border border-white/[0.18] backdrop-blur-[6px]"
+          }`}
+        >
+          Login
+        </a>
       </nav>
 
       {/* Mobile menu */}
@@ -152,23 +191,11 @@ export function Navbar() {
               </li>
             ))}
           </ul>
-          <div className="flex flex-col gap-3">
-            <Button variant="secondary" pill block asChild>
-              <a
-                href="https://app.letsdog.nl"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setOpen(false)}
-              >
-                Inloggen
-              </a>
-            </Button>
-            <Button variant="brand" pill block asChild>
-              <Link href="/prijzen" onClick={() => setOpen(false)}>
-                Start vandaag
-              </Link>
-            </Button>
-          </div>
+          <Button variant="brand" pill block asChild>
+            <Link href="/prijzen" onClick={() => setOpen(false)}>
+              Start vandaag
+            </Link>
+          </Button>
         </div>
       )}
     </header>
