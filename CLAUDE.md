@@ -97,12 +97,13 @@ Vitest (Node environment) covers the server-side + pure logic the browser previe
 - **Responsive**: Mobile-first, `md:` and `lg:` breakpoints
 - **Nav hover**: Brand green underline animates on hover via `after:` pseudo-element
 - **Interactive overlays — prefer native invoker commands.** For a `<button>` that opens/closes/toggles another element (popover, `<dialog>`, disclosure), reach for the HTML `command`/`commandfor` attributes + the Popover API / native `<dialog>` before hand-rolling a `useState` toggle + `onClick` + ARIA — the browser wires keyboard activation, focus, `aria-expanded`, and light-dismiss (outside-click + Esc) for free. Spec-`recommended` (Baseline end-2025 → keep a JS fallback; React 19 renders the attrs but may need a TS cast). Best local candidate: the hand-rolled popover in `components/layout/app-store-coming-soon.tsx`. Cross-project contract: `…/LD - project cross knowledge/contracts/invoker-commands.md`.
+- **Mobile header (homepage-only white state):** on `/` only, the fixed header shows a white hamburger + white logo (with a legibility drop-shadow) until scrolled past 16px, then flips to the existing dark ink + `beige/95` bar — the homepage's mobile hero is a full-bleed photo that dark icons can't reliably read against. Every other route keeps the dark icon/logo unconditionally (their top section is plain beige). A persistent glass-pill **Login** (→ `app.letsdog.nl`) sits top-right on mobile across all pages, independent of that gate — its own translucent fill carries contrast regardless of what's behind it. Gated via `usePathname() === "/"` in `components/layout/navbar.tsx`.
 
 ## Navigation Order
 ```
 Rassenkeuze hulp | Puppycursus | Prijzen | Over ons | FAQ | Contact
 ```
-Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/layout/footer.tsx`. Desktop navbar also includes an outlined **Inloggen** button (→ `app.letsdog.nl`) and a solid green **Start vandaag** CTA (→ `/prijzen`).
+Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/layout/footer.tsx`. Desktop navbar also includes an outlined **Inloggen** button (→ `app.letsdog.nl`) and a solid green **Start vandaag** CTA (→ `/prijzen`). **Mobile** reorders the same bar instead of reusing the desktop CTAs: hamburger pinned far left (`order-1`), logo nudged right next to it (`order-2`), then a flexible spacer, then a persistent **Login** pill pinned far right (`order-4`, → `app.letsdog.nl`) — see the white-state note above. The mobile dropdown menu's only CTA is **Start vandaag**; it no longer duplicates a login button now that the bar always shows one.
 
 ## Deployment
 
