@@ -51,28 +51,32 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Preload National2 (local OTF/TTF — next/font doesn't manage it, it's the
-  // one typeface for both headings and body) so first paint doesn't FOUT.
-  // Served at a stable /fonts/ URL the @font-face rules in globals.css match,
-  // so each is one fetch. preload() (React 19) injects a single deduped
-  // <link> into <head> — a raw <link> in <head> here gets double-emitted by
-  // the App Router. All three weights are preloaded: Regular (400, body
-  // copy) and Bold (700, headings + emphasis) are the two the design leans
-  // on; Medium (500) also renders above the fold via `font-medium` on the
-  // desktop nav links, so it's preloaded too rather than fetched on demand.
-  preload("/fonts/National2-Regular.ttf", {
+  // Preload National2 (local, subsetted WOFF2 — next/font doesn't manage it,
+  // it's the one typeface for both headings and body) so first paint doesn't
+  // FOUT. Preload the WOFF2 files specifically, not the OTF/TTF fallbacks in
+  // the @font-face `src` list — WOFF2 is what every modern browser actually
+  // requests first, so preloading the OTF/TTF instead would fetch a resource
+  // the browser never uses. Served at a stable /fonts/ URL the @font-face
+  // rules in globals.css match, so each is one fetch. preload() (React 19)
+  // injects a single deduped <link> into <head> — a raw <link> in <head>
+  // here gets double-emitted by the App Router. All three weights are
+  // preloaded: Regular (400, body copy) and Bold (700, headings + emphasis)
+  // are the two the design leans on; Medium (500) also renders above the
+  // fold via `font-medium` on the desktop nav links, so it's preloaded too
+  // rather than fetched on demand.
+  preload("/fonts/National2-Regular.woff2", {
     as: "font",
-    type: "font/ttf",
+    type: "font/woff2",
     crossOrigin: "anonymous",
   });
-  preload("/fonts/National2-Medium.otf", {
+  preload("/fonts/National2-Medium.woff2", {
     as: "font",
-    type: "font/otf",
+    type: "font/woff2",
     crossOrigin: "anonymous",
   });
-  preload("/fonts/National2-Bold.otf", {
+  preload("/fonts/National2-Bold.woff2", {
     as: "font",
-    type: "font/otf",
+    type: "font/woff2",
     crossOrigin: "anonymous",
   });
 
