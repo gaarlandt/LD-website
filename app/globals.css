@@ -20,9 +20,11 @@
   --color-terracotta: #330811;
   --color-white: #FFFFFF;
 
-  /* Fonts */
-  --font-heading: "National2", "Georgia", serif;
-  --font-body: var(--font-dm-sans), "DM Sans", "Inter", sans-serif;
+  /* Fonts — National2 everywhere, one family for display and body (brand
+     rule: "Eén typeface: National 2"). Fallback is sans, matching National2's
+     own neo-grotesque-sans classification — never serif. */
+  --font-heading: "National2", -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-body: var(--font-heading);
 
   /* Animation durations */
   --duration-fast: 150ms;
@@ -42,6 +44,14 @@
   font-family: "National2";
   src: url("/fonts/National2-Medium.otf") format("opentype");
   font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "National2";
+  src: url("/fonts/National2-Regular.ttf") format("truetype");
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
@@ -70,7 +80,7 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-body), "DM Sans", sans-serif;
+  font-family: var(--font-body), sans-serif;
   font-size: 1rem;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -78,7 +88,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading), Georgia, serif;
+  font-family: var(--font-heading), sans-serif;
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.02em;
