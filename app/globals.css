@@ -32,9 +32,14 @@
   --duration-slow: 400ms;
 }
 
+/* Each weight: subsetted WOFF2 first (Latin + Latin Extended — covers Dutch
+   diacritics and every symbol actually used in app/, components/, content/;
+   see docs/solutions/ for the subsetting recipe if new content needs wider
+   coverage), full OTF/TTF as a fallback for the rare browser without WOFF2. */
 @font-face {
   font-family: "National2";
-  src: url("/fonts/National2-Bold.otf") format("opentype");
+  src: url("/fonts/National2-Bold.woff2") format("woff2"),
+       url("/fonts/National2-Bold.otf") format("opentype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -42,7 +47,8 @@
 
 @font-face {
   font-family: "National2";
-  src: url("/fonts/National2-Medium.otf") format("opentype");
+  src: url("/fonts/National2-Medium.woff2") format("woff2"),
+       url("/fonts/National2-Medium.otf") format("opentype");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -50,7 +56,8 @@
 
 @font-face {
   font-family: "National2";
-  src: url("/fonts/National2-Regular.ttf") format("truetype");
+  src: url("/fonts/National2-Regular.woff2") format("woff2"),
+       url("/fonts/National2-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
