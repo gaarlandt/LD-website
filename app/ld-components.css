@@ -251,12 +251,12 @@
   color: var(--ld-text);
   font-size: var(--ld-fs-14);
 }
-.ld-alert__title { font-weight: 600; font-size: var(--ld-fs-16); font-family: var(--ld-font-display); }
+.ld-alert__title { font-weight: 700; font-size: var(--ld-fs-16); font-family: var(--ld-font-display); }
 .ld-alert--peach { background: var(--ld-peach); border-color: var(--ld-peach-deep); color: #4A1F0E; }
 .ld-alert--info  { background: var(--ld-blue); border-color: var(--ld-blue); color: #1F3A5C; }
 
 /* ---------- Avatar ---------- */
-.ld-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--ld-green); color: var(--ld-paper); display: inline-grid; place-content: center; font-weight: 600; font-size: var(--ld-fs-14); overflow: hidden; position: relative; }
+.ld-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--ld-green); color: var(--ld-paper); display: inline-grid; place-content: center; font-weight: 700; font-size: var(--ld-fs-14); overflow: hidden; position: relative; }
 .ld-avatar--lg { width: 56px; height: 56px; font-size: var(--ld-fs-18); }
 .ld-avatar--sm { width: 28px; height: 28px; font-size: var(--ld-fs-12); }
 .ld-avatar--beige { background: var(--ld-beige-deep); color: var(--ld-brown); }
@@ -265,7 +265,7 @@
 /* ---------- Utility ---------- */
 .ld-eyebrow {
   font-size: var(--ld-fs-12);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: var(--ld-tracking-caps);
   text-transform: uppercase;
   color: var(--ld-text-muted);

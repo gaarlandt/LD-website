@@ -3,25 +3,26 @@
    Source of truth: brand-guide-letsdog design-system tokens.css.
 
    Integration adaptations for this Next.js app (documented intentionally):
-   1. --ld-font-body is bound to var(--font-dm-sans) — this app loads DM Sans
-      via next/font (exposed as that CSS var), NOT as a globally-registered
-      'DM Sans' family, so the bare 'DM Sans' name wouldn't resolve.
-   2. The design-system tokens.css also ships GLOBAL element rules
+   1. The design-system tokens.css also ships GLOBAL element rules
       (body / h1-h6 / *) — those are intentionally OMITTED here so wiring the
       system in stays additive and does not restyle the existing site.
-   3. The auto prefers-color-scheme dark block is OMITTED — this marketing
+   2. The auto prefers-color-scheme dark block is OMITTED — this marketing
       site is light-only (viewport colorScheme: "light"). The manual
       [data-theme="dark"] hook is kept for parity / future use.
-   4. --ld-font-display binds to the "National2" family the app already
-      registers in globals.css (OTF), NOT the bundle's bare 'National 2'.
-      Same rationale as #1: bind DS type tokens to the faces this app
-      actually loads, so DS headings and app headings share one registration.
+   3. --ld-font-display AND --ld-font-body both bind to the "National2" family
+      the app registers in globals.css (OTF/TTF), NOT the bundle's bare
+      'National 2' (with a space) — that string is never @font-face-registered
+      here, so it would silently fall through to the fallback stack. Same
+      failure class as the old DM Sans-token bug documented in
+      docs/solutions/integration-issues/design-system-into-nextjs-static-export.md
+      — bind DS type tokens to the face this app actually loads.
    ============================================================ */
 
-/* National 2 (display/headings) is registered once — as the "National2" @font-face
-   family in app/globals.css (OTF, weights 500/700). --ld-font-display binds to that
-   family (see adaptation #4 above), so DS components and the app's own headings resolve
-   to the exact same loaded face with no duplicate registration. */
+/* National 2 (display + body) is registered once — as the "National2" @font-face
+   family in app/globals.css (OTF/TTF, weights 400/500/700). Both --ld-font-display
+   and --ld-font-body bind to that family (see adaptation #3 above), so DS components
+   and the app's own type resolve to the exact same loaded face with no duplicate
+   registration. */
 
 :root {
   /* Primary */
@@ -79,9 +80,9 @@
   --ld-on-green:         #FFFFFF;
   --ld-on-forest:        #FFFFFF;
 
-  /* Type — National 2 headings, DM Sans body (bound to next/font var) */
+  /* Type — National 2 for display and body alike (brand rule: one typeface) */
   --ld-font-display: "National2", system-ui, -apple-system, sans-serif;
-  --ld-font-body:    var(--font-dm-sans), 'DM Sans', system-ui, -apple-system, sans-serif;
+  --ld-font-body:    var(--ld-font-display);
 
   --ld-fs-12: 0.75rem;  --ld-fs-13: 0.8125rem; --ld-fs-14: 0.875rem;
   --ld-fs-15: 0.9375rem; --ld-fs-16: 1rem;     --ld-fs-18: 1.125rem;

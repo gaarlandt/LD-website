@@ -9,7 +9,7 @@ Marketing website for Let's Dog, a puppy training platform. Built as a static Ne
 - **Styling**: Tailwind CSS v4 (utility-first, no CSS modules)
 - **Animations**: CSS transitions + Radix primitive animations (Framer Motion removed 2026-06-25 — its only consumer was an unused `Reveal` component)
 - **Icons**: Phosphor (`@phosphor-icons/react/dist/ssr`) + inline SVGs (WhatsApp, TikTok)
-- **Fonts**: National2 (headings, local OTF), DM Sans (body, Google Fonts)
+- **Fonts**: National2 everywhere — one typeface for headings and body, per the brand guide ("Eén typeface: National 2"). Self-hosted, local files in `public/fonts/`: Regular `.ttf` (400, body) and Bold `.otf` (700, headings + emphasis like `.ld-eyebrow`/`.ld-avatar`) are the two weights the design leans on; Medium `.otf` (500, `font-medium` usages — desktop nav links, FAQ accordion) is also registered and preloaded. National2 has no 600 (semibold) face — components that need real weight fidelity use 500 or 700, not 600. No Google Fonts — DM Sans was removed 2026-07-03, its only role was body text.
 - **Images**: photographic JPEGs served as AVIF/WebP via the `OptimizedImage` `<picture>` component; variants generated at build-time by `sharp` ^0.34 (`scripts/optimize-images.mjs`) — see "On-page SEO, metadata & spec compliance" below
 - **Content (legal pages)**: Markdown via a small front-matter splitter (`lib/content.ts`, YAML parsed by `js-yaml` ^4) + `react-markdown` ^10 + `remark-gfm` ^4 — see "Markdown-driven legal pages" below
 - **Analytics**: GA4 (`G-0FCGXJHMMY`, fires immediately) + PostHog (EU project 143695, browser-only) — both dual-fired via `lib/analytics.ts` `trackEvent`; Cookiebot banner (display-only, does not gate tracking)

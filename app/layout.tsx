@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { preload } from "react-dom";
 import { SITE_URL, OG_IMAGE } from "@/lib/seo";
-import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import "./ld-tokens.css";
 import "./ld-components.css";
@@ -14,13 +13,6 @@ import { CTATracker } from "@/components/analytics/cta-tracker";
 import { PostHogProvider } from "@/components/analytics/posthog-provider";
 import { JsonLd } from "@/components/shared/json-ld";
 import { siteGraph } from "@/lib/structured-data";
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-dm-sans",
-  display: "swap",
-  weight: ["300", "400", "500", "600"],
-});
 
 export const metadata: Metadata = {
   // Canonical host = apex letsdog.nl. metadataBase makes every relative
@@ -59,12 +51,25 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Preload the National2 heading font (local OTF — next/font doesn't manage it)
-  // so the hero H1 weight is ready before first paint instead of FOUTing. Served
-  // at a stable /fonts/ URL the @font-face in globals.css matches, so it's one
-  // fetch. preload() (React 19) injects a single deduped <link> into <head> —
-  // a raw <link> in <head> here gets double-emitted by the App Router. Only Bold
-  // (700) is rendered by headings (Medium 500 is declared but unused).
+  // Preload National2 (local OTF/TTF — next/font doesn't manage it, it's the
+  // one typeface for both headings and body) so first paint doesn't FOUT.
+  // Served at a stable /fonts/ URL the @font-face rules in globals.css match,
+  // so each is one fetch. preload() (React 19) injects a single deduped
+  // <link> into <head> — a raw <link> in <head> here gets double-emitted by
+  // the App Router. All three weights are preloaded: Regular (400, body
+  // copy) and Bold (700, headings + emphasis) are the two the design leans
+  // on; Medium (500) also renders above the fold via `font-medium` on the
+  // desktop nav links, so it's preloaded too rather than fetched on demand.
+  preload("/fonts/National2-Regular.ttf", {
+    as: "font",
+    type: "font/ttf",
+    crossOrigin: "anonymous",
+  });
+  preload("/fonts/National2-Medium.otf", {
+    as: "font",
+    type: "font/otf",
+    crossOrigin: "anonymous",
+  });
   preload("/fonts/National2-Bold.otf", {
     as: "font",
     type: "font/otf",
@@ -72,7 +77,7 @@ export default function RootLayout({
   });
 
   return (
-    <html lang="nl" className={dmSans.variable}>
+    <html lang="nl">
       <head suppressHydrationWarning>
         <Cookiebot />
       </head>
