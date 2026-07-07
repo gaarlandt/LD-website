@@ -39,7 +39,7 @@ export function Hope() {
         <Link
           href="/puppycursus"
           aria-label="Bekijk de puppycursus"
-          className="relative order-2 lg:order-1 block group cursor-pointer"
+          className="relative order-1 block group cursor-pointer"
         >
           <div className="relative rounded-2xl overflow-hidden aspect-[4/5] transition-transform duration-300 motion-safe:group-hover:scale-[1.01]">
             <OptimizedImage
@@ -53,7 +53,7 @@ export function Hope() {
         </Link>
 
         {/* Right: outcomes */}
-        <div className="order-1 lg:order-2">
+        <div className="order-2">
           <Eyebrow tone="brand" className="block mb-4">
             Wat je krijgt
           </Eyebrow>
