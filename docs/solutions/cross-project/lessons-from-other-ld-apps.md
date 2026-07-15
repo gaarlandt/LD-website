@@ -40,6 +40,10 @@ Curated from BreedSelector (BS) and Puppy Agenda V2 (PA). Only items that genuin
 - **Pinned + scrollable horizontal strip with mask-fade** — for category/nav strips with always-visible + overflow items (two-flex-child split, not `position: sticky`). → `…/PuppyAgenda/code_puppyagenda/docs/solutions/design-patterns/pinned-scroll-strip-with-mask-fade-2026-05-15.md`
 - **Selector-keyed DOM caches go stale across route transitions — key on pathname.** Relevant for multi-page + scroll-spy/anchor behaviour where a hook caches `querySelector` results. → `…/PuppyAgenda/code_puppyagenda/docs/solutions/architecture-patterns/route-transition-stale-target-cache-2026-05-27.md`
 
+## Tooling / workflow
+
+- **Cross-model review via `agy` (Antigravity).** Before merging a substantial Claude-reviewed change here, run one Gemini pass over the fix diff (`agy --model "Gemini 3.1 Pro (High)" -p "<brief+diff>"`; `-p` ignores stdin — embed the diff) and verify every finding before acting on it. On LD Platform this caught 2 real bugs that 12 Claude reviewers + 14 validators missed, plus 1 confident false positive. → hub `…/contracts/cross-model-code-review-agy.md`
+
 ## Testing
 
 - **Two-layer testing strategy** (Vitest unit + manual regression with trigger-path ASK rule) — a near-exact fit: static-export, single contributor, browser-only behaviour. → `…/Keuzehulp/code_breedselector/docs/solutions/architecture-patterns/two-layer-testing-strategy-2026-05-12.md`
