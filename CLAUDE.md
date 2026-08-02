@@ -1,5 +1,20 @@
 # Let's Dog — Marketing Website
 
+## Where the project state lives (read this first)
+This repo sits **inside a werkmap**: `~/Documents/Coding/ldcoding/LDwebsite/`. That parent
+folder is its own private git repo (`gaarlandt/LD-website-loop`) and carries the self-learning
+loop — open tasks, decisions, session log. **Two nested repos: know which one you're in.**
+
+- **Code changes** → this repo (`gaarlandt/LD-website`), branch + PR + Cloudflare preview.
+- **Open work, decisions, session state** → the werkmap: `../loop/INDEX.md` (generated),
+  `../loop/sessies.md` (which session is next), `../JUR.md` (what waits on Jur), `../LOG.md`.
+  Mint items only with `bash ../scripts/loop/new.sh t|d "titel"`; close a session with
+  `bash ../scripts/loop/close.sh "<sessienaam>"`. Loop commits never touch this repo, so they
+  never trigger a Pages build.
+- `HANDOFF.md`, `TODO.md` and `PROGRESS.md` were retired on 2026-08-02 — their still-open
+  points became loop items T-1…T-10 / D-1, and the originals are kept verbatim in
+  `../archief/pre-v3-2026-08-02/`. Don't recreate them here.
+
 ## Project Overview
 Marketing website for Let's Dog, a puppy training platform. Built as a static Next.js site deployed on Cloudflare Pages.
 
