@@ -55,7 +55,9 @@ of *terms*. Plan and write with these names rather than synonyms.
   apps; `identifyLead(email)` is the single PostHog `identify` on this site (fired on
   contact-form success). See the cross-knowledge hub contract.
 - **GA4 custom dimensions** — `link_location` and `link_destination` (set by CTA
-  tracking) are registered GA4 custom dimensions; do not rename them.
+  tracking) are registered GA4 custom dimensions; do not rename them. Adding a new
+  *value* to one is fine — `link_destination` gained `"email"` in 2026-08 — but the
+  dimension names themselves are fixed.
 - **Spec compliance** — the site is held to The Website Specification
   (specification.website); the trigger→action→verify matrix lives in
   [`docs/website-spec-maintenance.md`](docs/website-spec-maintenance.md).
