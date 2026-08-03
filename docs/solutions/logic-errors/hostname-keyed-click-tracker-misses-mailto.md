@@ -70,6 +70,12 @@ When you see a click tracker, redirect guard, or allowlist that switches on `.ho
 
 Assert the empty-hostname fact in the test suite rather than only in a comment (see the snippet above). A comment explaining "this must come first" is advisory; a test that constructs the URL, asserts `hostname === ""`, and then asserts the classification is what actually stops the regression.
 
-## Side effect worth knowing
+## Side effect worth knowing: measure the blast radius, don't estimate it
 
-The fix is **sitewide, not page-local**: `/contact`'s long-standing mailto now emits `cta_clicked` too. `link_destination` gained the value `"email"` — that field is a registered GA4 custom dimension, where adding a new *value* is fine but renaming the dimension is not. Recorded in [`docs/analytics-events.md`](../../analytics-events.md), which is the reference to update whenever an event or dimension value changes.
+The fix is **sitewide, not page-local**, and the first draft of this doc understated it badly — it named `/contact` as the only other mailto. A grep found **about 12 mailto anchors across 9 pages**: the new `/partners` CTA, `/contact`'s card, and ten links in `content/*.md` that `legal-page-layout.tsx` renders as real anchors across seven legal pages.
+
+That gap is the reusable lesson. When a classifier is wired to a **delegated document-level listener mounted in the root layout**, the change is sitewide by construction, so "what else does this now match?" is a `grep` question, not a recall question — and content-driven surfaces (markdown rendered to anchors) are exactly what recall misses, because no `.tsx` file mentions them.
+
+Two consequences followed from the real count. `link_destination: "email"` cannot serve as the `/partners` conversion metric on its own — consumers must split by `link_url`. And the legal pages previously emitted only `$pageview` (autocapture is off), so a GDPR-request click on `/privacybeleid` became a tracked event under a consent banner that is display-only — a product/legal call, not a technical one.
+
+`link_destination` is a registered GA4 custom dimension: adding a new *value* is fine, renaming the dimension is not. The full surface table is in [`docs/analytics-events.md`](../../analytics-events.md).

@@ -18,7 +18,7 @@ export function PartnersWays() {
           id="ambassadeur"
           className="flex flex-col rounded-[var(--ld-r-xl)] bg-[var(--ld-green)] text-[var(--ld-on-green)] p-8 lg:p-10"
         >
-          <Badge tone="peach" className="self-start font-bold mb-5">
+          <Badge tone="peach" className="self-start mb-5">
             Ambassadeur
           </Badge>
           <h3 className="font-heading font-bold text-2xl mb-3 leading-snug">
@@ -38,7 +38,7 @@ export function PartnersWays() {
           id="ugc"
           className="flex flex-col rounded-[var(--ld-r-xl)] bg-[var(--ld-beige)] border border-[var(--ld-border)] text-[var(--ld-text)] p-8 lg:p-10"
         >
-          <Badge tone="peach" className="self-start font-bold mb-5">
+          <Badge tone="peach" className="self-start mb-5">
             UGC
           </Badge>
           <h3 className="font-heading font-bold text-2xl mb-3 leading-snug">

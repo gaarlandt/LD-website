@@ -44,7 +44,17 @@ A click on a pricing tier CTA fires **both** `cta_clicked` (`link_destination: "
 
 Added 2026-08-03 with the `/partners` page. A `mailto:` URL has an **empty hostname** under the WHATWG URL parser, so it fell straight through the host lookup and no mail CTA was tracked before this. The branch now runs first, ahead of that lookup.
 
-This covers every `mailto:` on the site, not just `/partners` — the long-standing `mailto:mail@letsdog.nl` on [`/contact`](../app/contact/contact-content.tsx) now emits `cta_clicked` too. Split the two by `link_url` when you need them apart.
+**This covers every `mailto:` on the site — about 12 anchors across 9 pages, not just `/partners`.** The tracker is mounted once in the root layout, so the branch reaches:
+
+| Surface | Address | Count |
+|---|---|---|
+| `/partners` slot-CTA | `creators@letsdog.nl` | 1 |
+| [`/contact`](../app/contact/contact-content.tsx) mail card | `mail@letsdog.nl` | 1 |
+| 7 legal pages — privacybeleid (3), retour (2), algemene-voorwaarden, ai-gebruiksvoorwaarden, cookieverklaring, modelformulier-herroeping, ip-overdrachtsverklaring | `support@letsdog.nl` (9), `mail@letsdog.nl` (1) | 10 |
+
+The legal-page links live in `content/*.md` and become real anchors via `legal-page-layout.tsx`, so they are easy to miss when reasoning about scope. **`link_destination: "email"` is therefore not a `/partners` conversion metric on its own — split by `link_url` to isolate the creators funnel.**
+
+Two consequences worth naming. Adding a mailto to any `content/*.md` silently joins this bucket. And the legal pages previously emitted only `$pageview` (autocapture is off), so a GDPR-request click on `/privacybeleid` is now a tracked event — see the consent posture note below.
 
 ## Suggested funnels / dashboards
 

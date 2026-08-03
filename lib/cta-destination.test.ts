@@ -24,6 +24,13 @@ describe("resolveCtaDestination", () => {
     expect(resolve("https://agenda.letsdog.nl/")).toBe("agenda");
   });
 
+  it("the checkout split is scoped to the app host, not any /checkout path", () => {
+    // Pins the `destination === "app" &&` conjunct: without it, both of these
+    // would be misattributed as "checkout".
+    expect(resolve("https://keuzehulp.letsdog.nl/checkout")).toBe("keuzehulp");
+    expect(resolve("https://letsdog.nl/checkout")).toBeUndefined();
+  });
+
   it("same-site pricing links → pricing, with or without trailing slash", () => {
     expect(resolve("https://letsdog.nl/prijzen")).toBe("pricing");
     expect(resolve("https://letsdog.nl/prijzen/")).toBe("pricing");

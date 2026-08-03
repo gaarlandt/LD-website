@@ -71,6 +71,7 @@ Vitest (Node environment) covers the server-side + pure logic the browser previe
 │   ├── contact/            # Contact page
 │   ├── rassenkeuze/        # Rassenkeuze hulp — breed selector quiz (iframe to keuzehulp.letsdog.nl)
 │   ├── over-ons/           # About page
+│   ├── partners/           # Partners — ambassadeurs & UGC-makers, mailto funnel to creators@letsdog.nl
 │   ├── prijzen/            # Pricing page
 │   ├── puppycursus/        # Puppycursus page (route renamed from /puppyagenda)
 │   ├── veelgestelde-vragen/ # FAQ page
