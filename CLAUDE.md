@@ -178,7 +178,15 @@ Brought up to [The Website Specification](https://specification.website) on 2026
 ## Feature Development Workflow
 Use the `/new-feature` skill for all new features. This handles branch creation, implementation, and PR workflow. The branch will get a preview build at `<branch-slug>.website-letsdog.pages.dev` — verify there before merging.
 
-**Pure-docs commits skip the branch + PR flow.** New files under `docs/solutions/`, updates to `CLAUDE.md` / `HANDOFF.md`, and similar documentation-only changes go directly to `main`. They don't touch the production build, Cloudflare auto-redeploys without any user-visible change, and the branch-and-PR overhead isn't worth it for a one-file doc edit. The "never commit to main" rule still applies to code changes — heuristic: if the diff touches any file outside `docs/`, `CLAUDE.md`, or `HANDOFF.md`, branch + PR. Codified 2026-05-29 after `/ce-compound` workflow precedent (commits `3f0e907`, `8ca381b` predecessors).
+**Merge with a merge commit, not squash (decided 2026-05-31, codified 2026-08-03 as T-7).**
+Default to `gh pr merge --merge --delete-branch`. The per-unit commits on a feature branch are
+deliberate — keeping them on `main` is what makes `git revert <one unit>` and `git bisect`
+usable; squashing collapses a multi-unit PR into a single blob that can only be reverted whole.
+Squash (`--squash`) is the exception, for small or throwaway PRs whose intermediate commits carry
+no information (a typo fix, a one-file tweak, a branch full of "wip"). Delete the branch on merge
+either way.
+
+**Pure-docs commits skip the branch + PR flow.** New files under `docs/solutions/`, updates to `CLAUDE.md`, and similar documentation-only changes go directly to `main`. They don't touch the production build, Cloudflare auto-redeploys without any user-visible change, and the branch-and-PR overhead isn't worth it for a one-file doc edit. The "never commit to main" rule still applies to code changes — heuristic: if the diff touches any file outside `docs/` or `CLAUDE.md`, branch + PR. (Both mentions of `HANDOFF.md` dropped 2026-08-03: it was retired here on 2026-08-02 — loop bookkeeping now lives in the `LDwebsite` workspace root and is committed by `close.sh`, never by this rule.) Codified 2026-05-29 after `/ce-compound` workflow precedent (commits `3f0e907`, `8ca381b` predecessors).
 
 ## Workflow harness — Compound Engineering
 
