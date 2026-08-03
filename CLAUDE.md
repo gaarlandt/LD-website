@@ -116,9 +116,9 @@ Vitest (Node environment) covers the server-side + pure logic the browser previe
 
 ## Navigation Order
 ```
-Rassenkeuze hulp | Puppycursus | Prijzen | Over ons | FAQ | Contact
+Rassenkeuze hulp | Puppycursus | Prijzen | Over ons | Partners | Contact
 ```
-Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/layout/footer.tsx`. Desktop navbar also includes an outlined **Inloggen** button (→ `app.letsdog.nl`) and a solid green **Start vandaag** CTA (→ `/prijzen`). **Mobile** reorders the same bar instead of reusing the desktop CTAs: hamburger pinned far left (`order-1`), logo nudged right next to it (`order-2`), then a flexible spacer, then a persistent **Login** pill pinned far right (`order-4`, → `app.letsdog.nl`) — see the white-state note above. The mobile dropdown menu's only CTA is **Start vandaag**; it no longer duplicates a login button now that the bar always shows one.
+Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/layout/footer.tsx`. **FAQ left the top nav on 2026-08-03** to free that slot for Partners; `/veelgestelde-vragen/` is now reachable from the footer (last entry, alongside the footer-only Homepage link) and the 404 quick-links only — the two nav arrays are separate consts and stay in sync by convention, not by a shared import. Desktop navbar also includes an outlined **Inloggen** button (→ `app.letsdog.nl`) and a solid green **Start vandaag** CTA (→ `/prijzen`). **Mobile** reorders the same bar instead of reusing the desktop CTAs: hamburger pinned far left (`order-1`), logo nudged right next to it (`order-2`), then a flexible spacer, then a persistent **Login** pill pinned far right (`order-4`, → `app.letsdog.nl`) — see the white-state note above. The mobile dropdown menu's only CTA is **Start vandaag**; it no longer duplicates a login button now that the bar always shows one.
 
 ## Deployment
 

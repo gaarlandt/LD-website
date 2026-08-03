@@ -17,6 +17,7 @@ const ROUTES = [
   "/puppycursus/",
   "/prijzen/",
   "/over-ons/",
+  "/partners/",
   "/veelgestelde-vragen/",
   "/contact/",
   "/algemene-voorwaarden/",

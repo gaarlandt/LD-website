@@ -13,7 +13,7 @@ const links = [
   { href: "/puppycursus", label: "Puppycursus" },
   { href: "/prijzen", label: "Prijzen" },
   { href: "/over-ons", label: "Over ons" },
-  { href: "/veelgestelde-vragen", label: "FAQ" },
+  { href: "/partners", label: "Partners" },
   { href: "/contact", label: "Contact" },
 ];
 

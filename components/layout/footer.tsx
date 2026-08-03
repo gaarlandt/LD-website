@@ -3,16 +3,19 @@ import Image from "next/image";
 import { asset } from "@/lib/utils";
 import { Container, Eyebrow } from "@/components/ui";
 
-// Canonical order (matches components/layout/navbar.tsx + CLAUDE.md), with the
-// footer-only Homepage link kept first.
+// Canonical order (matches components/layout/navbar.tsx + CLAUDE.md), bracketed
+// by the two footer-only links: Homepage first, FAQ last. FAQ left the top nav
+// on 2026-08-03 to free that slot for Partners, so this is now its only
+// navigation entry — don't drop it.
 const navLinks = [
   { href: "/", label: "Homepage" },
   { href: "/rassenkeuze", label: "Rassenkeuze hulp" },
   { href: "/puppycursus", label: "Puppycursus" },
   { href: "/prijzen", label: "Prijzen" },
   { href: "/over-ons", label: "Over ons" },
-  { href: "/veelgestelde-vragen", label: "FAQ" },
+  { href: "/partners", label: "Partners" },
   { href: "/contact", label: "Contact" },
+  { href: "/veelgestelde-vragen", label: "FAQ" },
 ];
 
 const beleidLinks = [

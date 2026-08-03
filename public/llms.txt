@@ -11,6 +11,7 @@ Let's dog B.V. is gevestigd in Nederland en de site is Nederlandstalig. Ondersta
 - [Puppycursus](https://letsdog.nl/puppycursus/): Week-voor-week plan voor en tijdens de puppyfase.
 - [Prijzen](https://letsdog.nl/prijzen/): Twee abonnementen — Flexibel (EUR 19,99/maand) en Early Member (EUR 59/eerste jaar). Betaling via Mollie.
 - [Over ons](https://letsdog.nl/over-ons/): Achtergrond van Let's dog en oprichtster Elien, gecertificeerd hondengedragstherapeut.
+- [Partners](https://letsdog.nl/partners/): Samenwerken met Let's dog als ambassadeur (deel je eigen kortingscode) of als UGC-maker (betaalde contentopdrachten). Gratis meedoen, aanmelden per mail via creators@letsdog.nl.
 - [Veelgestelde vragen](https://letsdog.nl/veelgestelde-vragen/): Antwoorden over de app, de trainingsmethode, het abonnement en betalingen.
 - [Contact](https://letsdog.nl/contact/): E-mail, telefoon, WhatsApp en het boeken van een consult (EUR 39,50 incl. btw, via app.letsdog.nl/consult/).
 
