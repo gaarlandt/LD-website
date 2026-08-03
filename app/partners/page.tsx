@@ -9,6 +9,7 @@ import { PartnersBenefits } from "@/components/sections/partners/benefits";
 import { PartnersMission } from "@/components/sections/partners/mission-band";
 import { PartnersTerms } from "@/components/sections/partners/terms-card";
 import { PartnersFaq } from "@/components/sections/partners/faq";
+import { PartnersClosingCta } from "@/components/sections/partners/closing-cta";
 import { partnersFaqs } from "@/components/sections/partners/partners-faq-data";
 
 export const metadata = pageMetadata({
@@ -30,6 +31,7 @@ export default function Partners() {
       <PartnersMission />
       <PartnersTerms />
       <PartnersFaq />
+      <PartnersClosingCta />
     </>
   );
 }

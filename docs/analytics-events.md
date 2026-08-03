@@ -31,7 +31,7 @@ All events are dual-fired (GA4 + PostHog) and carry the PostHog super-properties
 |---|---|---|---|
 | `$pageview` | Every page load + App-Router soft navigation (PostHog history-based, via `defaults: "2026-01-30"`) | PostHog-standard (`$current_url`, `$pathname`, …) | GA4 sends its own `page_view` via the gtag config |
 | `$pageleave` | Page/tab leave (PostHog automatic) | PostHog-standard | — |
-| `cta_clicked` | Click on any tracked outbound/pricing CTA — delegated document listener ([`cta-tracker.tsx`](../components/analytics/cta-tracker.tsx)) | `link_url`, `link_text`, `link_location` (`"navbar"` \| `"body"`), `link_destination` (`"app"` \| `"keuzehulp"` \| `"agenda"` \| `"checkout"` \| `"pricing"`) | `link_location` + `link_destination` are **registered GA4 custom dimensions — do not rename** |
+| `cta_clicked` | Click on any tracked outbound / pricing / mail CTA — delegated document listener ([`cta-tracker.tsx`](../components/analytics/cta-tracker.tsx)), rules in [`lib/cta-destination.ts`](../lib/cta-destination.ts) | `link_url`, `link_text`, `link_location` (`"navbar"` \| `"body"`), `link_destination` (`"app"` \| `"keuzehulp"` \| `"agenda"` \| `"checkout"` \| `"pricing"` \| `"email"`) | `link_location` + `link_destination` are **registered GA4 custom dimensions — do not rename**. Adding a new *value* (as `"email"` was, 2026-08-03) is fine; renaming the dimension is not |
 | `view_item_list` | Pricing section scrolls into view (IntersectionObserver, once per page) ([`pricing-view-tracker.tsx`](../components/sections/pricing-view-tracker.tsx)) | `item_list_name` (`"pricing"`), `source` (`"prijzen_page"` \| `"homepage"`) | GA4 ecommerce |
 | `begin_checkout` | Click on a pricing tier CTA ([`plan-cta.tsx`](../components/sections/plan-cta.tsx)) | `currency` (`"EUR"`), `value` (number), `billing_period` (`"monthly"` \| `"yearly"`), `items: [{ item_id, item_name, item_category: "membership", price, quantity }]` | GA4 ecommerce. `item_id` = the WooCommerce product id (`2234` monthly / `2233` yearly) |
 | `contact_form_submitted` | Contact form submits successfully ([`contact-form-modal.tsx`](../app/contact/contact-form-modal.tsx)) | *(none)* — `identifyLead(email)` fires alongside it | conversion event |
@@ -39,6 +39,12 @@ All events are dual-fired (GA4 + PostHog) and carry the PostHog super-properties
 ### A pricing CTA click emits two events
 
 A click on a pricing tier CTA fires **both** `cta_clicked` (`link_destination: "checkout"`, with navbar/body + link_text attribution) **and** `begin_checkout` (plan + value). This is intentional. **Build the checkout funnel on `begin_checkout`, not `cta_clicked`**, so one click isn't double-counted as two funnel steps.
+
+### Mail CTAs (`link_destination: "email"`)
+
+Added 2026-08-03 with the `/partners` page. A `mailto:` URL has an **empty hostname** under the WHATWG URL parser, so it fell straight through the host lookup and no mail CTA was tracked before this. The branch now runs first, ahead of that lookup.
+
+This covers every `mailto:` on the site, not just `/partners` — the long-standing `mailto:mail@letsdog.nl` on [`/contact`](../app/contact/contact-content.tsx) now emits `cta_clicked` too. Split the two by `link_url` when you need them apart.
 
 ## Suggested funnels / dashboards
 
