@@ -7,11 +7,11 @@ export type PartnerFaq = { q: string; a: string };
 export const partnersFaqs: PartnerFaq[] = [
   {
     q: "Wie kan meedoen?",
-    a: "Creators die op een authentieke manier over honden praten en een betrokken volgersgroep hebben. Grootte is minder belangrijk dan echtheid — we kijken vooral of jouw content en Let's dog bij elkaar passen.",
+    a: "Creators die op een authentieke manier over honden praten en een betrokken volgersgroep hebben. Grootte is minder belangrijk dan echtheid we kijken vooral of jouw content en Let's dog bij elkaar passen.",
   },
   {
     q: "Wat kost het mij?",
-    a: "Niets. Meedoen is volledig kosteloos — of je nu ambassadeur of UGC-maker bent. Je betaalt nergens voor. Wat je precies krijgt en hoe de samenwerking eruitziet, spreken we samen af.",
+    a: "Niets. Meedoen is volledig kosteloos of je nu ambassadeur of UGC-maker bent. Je betaalt nergens voor. Wat je precies krijgt en hoe de samenwerking eruitziet, spreken we samen af.",
   },
   {
     q: "Hoe zit het met de vergoeding?",
@@ -19,7 +19,7 @@ export const partnersFaqs: PartnerFaq[] = [
   },
   {
     q: "Ik heb geen grote following, maar maak wel graag content. Kan ik meedoen?",
-    a: "Zeker. Naast ambassadeurs werken we ook met makers die vooral goede content maken. Die content zetten wij in op onze eigen kanalen en in campagnes. Groot bereik is dan niet nodig — het gaat om echte, eerlijke beelden. Laat het weten in je mail.",
+    a: "Zeker. Naast ambassadeurs werken we ook met makers die vooral goede content maken. Die content zetten wij in op onze eigen kanalen en in campagnes. Groot bereik is dan niet nodig het gaat om echte, eerlijke beelden. Laat het weten in je mail.",
   },
   {
     q: "Zit ik ergens aan vast?",

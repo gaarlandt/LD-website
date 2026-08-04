@@ -3,14 +3,14 @@ import { SectionWrapper } from "@/components/shared/section-wrapper";
 
 const rows: ReactNode[] = [
   <>
-    <b className="font-bold">Gratis meedoen</b> — voor ambassadeurs én
+    <b className="font-bold">Gratis meedoen</b>, voor ambassadeurs én
     UGC-makers.
   </>,
   <>
     <b className="font-bold">Je eigen code</b>, of een betaalde UGC-opdracht.
   </>,
   <>
-    <b className="font-bold">Verdien mee</b> — zonder targets of verplichtingen.
+    <b className="font-bold">Verdien mee</b>, zonder targets of verplichtingen.
   </>,
   <>
     <b className="font-bold">Persoonlijk contact</b>, geen ingewikkelde
@@ -29,7 +29,7 @@ export function PartnersTerms() {
         </h2>
         <p className="text-[17px] leading-relaxed opacity-90 max-w-lg mx-auto mb-8">
           Meedoen is gratis en vrijblijvend. Wat je precies krijgt en hoe de
-          samenwerking eruitziet, bespreken we rustig samen — per mail, op maat
+          samenwerking eruitziet, bespreken we rustig samen per mail, op maat
           voor jou.
         </p>
         <ul

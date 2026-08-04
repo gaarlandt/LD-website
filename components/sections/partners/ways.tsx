@@ -9,7 +9,7 @@ export function PartnersWays() {
   return (
     <SectionWrapper id="manieren" className="bg-[var(--ld-beige)]">
       <PartnersSectionHead label="Twee manieren" title="Zo kun je samenwerken">
-        Kies wat bij je past — of doe allebei. In beide gevallen begint het met
+        Kies wat bij je past of doe allebei. In beide gevallen begint het met
         één mailtje.
       </PartnersSectionHead>
 
@@ -27,7 +27,7 @@ export function PartnersWays() {
           <p className="text-[17px] leading-relaxed opacity-95">
             Jij hebt een community die je vertrouwt. Deel je persoonlijke
             Let&apos;s dog-code, inspireer je volgers en verdien mee voor
-            iedereen die aanhaakt.
+            iedereen die aanhaakt. En help zoveel mogelijk honden een mooi leven te krijgen!
           </p>
           <div className="mt-auto pt-6 text-[15px] font-bold text-[var(--ld-lime)]">
             Voor makers met een eigen publiek
@@ -46,7 +46,7 @@ export function PartnersWays() {
           </h3>
           <p className="text-[17px] leading-relaxed text-[var(--ld-text-muted)]">
             Jij maakt graag content. Filmt echte, eerlijke honden momenten die
-            wij inzetten in onze eigen kanalen en campagnes — tegen een
+            wij inzetten in onze eigen kanalen en campagnes tegen een
             vergoeding die we samen afspreken.
           </p>
           <div className="mt-auto pt-6 text-[15px] font-bold text-[var(--ld-green-ink)]">
