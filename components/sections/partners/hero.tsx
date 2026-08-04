@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { OptimizedImage } from "@/components/shared/optimized-image";
 import { Button, Eyebrow } from "@/components/ui";
 
@@ -20,12 +19,17 @@ export function PartnersHero() {
             content maakt die wij inzetten: hoe meer hondenouders we samen
             bereiken, hoe meer honden een beter leven krijgen. Doe je mee?
           </p>
+          {/* Plain <a>, not next/link: for a same-page fragment the router treats
+              a click whose destination equals the current URL as a no-op, so the
+              CTA scrolls once and is dead on every click after that. The browser's
+              native fragment navigation re-scrolls every time. See
+              docs/solutions/ui-bugs/. */}
           <div className="flex flex-wrap gap-3">
             <Button variant="peach" pill asChild>
-              <Link href="#manieren">Ambassadeur worden</Link>
+              <a href="#manieren">Ambassadeur worden</a>
             </Button>
             <Button variant="secondary" pill asChild>
-              <Link href="#manieren">UGC-maker worden</Link>
+              <a href="#manieren">UGC-maker worden</a>
             </Button>
           </div>
         </div>

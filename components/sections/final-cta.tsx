@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Button, Eyebrow } from "@/components/ui";
 
 export function FinalCta() {
@@ -22,7 +21,12 @@ export function FinalCta() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button variant="peach" pill asChild>
-            <Link href="#prijzen">Start de cursus vandaag</Link>
+            {/* Plain <a>, not next/link: for a same-page fragment the router
+                treats a click whose destination equals the current URL as a
+                no-op, so the CTA scrolls once and is dead on every click after
+                that. The browser's native fragment navigation re-scrolls every
+                time. See docs/solutions/ui-bugs/. */}
+            <a href="#prijzen">Start de cursus vandaag</a>
           </Button>
         </div>
 
