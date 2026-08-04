@@ -21,7 +21,7 @@ export function PartnersMission() {
         </h2>
         <p className="text-xl leading-relaxed opacity-90 max-w-xl mx-auto mb-5">
           Wij helpen hondenouders hun hond écht te begrijpen en met vertrouwen de
-          juiste keuzes te maken — in iedere levensfase.
+          juiste keuzes te maken in iedere levensfase.
         </p>
         <p className="text-base leading-relaxed opacity-70 max-w-lg mx-auto mb-8">
           Betrouwbare kennis, deskundige begeleiding en een betrokken community,
