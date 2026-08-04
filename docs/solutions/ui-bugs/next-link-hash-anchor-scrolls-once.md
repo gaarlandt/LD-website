@@ -9,6 +9,7 @@ symptoms:
   - "An anchor CTA scrolls to its section the first time and does nothing on every click after that, until the page is reloaded or another hash is visited"
   - "The URL shows the fragment (`/partners/#manieren`) but the viewport stays where it is"
   - "No console error, no failed request — the click just has no effect"
+  - "Automated scroll assertions on the preview are unreliable for this bug and must not be used as proof — see 'Evidence, and the limits of it'"
 root_cause: wrong_api
 resolution_type: code_fix
 severity: medium
@@ -27,20 +28,15 @@ The App Router treats a navigation whose destination equals the current URL as a
 
 The browser's **native** fragment handling does not work that way: activating a fragment link re-scrolls to the target every time, whether or not the hash changed. Using `next/link` here replaces that native behaviour with routing that has an equality guard in front of it.
 
-## Measured
+## Evidence, and the limits of it
 
-On the deployed preview, with `scroll-behavior` forced to `auto` to remove smooth-scroll throttling from the measurement:
+The **symptom** is confirmed by a human on a real browser: click once, scroll back up, click again, nothing happens, with `/partners/#manieren` already in the address bar.
 
-```
-next/link:
-  click 1 (no hash yet)          scrollY 0 -> 836   hash #manieren
-  click 2 (hash already set)     scrollY 0 -> 0     hash #manieren   <- dead
+The **mechanism** is the App Router's same-URL guard, which is well-established behaviour, not a guess.
 
-plain <a>:
-  click 1 (hash already set)     scrollY 0 -> 836
-  click 2                        scrollY 0 -> 836
-  click 3                        scrollY 0 -> 836
-```
+The **fix was not empirically confirmed in automation**, and it is worth recording why, because the next person will be tempted to try the same thing. Driving the anchors with `element.click()` from the browser-automation console produced results that did not reproduce between runs: the same bare control anchor scrolled on one run and not on the next, with no code change in between. Two known factors make this environment unsuitable for the measurement — the preview throttles scrolling (see `developer-experience/preview-throttles-intersection-observer-and-smooth-scroll.md`), and a synthetic `.click()` is not a user activation, which is exactly the input the "re-scroll on an unchanged fragment" path depends on.
+
+**So: verify this one by clicking it, in a real browser.** Automated scroll assertions on fragment navigation are not trustworthy here, and a green synthetic check would have been worse than no check — it would have looked like proof.
 
 ## Solution
 
