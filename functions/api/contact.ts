@@ -42,10 +42,10 @@ const COLLABORATION = ["ambassador", "ugc", "both", "unsure"] as const;
 const CHANNELS = ["Instagram", "TikTok", "YouTube", "Facebook", "Overig"] as const;
 
 const COLLABORATION_LABEL: Record<string, string> = {
-  ambassador: "Als ambassadeur — ontvangt een persoonlijke code om te delen",
-  ugc: "Als UGC-maker — maakt content voor Let's dog",
+  ambassador: "Als ambassadeur: ontvangt een persoonlijke code om te delen",
+  ugc: "Als UGC-maker: maakt content voor Let's dog",
   both: "Allebei",
-  unsure: "Weet het nog niet — wil meer horen",
+  unsure: "Weet het nog niet, wil meer horen",
 };
 
 /** Trim, collapse any CR/LF run to a space, and cap. Use for every single-line

@@ -31,10 +31,10 @@ const EMPTY = {
 const CHANNELS = ["Instagram", "TikTok", "YouTube", "Facebook", "Overig"];
 
 const COLLABORATION_OPTIONS = [
-  { value: "ambassador", label: "Als ambassadeur — ik ontvang een persoonlijke code om te delen" },
-  { value: "ugc", label: "Als UGC-maker — ik maak content voor Let's dog" },
+  { value: "ambassador", label: "Als ambassadeur: ik ontvang een persoonlijke code om te delen" },
+  { value: "ugc", label: "Als UGC-maker: ik maak content voor Let's dog" },
   { value: "both", label: "Allebei" },
-  { value: "unsure", label: "Ik weet het nog niet — vertel me meer" },
+  { value: "unsure", label: "Ik weet het nog niet, vertel me meer" },
 ];
 
 // Server-side field-validation copy. functions/api/contact.ts returns
@@ -367,7 +367,7 @@ export function CreatorFormModal({
                 <legend className="block mb-2 text-[15px] font-medium text-[var(--ld-text)]">
                   Welke kanalen gebruik je?{" "}
                   <span className="text-[var(--ld-text-muted)] font-normal">
-                    — meerdere antwoorden mogelijk
+                    (meerdere antwoorden mogelijk)
                   </span>
                 </legend>
                 <div className="flex flex-wrap gap-2.5">
@@ -417,7 +417,7 @@ export function CreatorFormModal({
                     <>
                       Hoe groot is je bereik op je belangrijkste kanaal?{" "}
                       <span className="text-[var(--ld-text-muted)] font-normal">
-                        — optioneel
+                        (optioneel)
                       </span>
                     </>
                   }
@@ -446,7 +446,7 @@ export function CreatorFormModal({
                     <>
                       Ben je zelf graag in beeld?{" "}
                       <span className="text-[var(--ld-text-muted)] font-normal">
-                        — optioneel
+                        (optioneel)
                       </span>
                     </>
                   }
@@ -472,7 +472,7 @@ export function CreatorFormModal({
                   <>
                     Vertel kort over jezelf, je content en je hond{" "}
                     <span className="text-[var(--ld-text-muted)] font-normal">
-                      — optioneel
+                      (optioneel)
                     </span>
                   </>
                 }
