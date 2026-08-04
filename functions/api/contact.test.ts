@@ -437,3 +437,116 @@ describe("onRequestPost — confirmation email content (U1: no echo, name saniti
     expect(customer.HtmlBody).not.toContain(longName);
   });
 });
+
+// The /partners creator application shares this Function via a `kind` discriminator
+// (see the isCreator branch). These tests pin the three things that differ from a
+// contact submission — required fields, recipient, and the closed value sets — plus
+// the one property that must NOT differ: the security posture is shared, not forked.
+const CREATOR = {
+  kind: "creator",
+  name: "Sanne",
+  email: "sanne@example.nl",
+  collaboration: "ambassador",
+};
+
+describe("onRequestPost — creator applications (kind: \"creator\")", () => {
+  it("does not require a message, unlike a contact submission", async () => {
+    stubFetch();
+    const res = await call(makeRequest(CREATOR));
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ ok: true });
+  });
+
+  it("still requires name and a valid email", async () => {
+    stubFetch();
+    const noName = await call(makeRequest({ ...CREATOR, name: "" }));
+    expect(noName.status).toBe(400);
+    await expect(noName.json()).resolves.toEqual({ ok: false, error: "name" });
+
+    const badEmail = await call(makeRequest({ ...CREATOR, email: "nope" }));
+    expect(badEmail.status).toBe(400);
+    await expect(badEmail.json()).resolves.toEqual({ ok: false, error: "email" });
+  });
+
+  it("requires a collaboration value from the closed set", async () => {
+    stubFetch();
+    const missing = await call(makeRequest({ ...CREATOR, collaboration: "" }));
+    expect(missing.status).toBe(400);
+    await expect(missing.json()).resolves.toEqual({ ok: false, error: "collaboration" });
+
+    const forged = await call(makeRequest({ ...CREATOR, collaboration: "admin" }));
+    expect(forged.status).toBe(400);
+    await expect(forged.json()).resolves.toEqual({ ok: false, error: "collaboration" });
+  });
+
+  it("routes to the creators inbox, not support", async () => {
+    const { postmarkPayloads } = stubFetch();
+    await call(makeRequest(CREATOR), {
+      POSTMARK_SERVER_TOKEN: "pm-token",
+      CONTACT_TO: "support@letsdog.nl",
+    });
+    const [support] = postmarkPayloads[0];
+    expect(support.To).toBe("creators@letsdog.nl");
+    expect(support.Subject).toContain("creator-aanmelding");
+  });
+
+  it("drops channel values outside the closed set instead of forwarding them", async () => {
+    const { postmarkPayloads } = stubFetch();
+    await call(
+      makeRequest({
+        ...CREATOR,
+        channels: ["Instagram", "<script>alert(1)</script>", "TikTok"],
+      }),
+    );
+    const [support] = postmarkPayloads[0];
+    expect(support.TextBody).toContain("Kanalen: Instagram, TikTok");
+    expect(support.TextBody).not.toContain("script");
+  });
+
+  it("omits optional rows that were left blank", async () => {
+    const { postmarkPayloads } = stubFetch();
+    await call(makeRequest(CREATOR));
+    const [support] = postmarkPayloads[0];
+    expect(support.TextBody).not.toContain("Profiel:");
+    expect(support.TextBody).not.toContain("Bereik:");
+    expect(support.TextBody).not.toContain("Over zichzelf:");
+  });
+
+  it("collapses CR/LF in creator fields so they cannot forge extra lines", async () => {
+    const { postmarkPayloads } = stubFetch();
+    await call(
+      makeRequest({
+        ...CREATOR,
+        profile: "https://x.nl\nBereik: 1.000.000 volgers",
+      }),
+    );
+    const [support] = postmarkPayloads[0];
+    expect(support.TextBody).toContain("Profiel: https://x.nl Bereik: 1.000.000 volgers");
+    expect(support.TextBody.split("\n").filter((l) => l.startsWith("Bereik:"))).toHaveLength(0);
+  });
+
+  it("shares the contact form's Turnstile gate rather than forking it", async () => {
+    stubFetch({ turnstile: { success: false } });
+    const res = await call(makeRequest(CREATOR));
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({ ok: false, error: "captcha" });
+  });
+
+  it("honours the honeypot the same way", async () => {
+    const { postmarkPayloads } = stubFetch();
+    const res = await call(makeRequest({ ...CREATOR, company: "bot" }));
+    expect(res.status).toBe(200);
+    expect(postmarkPayloads).toHaveLength(0);
+  });
+
+  it("sends the applicant a confirmation that does not echo their submission", async () => {
+    const { postmarkPayloads } = stubFetch();
+    await call(makeRequest({ ...CREATOR, message: "Ik film mijn hond elke dag." }));
+    const [, customer] = postmarkPayloads[0];
+    expect(customer.To).toBe("sanne@example.nl");
+    expect(customer.Subject).toBe("We hebben je aanmelding ontvangen");
+    expect(customer.TextBody).toContain("drie werkdagen");
+    expect(customer.TextBody).not.toContain("Ik film mijn hond elke dag.");
+    expect(customer.HtmlBody).not.toContain("Ik film mijn hond elke dag.");
+  });
+});

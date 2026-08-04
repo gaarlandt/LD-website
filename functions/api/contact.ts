@@ -19,6 +19,7 @@ interface Env {
   POSTMARK_SERVER_TOKEN?: string;
   CONTACT_TO?: string;
   CONTACT_FROM?: string;
+  CREATORS_TO?: string;
   TURNSTILE_SECRET_KEY?: string;
 }
 
@@ -28,6 +29,30 @@ interface PagesContext {
 }
 
 const MAX = { name: 100, email: 200, message: 5000 };
+
+// Creator-application extras (kind: "creator"). Every one of these is optional
+// except `collaboration`, and all are attacker-controlled, so each is capped and
+// — apart from `about`, which stays multi-line like `message` — collapsed to a
+// single line before it can reach a Subject or a plain-text field label.
+const CREATOR_MAX = { collaboration: 40, channels: 120, profile: 300, reach: 60, camera: 40 };
+
+// Closed sets: the form's selects and checkboxes only ever submit these. Anything
+// else is a hand-crafted payload, so reject rather than forward it into an email.
+const COLLABORATION = ["ambassador", "ugc", "both", "unsure"] as const;
+const CHANNELS = ["Instagram", "TikTok", "YouTube", "Facebook", "Overig"] as const;
+
+const COLLABORATION_LABEL: Record<string, string> = {
+  ambassador: "Als ambassadeur — ontvangt een persoonlijke code om te delen",
+  ugc: "Als UGC-maker — maakt content voor Let's dog",
+  both: "Allebei",
+  unsure: "Weet het nog niet — wil meer horen",
+};
+
+/** Trim, collapse any CR/LF run to a space, and cap. Use for every single-line
+ *  field that can reach a Subject, a header, or a `Label: value` line. */
+function singleLine(value: unknown, max: number): string {
+  return (typeof value === "string" ? value.trim() : "").replace(/[\r\n]+/g, " ").slice(0, max);
+}
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function json(body: unknown, status = 200): Response {
@@ -128,11 +153,43 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
   const email = typeof data.email === "string" ? data.email.trim() : "";
   const message = typeof data.message === "string" ? data.message.trim() : "";
 
+  // Two submission kinds share this endpoint: the contact form and the /partners
+  // creator application. They differ only in which fields are required and what
+  // the two emails say — everything security-critical below (honeypot, Turnstile,
+  // fail-closed secrets, Postmark batch, support-confirmation) is deliberately
+  // shared rather than duplicated into a second Function.
+  const isCreator = data.kind === "creator";
+
   if (!name || name.length > MAX.name) return json({ ok: false, error: "name" }, 400);
   if (!email || email.length > MAX.email || !EMAIL_RE.test(email)) {
     return json({ ok: false, error: "email" }, 400);
   }
-  if (!message || message.length > MAX.message) return json({ ok: false, error: "message" }, 400);
+  // The creator form's free-text field is optional — its required field is the
+  // collaboration type instead. The contact form still requires a message.
+  if (!isCreator && (!message || message.length > MAX.message)) {
+    return json({ ok: false, error: "message" }, 400);
+  }
+  if (isCreator && message.length > MAX.message) {
+    return json({ ok: false, error: "message" }, 400);
+  }
+
+  const collaboration = singleLine(data.collaboration, CREATOR_MAX.collaboration);
+  const profile = singleLine(data.profile, CREATOR_MAX.profile);
+  const reach = singleLine(data.reach, CREATOR_MAX.reach);
+  const camera = singleLine(data.camera, CREATOR_MAX.camera);
+  // Only keep values from the closed set, so a hand-crafted payload can't inject
+  // arbitrary text into the notification through the channel list.
+  const channels = Array.isArray(data.channels)
+    ? data.channels
+        .filter((c): c is string => typeof c === "string")
+        .filter((c) => (CHANNELS as readonly string[]).includes(c))
+        .join(", ")
+        .slice(0, CREATOR_MAX.channels)
+    : "";
+
+  if (isCreator && !(COLLABORATION as readonly string[]).includes(collaboration)) {
+    return json({ ok: false, error: "collaboration" }, 400);
+  }
 
   // Turnstile: confirm the visitor is human before sending anything. Always on —
   // a missing/invalid token (or a verify failure) returns 400 and sends no mail.
@@ -161,22 +218,56 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
     return json({ ok: false, error: "server_not_configured" }, 500);
   }
 
-  const to = env.CONTACT_TO || "support@letsdog.nl";
+  // Creator applications go to their own inbox; everything else to support.
+  const to = isCreator
+    ? env.CREATORS_TO || "creators@letsdog.nl"
+    : env.CONTACT_TO || "support@letsdog.nl";
   const from = env.CONTACT_FROM || "noreply@letsdog.nl";
 
-  // Support notification — unchanged. This is the source of truth: the team must
-  // receive every submission, with the full message intact.
-  const supportText =
-    `Nieuw contactbericht via de website\n\n` +
-    `Naam: ${name}\n` +
-    `E-mail: ${email}\n\n` +
-    `Bericht:\n${message}\n`;
+  // Optional creator rows are omitted entirely when empty, so the notification
+  // stays readable instead of carrying a column of blanks.
+  const creatorRow = (label: string, value: string) => (value ? `${label}: ${value}\n` : "");
+  const creatorRowHtml = (label: string, value: string) =>
+    value ? `<strong>${label}:</strong> ${escapeHtml(value)}<br>` : "";
 
-  const supportHtml =
-    `<h2>Nieuw contactbericht via de website</h2>` +
-    `<p><strong>Naam:</strong> ${escapeHtml(name)}<br>` +
-    `<strong>E-mail:</strong> ${escapeHtml(email)}</p>` +
-    `<p><strong>Bericht:</strong><br>${escapeHtml(message).replace(/\n/g, "<br>")}</p>`;
+  // Support notification — the source of truth: the team must receive every
+  // submission, with the full free-text intact.
+  const supportSubject = isCreator
+    ? `Nieuwe creator-aanmelding via de website — ${name}`
+    : `Nieuw contactbericht via de website — ${name}`;
+
+  const supportText = isCreator
+    ? `Nieuwe creator-aanmelding via de website\n\n` +
+      `Naam: ${name}\n` +
+      `E-mail: ${email}\n` +
+      `Samenwerking: ${COLLABORATION_LABEL[collaboration] ?? collaboration}\n` +
+      creatorRow("Kanalen", channels) +
+      creatorRow("Profiel", profile) +
+      creatorRow("Bereik", reach) +
+      creatorRow("Zelf in beeld", camera) +
+      (message ? `\nOver zichzelf:\n${message}\n` : "")
+    : `Nieuw contactbericht via de website\n\n` +
+      `Naam: ${name}\n` +
+      `E-mail: ${email}\n\n` +
+      `Bericht:\n${message}\n`;
+
+  const supportHtml = isCreator
+    ? `<h2>Nieuwe creator-aanmelding via de website</h2>` +
+      `<p><strong>Naam:</strong> ${escapeHtml(name)}<br>` +
+      `<strong>E-mail:</strong> ${escapeHtml(email)}<br>` +
+      `<strong>Samenwerking:</strong> ${escapeHtml(COLLABORATION_LABEL[collaboration] ?? collaboration)}<br>` +
+      creatorRowHtml("Kanalen", channels) +
+      creatorRowHtml("Profiel", profile) +
+      creatorRowHtml("Bereik", reach) +
+      creatorRowHtml("Zelf in beeld", camera) +
+      `</p>` +
+      (message
+        ? `<p><strong>Over zichzelf:</strong><br>${escapeHtml(message).replace(/\n/g, "<br>")}</p>`
+        : "")
+    : `<h2>Nieuw contactbericht via de website</h2>` +
+      `<p><strong>Naam:</strong> ${escapeHtml(name)}<br>` +
+      `<strong>E-mail:</strong> ${escapeHtml(email)}</p>` +
+      `<p><strong>Bericht:</strong><br>${escapeHtml(message).replace(/\n/g, "<br>")}</p>`;
 
   // Customer confirmation — a NEUTRAL acknowledgement back to the submitter. It
   // deliberately does NOT echo the submitted message: the recipient (To) is
@@ -184,7 +275,9 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
   // would turn this into a branded-email amplification / phishing vector (#1).
   // Dutch, on-brand (lowercase "Let's dog"), plain-text + HTML. Best-effort: a
   // bounced confirmation must never regress the support send (see batch handling).
-  const customerSubject = "We hebben je bericht ontvangen";
+  const customerSubject = isCreator
+    ? "We hebben je aanmelding ontvangen"
+    : "We hebben je bericht ontvangen";
 
   // The greeting still personalizes with the visitor's name, but capped at 20
   // chars: enough for a real first name, while bounding how much attacker-controlled
@@ -193,13 +286,22 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
   // keeps the full name.
   const greetingName = name.slice(0, 20).trimEnd();
 
+  const customerBody = isCreator
+    ? `Bedankt voor je aanmelding. We hebben hem goed ontvangen en nemen binnen ` +
+      `drie werkdagen persoonlijk contact met je op.`
+    : `Bedankt voor je bericht. We hebben het goed ontvangen en je hoort binnen ` +
+      `1 werkdag van ons.`;
+
+  const customerReason = isCreator
+    ? `Je ontvangt deze e-mail omdat je je hebt aangemeld als creator op letsdog.nl.`
+    : `Je ontvangt deze e-mail omdat je het contactformulier op letsdog.nl hebt ingevuld.`;
+
   const customerText =
     `Hoi ${greetingName},\n\n` +
-    `Bedankt voor je bericht. We hebben het goed ontvangen en je hoort binnen ` +
-    `1 werkdag van ons.\n\n` +
+    `${customerBody}\n\n` +
     `Tot snel,\n` +
     `Elien\n\n` +
-    `Je ontvangt deze e-mail omdat je het contactformulier op letsdog.nl hebt ingevuld.\n` +
+    `${customerReason}\n` +
     `Let's dog BV · Naarderstraat 317 · 1272 NK Huizen · Nederland\n`;
 
   // The header logo is an <img> with the wordmark as alt-text fallback (email
@@ -217,11 +319,11 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
         `</div>` +
         `<div style="padding:28px;color:#141414;">` +
           `<p style="margin:0 0 16px;font-size:16px;line-height:1.7;">Hoi ${escapeHtml(greetingName)},</p>` +
-          `<p style="margin:0 0 16px;font-size:16px;line-height:1.7;">Bedankt voor je bericht. We hebben het goed ontvangen en je hoort binnen 1 werkdag van ons.</p>` +
+          `<p style="margin:0 0 16px;font-size:16px;line-height:1.7;">${customerBody}</p>` +
           `<p style="margin:0;font-size:16px;line-height:1.7;">Tot snel,<br>Elien</p>` +
         `</div>` +
         `<div style="background:#162A0E;padding:20px 28px;">` +
-          `<p style="margin:0 0 6px;color:rgba(255,255,255,0.65);font-size:12px;line-height:1.6;">Je ontvangt deze e-mail omdat je het contactformulier op letsdog.nl hebt ingevuld.</p>` +
+          `<p style="margin:0 0 6px;color:rgba(255,255,255,0.65);font-size:12px;line-height:1.6;">${customerReason}</p>` +
           `<p style="margin:0;color:rgba(255,255,255,0.5);font-size:12px;line-height:1.6;">Let's dog BV · Naarderstraat 317 · 1272 NK Huizen · Nederland</p>` +
         `</div>` +
       `</div>` +
@@ -245,7 +347,7 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
           From: from,
           To: to,
           ReplyTo: email,
-          Subject: `Nieuw contactbericht via de website — ${name}`,
+          Subject: supportSubject,
           TextBody: supportText,
           HtmlBody: supportHtml,
           MessageStream: "outbound",
