@@ -45,9 +45,9 @@ export function PartnersWays() {
             Maak content die wij inzetten
           </h3>
           <p className="text-[17px] leading-relaxed text-[var(--ld-text-muted)]">
-            Jij maakt graag content. Film echte, eerlijke hondenmomenten die wij
-            inzetten in onze eigen kanalen en campagnes — tegen een vergoeding
-            die we samen afspreken.
+            Jij maakt graag content. Filmt echte, eerlijke honden momenten die
+            wij inzetten in onze eigen kanalen en campagnes — tegen een
+            vergoeding die we samen afspreken.
           </p>
           <div className="mt-auto pt-6 text-[15px] font-bold text-[var(--ld-green-ink)]">
             Voor makers die graag filmen

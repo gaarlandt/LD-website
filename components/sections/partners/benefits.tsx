@@ -17,13 +17,13 @@ const benefits = [
     icon: PawPrint,
     tile: "var(--ld-blue)",
     title: "Voor elke levensfase",
-    body: "Van pup tot senior: per fase weet de hondenouder wat normaal is, wat te doen en wanneer extra hulp nodig is. Eén plek, geen tegenstrijdig advies.",
+    body: "Van pup tot senior: per fase weet de hondenouder wat te verwachten, wat te doen en wanneer extra hulp nodig is. Eén plek, geen tegenstrijdig advies.",
   },
   {
     icon: Heart,
     tile: "var(--ld-lime)",
     title: "Fijn om te delen",
-    body: "Je volgers krijgen echte waarde en een eerlijke korting. Jij bouwt aan iets wat hondenouders vooruithelpt, niet aan een snelle verkoop.",
+    body: "Je volgers krijgen echte waarde en een eerlijke korting. Jij bouwt aan iets wat honden-ouders en honden vooruit helpt, niet aan snelle verkoop.",
   },
 ];
 
@@ -36,7 +36,7 @@ export function PartnersBenefits() {
       >
         Je deelt geen product dat je zelf niet zou gebruiken. Let&apos;s dog is
         opgebouwd door gecertificeerde gedragstherapeuten, zonder quick fixes of
-        harde correcties.
+        fysieke correcties, maar met positief belonen.
       </PartnersSectionHead>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -16,9 +16,9 @@ export function PartnersHero() {
             Deel wat werkt. Help hondenouders verder.
           </h1>
           <p className="text-[var(--ld-text-muted)] text-lg leading-relaxed mb-8 max-w-lg">
-            Of je nu je eigen volgers inspireert met je code, óf als UGC-maker
-            content maakt die wij inzetten — samen laten we Let&apos;s dog
-            groeien. Zin om bij te dragen aan onze missie?
+            Of je nu je volgers inspireert met je eigen code, of als creator
+            content maakt die wij inzetten: hoe meer hondenouders we samen
+            bereiken, hoe meer honden een beter leven krijgen. Doe je mee?
           </p>
           <div className="flex flex-wrap gap-3">
             <Button variant="peach" pill asChild>

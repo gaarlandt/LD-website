@@ -8,12 +8,12 @@ const steps: { num: string; title: string; body: ReactNode }[] = [
     title: "Meld je gratis aan",
     body: (
       <>
-        Stuur een mail naar{" "}
+        Stuur een e-mail naar{" "}
         <span className="font-bold text-[var(--ld-green-ink)]">
           creators@letsdog.nl
         </span>{" "}
         en vertel kort iets over jezelf en je hond. We nemen persoonlijk contact
-        met je op en bespreken wat past.
+        met je op om te bespreken wat bij je past.
       </>
     ),
   },
@@ -47,7 +47,7 @@ export function PartnersSteps() {
   return (
     <SectionWrapper id="hoe" className="bg-white">
       <PartnersSectionHead label="Hoe het werkt" title="In drie stappen op weg">
-        Geen ingewikkelde tools of dashboards. Jij mailt, wij regelen de rest
+        Geen ingewikkelde tools of dashboards. Jij mailt, we regelen de rest
         samen.
       </PartnersSectionHead>
 

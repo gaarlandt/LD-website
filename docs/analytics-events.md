@@ -35,6 +35,7 @@ All events are dual-fired (GA4 + PostHog) and carry the PostHog super-properties
 | `view_item_list` | Pricing section scrolls into view (IntersectionObserver, once per page) ([`pricing-view-tracker.tsx`](../components/sections/pricing-view-tracker.tsx)) | `item_list_name` (`"pricing"`), `source` (`"prijzen_page"` \| `"homepage"`) | GA4 ecommerce |
 | `begin_checkout` | Click on a pricing tier CTA ([`plan-cta.tsx`](../components/sections/plan-cta.tsx)) | `currency` (`"EUR"`), `value` (number), `billing_period` (`"monthly"` \| `"yearly"`), `items: [{ item_id, item_name, item_category: "membership", price, quantity }]` | GA4 ecommerce. `item_id` = the WooCommerce product id (`2234` monthly / `2233` yearly) |
 | `contact_form_submitted` | Contact form submits successfully ([`contact-form-modal.tsx`](../app/contact/contact-form-modal.tsx)) | *(none)* — `identifyLead(email)` fires alongside it | conversion event |
+| `creator_form_submitted` | Creator application submits successfully on `/partners` ([`creator-form-modal.tsx`](../components/sections/partners/creator-form-modal.tsx)) | `collaboration` (`"ambassador"` \| `"ugc"` \| `"both"` \| `"unsure"`) | conversion event — `identifyLead(email)` fires alongside it, same lowercased-email join key. **This is the `/partners` conversion metric**, not `cta_clicked` |
 
 ### A pricing CTA click emits two events
 
@@ -48,13 +49,14 @@ Added 2026-08-03 with the `/partners` page. A `mailto:` URL has an **empty hostn
 
 | Surface | Address | Count |
 |---|---|---|
-| `/partners` slot-CTA | `creators@letsdog.nl` | 1 |
 | [`/contact`](../app/contact/contact-content.tsx) mail card | `mail@letsdog.nl` | 1 |
 | 7 legal pages — privacybeleid (3), retour (2), algemene-voorwaarden, ai-gebruiksvoorwaarden, cookieverklaring, modelformulier-herroeping, ip-overdrachtsverklaring | `support@letsdog.nl` (9), `mail@letsdog.nl` (1) | 10 |
 
-The legal-page links live in `content/*.md` and become real anchors via `legal-page-layout.tsx`, so they are easy to miss when reasoning about scope. **`link_destination: "email"` is therefore not a `/partners` conversion metric on its own — split by `link_url` to isolate the creators funnel.**
+The legal-page links live in `content/*.md` and become real anchors via `legal-page-layout.tsx`, so they are easy to miss when reasoning about scope. Adding a mailto to any `content/*.md` silently joins this bucket.
 
-Two consequences worth naming. Adding a mailto to any `content/*.md` silently joins this bucket. And the legal pages previously emitted only `$pageview` (autocapture is off), so a GDPR-request click on `/privacybeleid` is now a tracked event — see the consent posture note below.
+**`/partners` is deliberately not in this table.** Its CTA opened a `mailto:` for one day (2026-08-03) and now opens the creator form modal instead, so the creator funnel is measured by `creator_form_submitted`, not by `link_destination: "email"`.
+
+The legal pages previously emitted only `$pageview` (autocapture is off), so a GDPR-request click on `/privacybeleid` is now a tracked event — see the consent posture note below.
 
 ## Suggested funnels / dashboards
 
