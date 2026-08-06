@@ -20,7 +20,7 @@ Page matches mockup at desktop + mobile · modal opens/closes (X, Escape, backdr
 
 ### ✅ VERIFIED 2026-05-31 — contact form works end-to-end on the preview
 After `POSTMARK_SERVER_TOKEN` was set on the **Preview** scope + a redeploy (empty commit `23159ea`), all three paths were confirmed on `https://feature-contact-page-redesig.website-letsdog.pages.dev/api/contact`: valid body → **`{"ok":true}` (200)** with a real email sent to `support@letsdog.nl` (Reply-To = visitor); invalid → **`400 {"error":"name"}`**; honeypot (`company` filled) → **`200`, no send**. The earlier `server_not_configured` 500 was exactly the token-not-on-Preview-scope cause diagnosed below.
-**Remaining:** (1) confirm the test email landed in the support inbox; (2) merge PR #17 (**merge commit**) — prod already has the Production-scoped token, so it should work on first deploy, but confirm `CONTACT_FROM` (`noreply@letsdog.nl`) is a Postmark-verified sender; (3) optional: swap the placeholder hero photo (`training.jpeg`).
+**Remaining:** (1) confirm the test email landed in the support inbox; (2) merge PR #17 (**merge commit**) — prod already has the Production-scoped token, so it should work on first deploy, but confirm `CONTACT_FROM` (`noreply@letsdog.nl`) is a Postmark-verified sender; (3) ~~optional: swap the placeholder hero photo (`training.jpeg`)~~ — done 2026-08-06, see the RESOLVED section below.
 
 ### Original "not verified" note ⏳ — superseded by the ✅ above (kept for context)
 **The real Postmark email send.** Cloudflare `functions/` do **not** run under `next dev`, so `/api/contact` 404s locally (expected). End-to-end delivery can only be tested on the **Cloudflare branch-preview deploy**, and only after the owner does the two setup steps below.
@@ -78,9 +78,9 @@ On the branch preview `https://feature-contact-page-redesign.website-letsdog.pag
 
 ---
 
-## Heads-up: the hero photo is a placeholder
+## ✅ RESOLVED 2026-08-06 — the hero photo is no longer a placeholder
 
-The contact hero currently uses `public/images/training.jpeg` as a swappable stand-in. If you have the exact mockup photo, drop it into `public/images/`, point the `OptimizedImage src` in `app/contact/contact-content.tsx` at it, run `npm run optimize:images`, and commit the new variants. Not a blocker for testing.
+The contact hero ran on `public/images/training.jpeg` as a swappable stand-in from 2026-05-31. Jur picked the real photo on 2026-08-06 and it is now `public/images/kid-dog.jpeg` (loop item T-5). No `npm run optimize:images` was needed — that file and its eight AVIF/WebP variants had been committed since `5f217bc`.
 
 ---
 
