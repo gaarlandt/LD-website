@@ -6,7 +6,7 @@ lead: Laatst bijgewerkt op 17 juni 2026.
 
 ## 1. Definities
 
-Let's dog: Let's dog B.V., gevestigd aan Naarderstraat 31, 1272 NK Huizen, KvK 98271814.
+Let's dog: Let's dog B.V., gevestigd aan Amsterdamsestraatweg 5, 1411 AW Naarden, KvK 98271814.
 
 Platform: De website, webapplicatie, mobiele app, community, cursussen, AI-functionaliteiten en aanverwante diensten van Let's dog.
 

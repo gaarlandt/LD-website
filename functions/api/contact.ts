@@ -302,7 +302,7 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
     `Tot snel,\n` +
     `Elien\n\n` +
     `${customerReason}\n` +
-    `Let's dog BV · Naarderstraat 317 · 1272 NK Huizen · Nederland\n`;
+    `Let's dog BV · Amsterdamsestraatweg 5 · 1411 AW Naarden · Nederland\n`;
 
   // The header logo is an <img> with the wordmark as alt-text fallback (email
   // clients strip SVG, so this is a committed PNG). Serve it from the origin that
@@ -324,7 +324,7 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
         `</div>` +
         `<div style="background:#162A0E;padding:20px 28px;">` +
           `<p style="margin:0 0 6px;color:rgba(255,255,255,0.65);font-size:12px;line-height:1.6;">${customerReason}</p>` +
-          `<p style="margin:0;color:rgba(255,255,255,0.5);font-size:12px;line-height:1.6;">Let's dog BV · Naarderstraat 317 · 1272 NK Huizen · Nederland</p>` +
+          `<p style="margin:0;color:rgba(255,255,255,0.5);font-size:12px;line-height:1.6;">Let's dog BV · Amsterdamsestraatweg 5 · 1411 AW Naarden · Nederland</p>` +
         `</div>` +
       `</div>` +
     `</div>`;
