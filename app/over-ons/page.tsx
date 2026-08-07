@@ -1,4 +1,5 @@
 import { pageMetadata } from "@/lib/seo";
+import { CONSULT_AVAILABLE } from "@/lib/feature-flags";
 import Link from "next/link";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { JsonLd } from "@/components/shared/json-ld";
@@ -237,15 +238,18 @@ export default function OverOns() {
             <Button variant="brand" pill asChild>
               <Link href="/prijzen">Start vandaag</Link>
             </Button>
-            <Button variant="ghost" pill asChild>
-              <a
-                href="https://app.letsdog.nl/consult/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Plan een consult
-              </a>
-            </Button>
+            {/* Hidden while CONSULT_AVAILABLE is false — see lib/feature-flags.ts */}
+            {CONSULT_AVAILABLE && (
+              <Button variant="ghost" pill asChild>
+                <a
+                  href="https://app.letsdog.nl/consult/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Plan een consult
+                </a>
+              </Button>
+            )}
           </div>
         </Card>
       </SectionWrapper>

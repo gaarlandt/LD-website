@@ -14,9 +14,25 @@
 // to the script tag below and drop the <noscript> pixel (a JS-disabled browser
 // never sees the banner, so it can't consent).
 //
-// NOTE: unlike GA4 there is no environment split — Meta has no traffic_type
-// equivalent, so preview and localhost events land in the same dataset as
-// production. See docs/analytics-events.md.
+// PRODUCTION ONLY. Meta has no traffic_type/environment equivalent — every event
+// lands in one dataset — so the only way to keep preview and localhost out of the
+// numbers that campaigns optimise against is to not fire at all off production.
+// Since 2026-08-07 (letsdog.nl now serves this site) that is the right trade.
+//
+// The check is at RUNTIME, not build time, and has to be: one static export is
+// served on both letsdog.nl and *.pages.dev, so the HTML is identical and only
+// location.hostname can tell them apart. Same mechanism ga4.tsx uses to tag
+// internal traffic; PROD_HOSTS is the shared list.
+//
+// Consequence worth knowing: the pixel does not exist on branch previews, so it
+// cannot be verified there. Verify on production with Meta Pixel Helper or
+// Events Manager -> Test Events.
+//
+// Off production nothing loads: no fbevents.js, no window.fbq. The guards in
+// lib/analytics.ts (typeof window.fbq === "function") then skip the Meta sink on
+// their own, so there is one gate rather than a check per call site.
+
+import { PROD_HOSTS } from "@/lib/prod-hosts";
 
 const PIXEL_ID_PATTERN = /^\d{15,16}$/;
 
@@ -35,7 +51,9 @@ export function MetaPixel() {
     return null;
   }
 
+  // Meta's snippet verbatim, wrapped in the production-host gate.
   const inlineScript =
+    `(function(){if(${JSON.stringify(PROD_HOSTS)}.indexOf(location.hostname)===-1)return;` +
     `!function(f,b,e,v,n,t,s)` +
     `{if(f.fbq)return;n=f.fbq=function(){n.callMethod?` +
     `n.callMethod.apply(n,arguments):n.queue.push(arguments)};` +
@@ -45,21 +63,13 @@ export function MetaPixel() {
     `s.parentNode.insertBefore(t,s)}(window,document,'script',` +
     `'https://connect.facebook.net/en_US/fbevents.js');` +
     `fbq('init','${id}');` +
-    `fbq('track','PageView');`;
+    `fbq('track','PageView');})();`;
 
-  return (
-    <>
-      <script dangerouslySetInnerHTML={{ __html: inlineScript }} />
-      <noscript>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          height="1"
-          width="1"
-          style={{ display: "none" }}
-          alt=""
-          src={`https://www.facebook.com/tr?id=${id}&ev=PageView&noscript=1`}
-        />
-      </noscript>
-    </>
-  );
+  // Meta's <noscript> fallback pixel is deliberately omitted. It cannot be
+  // host-gated (no JS to run the check), so it would be the one path still
+  // leaking preview traffic into the dataset. It is also the least defensible
+  // path under the ungated consent posture — a scripting-disabled browser never
+  // renders the Cookiebot banner, so that visitor has no way to refuse — and it
+  // only ever covered visitors who could not complete a JS checkout anyway.
+  return <script dangerouslySetInnerHTML={{ __html: inlineScript }} />;
 }
