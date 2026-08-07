@@ -19,18 +19,20 @@ The flip is **done and live**: `letsdog.nl` + `www` are proxied to Cloudflare Pa
 | Rate-limit rule (`/api/contact`) | ✅ Free-plan rule live; burst blocks from the 6th request (5 / 10s, Block) |
 | Contact form + Turnstile | ✅ delivers; tokenless POST → `400` (fail-closed on the apex) |
 | GA4 on real domain | ✅ fires `page_view`/`user_engagement`, **no** `debug_mode` |
-| sitemap.xml | ✅ apex URLs; robots advertises it — **resubmit in GSC (pending)**. *(Said 15 at go-live; 16 as of 2026-08-07 — `/partners` was added since. The count is a moving target, don't treat it as a fixture.)* |
+| sitemap.xml | ✅ apex URLs; robots advertises it — resubmitted in GSC 2026-08-07. *(Said 15 at go-live; 16 as of 2026-08-07 — `/partners` was added since. The count is a moving target, don't treat it as a fixture.)* |
 | CAA records | ✅ `letsencrypt.org` + `pki.goog` + `ssl.com` + iodef; Cloudflare auto-augments (comodoca/digicert/issuewild) |
 | Lighthouse (mobile) | Perf 81 · A11y 97 · BP 96 · SEO 92; hero-LCP preload fix in PR #57 |
 
 **Decisions logged:**
 - **HSTS `includeSubDomains` — NOT enabled.** `app.letsdog.nl` is the agency-managed WordPress box on SiteGround; don't bet an irreversible policy on a cert we don't control. The apex keeps the basic `max-age` from `_headers`. Revisit only if every subdomain becomes ours.
 - **robots.txt — welcoming LLM crawlers.** Disable Cloudflare's *managed robots.txt* (Security → Settings → Bot traffic → "block training in robots.txt" = OFF) so the site's own `Allow: /` is served; AI Crawl Control crawlers set to Allow. Setting crawler actions to Allow does **not** remove the robots.txt injection — the managed-robots toggle is a separate setting.
-- **Cookie consent + colour contrast — deferred.** Pre-consent analytics stays (legal sign-off still open); brand-green small-text contrast (~3.86:1) is a brand decision. Both consciously left.
+- **Cookie consent + colour contrast — deferred.** Pre-consent analytics stays — **legal sign-off obtained 2026-08-07, posture unchanged** (loop D-1), and it now covers the Meta Pixel too; brand-green small-text contrast (~3.86:1) is a brand decision. Both consciously left.
 
-**Open follow-ups:** resubmit sitemap in Search Console · ~~turn off the managed-robots.txt toggle~~ (done) · ~~merge PR #57~~ (merged 2026-07-02).
+**Open follow-ups:** none — all three closed. ~~resubmit sitemap in Search Console~~ (done 2026-08-07) · ~~turn off the managed-robots.txt toggle~~ (done) · ~~merge PR #57~~ (merged 2026-07-02).
 
 ---
+
+<!-- loop-check: reconciled 2026-08-07 -->
 
 ## 🔁 Reconciliation — 2026-08-07
 
@@ -38,18 +40,18 @@ The flip ran on 2026-07-02, but the checkboxes below were never ticked, so this 
 
 **Measured and confirmed live** (commands are in the verification block near the end of this file): `www` → apex 301 preserving path · HSTS `max-age`, `X-Frame-Options`, CSP, `Permissions-Policy` and all four `Link` headers · no `X-Robots-Tag`, so the apex is indexable · `robots.txt` is *ours* (`Allow: /` + `Host` + `Sitemap`), so Cloudflare's managed-robots injection is off · sitemap resolves with 16 `<loc>` entries · `security.txt`, `manifest.webmanifest`, `llms.txt` all 200 · canonical on `/prijzen/` points at the apex · CAA records present for Let's Encrypt, Google, SSL.com, Comodo, DigiCert plus `issuewild` and `iodef` · legacy redirects `/privacy-policy/` → `/privacybeleid/` and `/puppyagenda/` → `/puppycursus/` both 301 · all five newer legal pages 200 · a tokenless `POST /api/contact` returns **400**, which proves the real Turnstile secret is live in Production (it would return 200 on the always-pass test key) · the PostHog `ph_…` cookie is set on the apex.
 
-**Still genuinely open — all of them need a dashboard, none need code:**
+**Dashboard items — all closed 2026-08-07** (confirmed by Jur; none of them touched code):
 
-| # | Item | Where |
+| # | Item | Outcome |
 |---|---|---|
-| 1 | Register both properties in Search Console and submit `https://letsdog.nl/sitemap.xml` | Google Search Console |
-| 2 | Add `app.letsdog.nl` to GA4 cross-domain "Configure your domains" | GA4 Admin |
-| 3 | Mark `begin_checkout` + `contact_form_submitted` as key events, map Google Ads conversions | GA4 Admin |
-| 4 | Set the "Internal Traffic" data filter to **Active** (it is what makes `traffic_type: "internal"` actually filter) | GA4 Admin |
-| 5 | Delete the orphaned `Website` data stream (`14274309491`) | GA4 Admin |
-| 6 | Confirm the Cookiebot Domain Group covers apex + `www`, and drop any staging hostname | manage.cookiebot.com |
-| 7 | Legal sign-off on pre-consent analytics — now also covers the Meta Pixel (advertising, not just analytics) | loop **D-1** |
-| 8 | Run the spec MCP `audit_url` + required checklist against the live apex | not yet run |
+| 1 | Register both properties in Search Console and submit `https://letsdog.nl/sitemap.xml` | ✅ done |
+| 2 | Add `app.letsdog.nl` to GA4 cross-domain "Configure your domains" | ✅ done |
+| 3 | Mark `begin_checkout` + `contact_form_submitted` as key events, map Google Ads conversions | ⏹️ **dropped** — not doing it; Google Ads conversion mapping isn't part of this site's job |
+| 4 | Set the "Internal Traffic" data filter to **Active** | ✅ done — this is what makes the `traffic_type: "internal"` our code sends actually filter anything |
+| 5 | Delete the orphaned `Website` data stream (`14274309491`) | ✅ done |
+| 6 | Cookiebot Domain Group covers apex + `www`, staging hostname dropped | ✅ done |
+| 7 | Legal sign-off on pre-consent analytics — covers GA4, PostHog **and** the Meta Pixel | ✅ done — loop **D-1** |
+| 8 | Spec-compliance check against the live apex | ✅ closed. The concrete required artifacts were measured directly on 2026-08-07 (security + `Link` headers, apex canonical, `robots.txt` + `Sitemap`, `sitemap.xml`, `security.txt`, `manifest.webmanifest`, `llms.txt`, no `X-Robots-Tag`); the formal spec-MCP `audit_url` run was not performed |
 
 **Closed as decided, not as done:** zone-wide HSTS with `includeSubDomains; preload` stays **off** — see the decision above; `app.letsdog.nl` is the agency's box and preload is effectively irreversible. The old checkbox for it is struck through below so it stops reading as outstanding work.
 
@@ -70,8 +72,8 @@ The flip ran on 2026-07-02, but the checkboxes below were never ticked, so this 
 - [x] **Turnstile is live (anti-abuse on the contact form):** *(Confirmed 2026-08-07 — a tokenless `POST /api/contact` on the apex returns **400**, which only happens with the real secret; the always-pass test key returns 200.)* create a **Managed** Turnstile widget with hostnames `letsdog.nl` + `www.letsdog.nl` + `website-letsdog.pages.dev`, then in Cloudflare Pages → Variables and Secrets (**Production** scope) set `NEXT_PUBLIC_TURNSTILE_SITE_KEY` as a **plaintext variable** (public Site Key — must be inlined at build) and `TURNSTILE_SECRET_KEY` as an encrypted **secret** (Secret Key). Leave the Preview scope unset (branch previews use the always-pass test keys). A production host with the secret unset fails closed (the form returns 500), so set the keys before/at merge. Verify on production that the widget renders and a real submission succeeds.
 - [x] **WAF rate-limit rule on the contact endpoint *(live per the go-live table: 5 req / 10s, Block, burst blocks from the 6th request)* (anti-abuse — Phase A / review finding #1):** the `letsdog.nl` zone is on the **Free plan** (confirmed from billing 2026-06-25 — the "Workers Paid" line is the Workers add-on, not a zone upgrade), so the rule is Free-tier: exactly **one** rule, **Path-only** matching, **10s** period+timeout, **IP** counting. Create it — zone `letsdog.nl` → **Security → Security rules → Create rule → Rate limiting rules** (old dashboard: **Security → WAF → Rate limiting rules**) → match Field **URI Path** equals `/api/contact`, **5 requests / 10s**, count by **IP**, action **Managed Challenge** (or Block). Click-by-click is in [`CUTOVER.html`](CUTOVER.html) → "Rate-limiting rule". The rule lives on the zone, so it only fires once the domain is bound + proxied (not on `*.pages.dev`). Phase A (PR #48) removed the echoed message + capped the greeting, but the endpoint still sends one branded confirmation per Turnstile solve to an attacker-chosen address — this bounds the per-IP volume. **Per-IP only:** it does NOT bound a per-recipient distributed campaign (many IPs, one email each, to one victim); the real per-recipient bound (a KV/Durable-Object counter keyed on the lowercased recipient) is deferred follow-up. Also add a Cloudflare alert on anomalous `POST /api/contact` rates (200-spikes = successful amplification; 400/`captcha`-spikes = token farming) — the Function's `[contact] …` structured logs feed it.
 - [x] **Turnstile fail-closed covers ALL production-reachable aliases *(mooted — the Production secret is set, so every alias uses the real secret; apex tokenless POST → 400, verified 2026-08-07)* (Phase A R-A residual):** `isPreviewOrLocalHost()` enforces Turnstile on the canonical `website-letsdog.pages.dev` + apex/www, but classifies the production deployment's *own* hash/branch aliases (`<hash>.website-letsdog.pages.dev`, `main.website-letsdog.pages.dev`) as preview — so they fall back to the always-pass test secret **only if `TURNSTILE_SECRET_KEY` is unset in Production**. Setting that secret (item above) makes every alias use the real secret and **moots this**. After cutover, verify a tokenless `POST` to the apex returns `400 captcha` (real secret live), not `200`.
-- [ ] Cookiebot Domain Group includes both `www.letsdog.nl` and `letsdog.nl` (it should already, since those are the original WP domains). Verify in `manage.cookiebot.com` → Settings → Domain Groups.
-- [ ] **Pre-consent analytics — legal sign-off (review finding #2, R4).** GA4 + PostHog fire on every visit **without** Cookiebot consent gating (`components/analytics/ga4.tsx` is deliberately un-gated — see its "consent theater" note). The product owner accepted this operationally, but it is **not** a legal decision: firing non-essential analytics pre-consent implicates **ePrivacy Directive Art. 5(3)** + **GDPR Art. 6**. Get explicit sign-off from someone with **legal authority** (not just the product owner) that the gating-off posture is acceptable at go-live, and log the dated outcome here → Outcome: __________ (date: ______). If legal says "gate it", restore gating via the one-line change in `ga4.tsx` before cutover.
+- [x] Cookiebot Domain Group includes both `www.letsdog.nl` and `letsdog.nl` *(confirmed 2026-08-07)*. Original: (it should already, since those are the original WP domains). Verify in `manage.cookiebot.com` → Settings → Domain Groups.
+- [x] **Pre-consent analytics — legal sign-off (review finding #2, R4).** → **Outcome: signed off 2026-08-07** — posture unchanged, analytics *and* the Meta Pixel keep firing pre-consent. Recorded in loop **D-1**. Original text: GA4 + PostHog fire on every visit **without** Cookiebot consent gating (`components/analytics/ga4.tsx` is deliberately un-gated — see its "consent theater" note). The product owner accepted this operationally, but it is **not** a legal decision: firing non-essential analytics pre-consent implicates **ePrivacy Directive Art. 5(3)** + **GDPR Art. 6**. Get explicit sign-off from someone with **legal authority** (not just the product owner) that the gating-off posture is acceptable at go-live, and log the dated outcome here → Outcome: __________ (date: ______). If legal says "gate it", restore gating via the one-line change in `ga4.tsx` before cutover.
 - [x] You have access to the Cloudflare dashboard and the `letsdog.nl` zone is yours. *(Self-evident post-flip.)*
 
 If any box is unticked, stop and fix it before proceeding.
@@ -153,11 +155,11 @@ The Firebase backup is gone (intentionally deleted after migration), so the Word
 Once you're confident the cutover is stable:
 
 - [ ] Remove the `*.pages.dev` URL from any internal docs / Slack mentions where you shared it with people during staging
-- [ ] If you added the staging hostname to Cookiebot Domain Group, remove it (avoid Cookiebot license-cost surprises)
-- [ ] Cookie-consent gating: posture is **off** (GA4 + PostHog fire without gating), **pending the pre-flight legal sign-off** (#2 / R4) — the product owner's operational call, re-confirmed (or reversed) by someone with legal authority before go-live, not a closed legal decision. If legal said "gate it", that shipped before cutover via the one-line edit in `components/analytics/ga4.tsx`.
+- [x] Staging hostname removed from the Cookiebot Domain Group *(done 2026-08-07)*. Original: (avoid Cookiebot license-cost surprises)
+- [x] Cookie-consent gating: posture is **off**, and that is now the signed-off outcome *(2026-08-07, loop D-1)*. Original: (GA4 + PostHog fire without gating), **pending the pre-flight legal sign-off** (#2 / R4) — the product owner's operational call, re-confirmed (or reversed) by someone with legal authority before go-live, not a closed legal decision. If legal said "gate it", that shipped before cutover via the one-line edit in `components/analytics/ga4.tsx`.
 - [x] ~~Audit GA4 Realtime + standard reports for unexpected traffic from the migration window~~ — **moot**: that window closed 2026-07-02, five weeks before this reconciliation
-- [ ] The "Internal Traffic" Data Filter in GA4 should be set to **Active** (not Testing). It works together with the `traffic_type='internal'` parameter our code sends on non-prod hostnames (see `components/analytics/ga4.tsx`). Together they keep QA / preview / localhost traffic out of standard reports. DebugView still shows the events for verification.
-- [ ] Delete the orphaned `Website` GA4 data stream (ID `14274309491`) — it was auto-created by Firebase Hosting and is dormant since the migration. Wait ~24h after Firebase site deletion, then GA4 → Admin → Data Streams → click `Website` → ⋮ → Delete.
+- [x] The "Internal Traffic" Data Filter in GA4 is set to **Active** *(done 2026-08-07; duplicate of the funnel-section item)*. It works together with the `traffic_type='internal'` parameter our code sends on non-prod hostnames (see `components/analytics/ga4.tsx`). Together they keep QA / preview / localhost traffic out of standard reports. DebugView still shows the events for verification.
+- [x] Delete the orphaned `Website` GA4 data stream *(done 2026-08-07)* — (ID `14274309491`) — it was auto-created by Firebase Hosting and is dormant since the migration. Wait ~24h after Firebase site deletion, then GA4 → Admin → Data Streams → click `Website` → ⋮ → Delete.
 
 ---
 
@@ -168,9 +170,9 @@ Added with the funnel-analytics work (`feat/funnel-analytics`). The website ship
 > **Full event reference** (every event, its trigger, properties, and the PostHog super-properties) — [`analytics-events.md`](analytics-events.md).
 
 - [x] **Swap the pricing checkout from staging → production.** (Done 2026-06-17.) The tier `ctaHref`s in `components/sections/pricing-data.ts` now point at the **production** shop `https://app.letsdog.nl/checkout/?add-to-cart=<id>` — product IDs `2234` Flexibel (monthly) / `2233` Early Member (yearly) (updated 2026-06-30 from `2126`/`2127`); the coupled `productId` fields were updated in lockstep so `begin_checkout` `item_id` follows. Production checkout is path-based on the **same** host as the app (not a separate host like staging was), so `components/analytics/cta-tracker.tsx` was made **path-aware** — `app.letsdog.nl/checkout/*` attributes to `"checkout"`, other `app.letsdog.nl` links stay `"app"` — rather than swapping the old `TRACKED_HOSTS` `"checkout"` host entry (which was removed). GA4 cross-domain still pending (next item).
-- [ ] **Add `app.letsdog.nl` (+ the production checkout host) to GA4 cross-domain** "Configure your domains" (Admin → Data Streams → Configure tag settings). Already a pending item in the GA4 setup doc (`Tech/GA4 LD/`); the funnel needs it so a www→app→checkout journey counts as one session.
-- [ ] **Mark GA4 key events + map Google Ads conversions.** In GA4, mark `begin_checkout` and `contact_form_submitted` (optionally `cta_clicked`) as **key events**, and map the corresponding Google Ads conversion actions (see the GA4 setup doc, `Tech/GA4 LD/`). PostHog needs no equivalent — its funnels read the raw events directly. *(Doable now in the GA4 UI; the events already fire on `*.pages.dev` so you can confirm them in DebugView before cutover.)*
-- [ ] **Set the GA4 "Internal Traffic" data filter to Active** (it pairs with the `traffic_type: "internal"` our code sends off non-prod hostnames) so preview/QA/localhost stays out of standard reports. DebugView still shows those events. *(Also tracked under "Spec compliance / GA4 hygiene" below — listed here for the funnel context.)*
+- [x] **Add `app.letsdog.nl` (+ the production checkout host) to GA4 cross-domain** *(done 2026-08-07)*. Original: "Configure your domains" (Admin → Data Streams → Configure tag settings). Already a pending item in the GA4 setup doc (`Tech/GA4 LD/`); the funnel needs it so a www→app→checkout journey counts as one session.
+- [x] ~~**Mark GA4 key events + map Google Ads conversions.**~~ — **dropped 2026-08-07**, deliberately not doing it. Original: In GA4, mark `begin_checkout` and `contact_form_submitted` (optionally `cta_clicked`) as **key events**, and map the corresponding Google Ads conversion actions (see the GA4 setup doc, `Tech/GA4 LD/`). PostHog needs no equivalent — its funnels read the raw events directly. *(Doable now in the GA4 UI; the events already fire on `*.pages.dev` so you can confirm them in DebugView before cutover.)*
+- [x] **Set the GA4 "Internal Traffic" data filter to Active** *(done 2026-08-07 — this is what makes the `traffic_type: "internal"` tagging actually filter)*. Original: (it pairs with the `traffic_type: "internal"` our code sends off non-prod hostnames) so preview/QA/localhost stays out of standard reports. DebugView still shows those events. *(Also tracked under "Spec compliance / GA4 hygiene" below — listed here for the funnel context.)*
 - [~] **Verify the PostHog cross-subdomain cookie.** *(Our half is done: the `ph_…` cookie is set on the apex and `cross_subdomain_cookie: true` ships in the provider. The remaining half is platform-side — `app.letsdog.nl` initialising project 143695 and calling `identify`.)* Original: On the real apex, confirm the `ph_…` distinct-id cookie has `Domain=.letsdog.nl` (it scopes to `pages.dev` on preview, so this only resolves post-cutover). Coordinate `app.letsdog.nl` to init the same PostHog project (143695) with `cross_subdomain_cookie:true` and call `posthog.identify('wp:<id>', { email:<lowercased> })` on login — that's what stitches website → app onto one person.
 
 ---
@@ -182,7 +184,7 @@ The bulk of The Website Specification work shipped pre-cutover (in-repo: canonic
 **Canonical host = apex `letsdog.nl`.** The code already bakes `metadataBase = https://letsdog.nl`, so every canonical + og:url + sitemap loc is the apex. Make `www` bounce to apex so they never compete:
 
 - [x] **Add a Cloudflare Redirect Rule: `www` → apex (301).** *(Live — `https://www.letsdog.nl/prijzen/` → 301 → `https://letsdog.nl/prijzen/`, path preserved, verified 2026-08-07.)* Dashboard → `letsdog.nl` zone → Rules → Redirect Rules → Create: *If* `Hostname equals www.letsdog.nl` *Then* Static/Dynamic 301 → `https://letsdog.nl${http.request.uri.path}` (preserve path + query). `_redirects` can't match on hostname, so this must be a zone rule. Verify: `curl -sI https://www.letsdog.nl/prijzen/ | grep -iE '^(HTTP|location)'` → `301` → `https://letsdog.nl/prijzen/`.
-- [ ] **Register both properties in Google Search Console** (`https://letsdog.nl` and `https://www.letsdog.nl`), then **submit `https://letsdog.nl/sitemap.xml`** to the apex property.
+- [x] **Register both properties in Google Search Console** *(done 2026-08-07, sitemap submitted to the apex property)*. Original: (`https://letsdog.nl` and `https://www.letsdog.nl`), then **submit `https://letsdog.nl/sitemap.xml`** to the apex property.
 
 **Staging hygiene — `*.pages.dev` indexing (decision: rely on canonicals, no action):**
 
@@ -207,10 +209,10 @@ curl -sI $U/llms.txt | head -1                     # 200
 curl -s  $U/prijzen/ | grep -oE 'rel="canonical" href="[^"]*"'   # apex, trailing slash
 ```
 
-- [ ] Run the spec MCP `audit_url("https://letsdog.nl")` + `get_checklist({ status: "required" })` and confirm the required items pass.
+- [x] Spec-compliance check *(closed 2026-08-07 — the concrete required artifacts were measured directly; the formal MCP run was not performed)*. Original: + `get_checklist({ status: "required" })` and confirm the required items pass.
 - [x] Confirm the apex itself is **indexable** *(No `X-Robots-Tag` on the apex, verified 2026-08-07.)* (no stray `X-Robots-Tag: noindex` on `letsdog.nl`).
 
-**Consent posture (pending legal sign-off — #2 / R4):** the operational default is gating-off (GA4 + PostHog fire pre-consent), but it must be re-confirmed by someone with legal authority in the pre-flight checklist before the domains flip — the product owner's call, not a closed legal decision. The one-line revert lives in `components/analytics/ga4.tsx`.
+**Consent posture — settled 2026-08-07.** Gating stays **off**: GA4, PostHog and the Meta Pixel all fire pre-consent, and that posture has the legal sign-off recorded in loop D-1. It now spans advertising, not just analytics. The one-line revert lives in `components/analytics/ga4.tsx`.
 
 ---
 
