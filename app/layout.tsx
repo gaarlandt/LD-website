@@ -9,6 +9,8 @@ import { Footer } from "@/components/layout/footer";
 import { WhatsAppButton } from "@/components/shared/whatsapp-button";
 import { Cookiebot } from "@/components/analytics/cookiebot";
 import { GA4 } from "@/components/analytics/ga4";
+import { MetaPixel } from "@/components/analytics/meta-pixel";
+import { MetaPixelPageView } from "@/components/analytics/meta-pixel-pageview";
 import { CTATracker } from "@/components/analytics/cta-tracker";
 import { PostHogProvider } from "@/components/analytics/posthog-provider";
 import { JsonLd } from "@/components/shared/json-ld";
@@ -83,7 +85,10 @@ export default function RootLayout({
   return (
     <html lang="nl">
       <head suppressHydrationWarning>
+        {/* Cookiebot stays first: its auto-blocker has to be in place before
+            any tracker it might govern loads. */}
         <Cookiebot />
+        <MetaPixel />
       </head>
       <body className="bg-[#EFE8E4] text-[#141414] antialiased">
         <PostHogProvider>
@@ -100,6 +105,7 @@ export default function RootLayout({
           <Footer />
           <WhatsAppButton />
           <CTATracker />
+          <MetaPixelPageView />
         </PostHogProvider>
       </body>
     </html>
