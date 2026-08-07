@@ -65,13 +65,14 @@ export function ContactContent() {
             </div>
           </div>
 
-          {/* Hero image — swappable placeholder; drop the mockup photo into
-              public/images/ and update the src + run npm run optimize:images */}
+          {/* Hero image — the 4/3 frame crops a 3:2 source left/right, so the
+              two faces sit centre-frame on purpose; re-check the crop on mobile
+              if this photo is ever swapped again. */}
           <div className="relative">
             <div className="relative aspect-[4/3] rounded-[var(--ld-r-xl)] overflow-hidden shadow-[var(--ld-sh-1)]">
               <OptimizedImage
-                src="/images/training.jpeg"
-                alt="Hondeneigenaar met pup buiten in het gras"
+                src="/images/kid-dog.jpeg"
+                alt="Kind knuffelt een blonde labrador, wang tegen wang"
                 fill
                 priority
                 sizes="(max-width: 1024px) 100vw, 50vw"

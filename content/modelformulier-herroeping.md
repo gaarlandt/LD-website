@@ -9,8 +9,8 @@ Dit formulier kunt u gebruiken wanneer u de overeenkomst wilt herroepen. Het geb
 ## Aan
 
 - Let's dog B.V.
-- Naarderstraat 31
-- 1272 NK Huizen
+- Amsterdamsestraatweg 5
+- 1411 AW Naarden
 - Nederland
 - E-mail: [support@letsdog.nl](mailto:support@letsdog.nl)
 

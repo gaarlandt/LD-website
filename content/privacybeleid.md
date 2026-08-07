@@ -17,7 +17,7 @@ Dit document is bedoeld als geconsolideerde versie voor publicatie op de website
 Let's dog B.V. is de verwerkingsverantwoordelijke voor de persoonsgegevens die via de Let's dog-dienst worden verwerkt.
 
 Naam: Let's dog B.V.  
-Adres: Naarderstraat 31, 1272 NK Huizen, Nederland  
+Adres: Amsterdamsestraatweg 5, 1411 AW Naarden, Nederland  
 KvK-nummer: 98271814  
 E-mail: [support@letsdog.nl](mailto:support@letsdog.nl)  
 Website: letsdog.nl
