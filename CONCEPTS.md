@@ -48,9 +48,16 @@ of *terms*. Plan and write with these names rather than synonyms.
   www→apex 301, GSC sitemap) are gated on it.
 - **Preview-first discipline** — every non-main branch gets a Cloudflare preview at
   `<branch-slug>.website-letsdog.pages.dev`; verify there before merging to main.
-- **Dual-fire (analytics)** — `trackEvent` sends the *same* event to both GA4 and
-  PostHog, each guarded independently. Add events via `trackEvent`, never by calling
-  `gtag` / `posthog` directly.
+- **Multi-fire (analytics)** — `trackEvent` is the single chokepoint through which every
+  analytics event leaves the site. It sends the *same* event to both GA4 and PostHog,
+  each guarded independently, and additionally to the Meta Pixel — but Meta receives only
+  the mapped subset (see **Meta standard event**), never the full stream. Add events via
+  `trackEvent`, never by calling `gtag` / `posthog` / `fbq` directly.
+  *Avoid: dual-fire* — accurate only while there were two sinks.
+- **Meta standard event** — one of the event names Meta recognises by name and a campaign
+  can therefore optimise and bid on. Only site events that map onto one of these are sent
+  to the Meta Pixel; anything else would arrive as an unbiddable custom event and is
+  deliberately withheld. The mapping is deliberate and named, not automatic.
 - **Cross-product identity** — lowercased email is the join key across all Let's dog
   apps; `identifyLead(email)` is the single PostHog `identify` on this site (fired on
   contact-form success). See the cross-knowledge hub contract.
@@ -74,8 +81,11 @@ content). Tone is "je/jouw", empathy-first, no jargon, and no exclamation-marks-
 
 - **"Binnenkort" (app status)** — the website and web-app are live; the iOS/Android apps
   are "binnenkort". Don't promise a date or claim the app works everywhere yet.
-- **Cookiebot is display-only** — the consent banner is informational; GA4 + PostHog fire
-  regardless of consent state (a deliberate, documented decision).
+- **Cookiebot is display-only** — the consent banner is informational; GA4, PostHog *and*
+  the Meta Pixel all fire regardless of consent state (a deliberate, documented decision,
+  with the risk accepted by the owner). Note this now spans advertising as well as
+  analytics, and that the published cookieverklaring still promises advertentiepixels are
+  placed only after consent — so code and policy currently disagree.
 - **Features not in marketing copy** — AI Coach, "plan op maat", gezin-/herstart-modules,
   health tracker / digitaal paspoort, walker-service, insurance: these are not live for
   marketing and must not appear in site copy.
