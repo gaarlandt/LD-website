@@ -4,6 +4,7 @@ import { useState } from "react";
 import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { ContactFormModal } from "./contact-form-modal";
+import { CONSULT_AVAILABLE } from "@/lib/feature-flags";
 import { Button, Card, Badge, Eyebrow } from "@/components/ui";
 import {
   PaperPlaneTilt,
@@ -89,7 +90,10 @@ export function ContactContent() {
         </div>
       </section>
 
-      {/* Trainer consultation card */}
+      {/* Trainer consultation card — hidden while CONSULT_AVAILABLE is false
+          (see lib/feature-flags.ts). Kept in the tree so switching the offer
+          back on is one constant, not a rebuild from git history. */}
+      {CONSULT_AVAILABLE && (
       <SectionWrapper className="bg-[var(--ld-beige)]">
         <div className="max-w-5xl mx-auto bg-white rounded-[var(--ld-r-xl)] overflow-hidden shadow-[var(--ld-sh-1)] grid lg:grid-cols-2">
           <div className="p-8 lg:p-12 flex flex-col justify-center">
@@ -148,6 +152,7 @@ export function ContactContent() {
           </div>
         </div>
       </SectionWrapper>
+      )}
 
       {/* Direct contact — three cards */}
       <SectionWrapper className="bg-white">
