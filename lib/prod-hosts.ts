@@ -4,6 +4,10 @@
 // PostHog tags them environment:'preview' (see posthog-provider.tsx), so the
 // shared GA4 property + PostHog project stay free of staging noise.
 //
+// The Meta Pixel (components/analytics/meta-pixel.tsx) uses this list too, but
+// as a hard gate rather than a tag: Meta has no traffic_type equivalent, so off
+// production it does not load at all.
+//
 // NOTE: this list is scoped to ANALYTICS environment tagging — it intentionally
 // treats the Pages alias `website-letsdog.pages.dev` as non-production so the
 // shared GA4/PostHog data stays clean. The contact Function takes the OPPOSITE
