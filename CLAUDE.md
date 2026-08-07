@@ -101,8 +101,7 @@ Vitest (Node environment) covers the server-side + pure logic the browser previe
 ├── docs/                   # Documentation
 │   ├── CUTOVER.md          # DNS cutover runbook
 │   └── solutions/          # /ce-compound learnings, organized by category (developer-experience, integration-issues, etc.) with YAML frontmatter for searchability
-├── .env.example            # Documents env vars (NEXT_PUBLIC_GA_MEASUREMENT_ID, NEXT_PUBLIC_COOKIEBOT_CBID)
-└── .github/workflows/      # CI/CD (no deploy workflows — Cloudflare Pages handles deploys)
+└── .env.example            # Documents env vars (NEXT_PUBLIC_GA_MEASUREMENT_ID, NEXT_PUBLIC_COOKIEBOT_CBID)
 ```
 
 ## Styling Conventions
@@ -123,7 +122,7 @@ Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/lay
 
 ## Deployment
 
-**Cloudflare Pages, Git-integrated. No GitHub Actions deploy workflows — Cloudflare handles deploys directly from GitHub pushes.**
+**Cloudflare Pages, Git-integrated. There is no `.github/workflows/` directory and no GitHub Actions at all — Cloudflare handles deploys directly from GitHub pushes.** The old Firebase deploy workflows were removed at the Cloudflare migration (May 2026). Consequence worth knowing when CI looks stuck: the **only** check on a PR here is "Cloudflare Pages", so a GitHub Actions outage cannot affect this repo. The GitHub dependency is the push webhook that tells Cloudflare to build — if that fails the check sits `pending` rather than failing, which looks identical to "still building". (Verified 2026-08-07: `gh run list` shows nothing since 2026-05-28.)
 
 - **Production**: Merge to `main` → Cloudflare auto-builds + deploys → live on `website-letsdog.pages.dev`, custom domains `www.letsdog.nl` + `letsdog.nl` (after Phase 5 cutover, see `docs/CUTOVER.md`)
 - **Preview**: Push to any non-main branch → Cloudflare auto-builds → preview URL at `<branch-slug>.website-letsdog.pages.dev`
