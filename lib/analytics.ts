@@ -1,5 +1,5 @@
 import posthog from "posthog-js";
-import { toMetaEvent } from "@/lib/meta-events";
+import { toMetaEvent, type MetaEventParams } from "@/lib/meta-events";
 
 declare global {
   interface Window {
@@ -9,7 +9,9 @@ declare global {
   }
 }
 
-type EventParams = Record<string, string | number | boolean | null | undefined | object>;
+// Single definition, owned by lib/meta-events.ts (a leaf module) so the two
+// stay in lockstep without a circular import.
+type EventParams = MetaEventParams;
 
 // Single chokepoint: fires the same event to GA4 (gtag), PostHog AND the Meta
 // Pixel. Each sink is guarded independently so a blocker/absence of one never
@@ -27,9 +29,20 @@ export function trackEvent(eventName: string, params?: EventParams): void {
   if (posthog.__loaded) {
     posthog.capture(eventName, params);
   }
-  const metaEvent = toMetaEvent(eventName, params);
-  if (metaEvent && typeof window.fbq === "function") {
-    window.fbq("track", metaEvent.name, metaEvent.params);
+  // Wrapped because this sink calls out to fbq — third-party code we don't
+  // control — and trackEvent runs inside callers' try/catch. contact-form-modal
+  // catches around its trackEvent call and renders "error" to the user, so an
+  // exception thrown here would tell someone their message failed when it was
+  // sent. Analytics must never be able to do that. GA4 and PostHog are safe by
+  // ordering (they already fired above); this keeps the caller safe too.
+  try {
+    const metaEvent = toMetaEvent(eventName, params);
+    if (metaEvent && typeof window.fbq === "function") {
+      window.fbq("track", metaEvent.name, metaEvent.params);
+    }
+  } catch {
+    // Swallowed on purpose: a missing marketing event is strictly preferable to
+    // a broken user-facing flow.
   }
 }
 
@@ -40,7 +53,12 @@ export function trackEvent(eventName: string, params?: EventParams): void {
 // event to both of those datasets instead of completing Meta's.
 export function trackMetaPageView(): void {
   if (typeof window === "undefined" || typeof window.fbq !== "function") return;
-  window.fbq("track", "PageView");
+  try {
+    window.fbq("track", "PageView");
+  } catch {
+    // Same reasoning as trackEvent: fbq is third-party, and this runs inside a
+    // render effect where an exception would surface as a React error.
+  }
 }
 
 // The one identify opportunity on the marketing site (contact-form success).

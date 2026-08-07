@@ -81,6 +81,51 @@ describe("toMetaEvent", () => {
     );
   });
 
+  it("keeps content_ids and contents describing the same line items", () => {
+    // An item with no id must drop out of BOTH arrays, not just content_ids —
+    // mismatched lengths read as a malformed payload on Meta's side.
+    const result = toMetaEvent("begin_checkout", {
+      currency: "EUR",
+      value: 59,
+      items: [
+        { item_id: "2233", price: 59, quantity: 1 },
+        { item_name: "no id here", price: 12, quantity: 1 },
+      ],
+    });
+
+    expect(result?.params.content_ids).toEqual(["2233"]);
+    expect(result?.params.contents).toEqual([{ id: "2233", quantity: 1, item_price: 59 }]);
+    expect(result?.params.num_items).toBe(1);
+  });
+
+  it("survives a malformed items array instead of throwing on the checkout click", () => {
+    const result = toMetaEvent("begin_checkout", {
+      currency: "EUR",
+      value: 59,
+      items: [null, "nonsense", { item_id: "2234", price: 59, quantity: 2 }],
+    });
+
+    expect(result?.params.content_ids).toEqual(["2234"]);
+    expect(result?.params.contents).toEqual([{ id: "2234", quantity: 2, item_price: 59 }]);
+  });
+
+  it("defaults a non-numeric quantity and omits a non-numeric price", () => {
+    const result = toMetaEvent("begin_checkout", {
+      currency: "EUR",
+      value: 59,
+      items: [{ item_id: "2233", price: "59,00", quantity: "one" }],
+    });
+
+    expect(result?.params.contents).toEqual([{ id: "2233", quantity: 1, item_price: undefined }]);
+  });
+
+  it("does not treat inherited Object keys as mapped events", () => {
+    // A bare MAPPINGS[name] lookup would return a truthy function here and throw.
+    expect(toMetaEvent("constructor")).toBeNull();
+    expect(toMetaEvent("toString")).toBeNull();
+    expect(toMetaEvent("__proto__")).toBeNull();
+  });
+
   it("drops undefined params rather than sending them to Meta", () => {
     // creator_form_submitted without `collaboration` must not send
     // content_category: undefined — Events Manager flags that as a diagnostic.

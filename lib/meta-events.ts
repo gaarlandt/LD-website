@@ -14,6 +14,9 @@
 // platform cutover), so this pixel can never observe it. Revenue attribution
 // needs the pixel and/or the Conversions API on that side — separate work.
 
+// Defined here rather than in lib/analytics.ts, and imported *from* here by the
+// chokepoint. This module is a leaf with no imports of its own, so owning the
+// type keeps one definition without creating an analytics <-> meta-events cycle.
 export type MetaEventParams = Record<string, string | number | boolean | null | undefined | object>;
 
 export type MetaEvent = {
@@ -30,7 +33,11 @@ type CheckoutItem = {
 
 function readItems(params: MetaEventParams): CheckoutItem[] {
   const items = params.items;
-  return Array.isArray(items) ? (items as CheckoutItem[]) : [];
+  if (!Array.isArray(items)) return [];
+  // Drop non-objects before anything reads a property off them: a stray null or
+  // string in the array would otherwise throw inside the mapping, and this runs
+  // on the checkout click path.
+  return items.filter((item): item is CheckoutItem => typeof item === "object" && item !== null);
 }
 
 // Meta expects content ids as strings. item_id is already String(productId)
@@ -49,16 +56,20 @@ const MAPPINGS: Record<string, { name: string; params: (p: MetaEventParams) => R
   begin_checkout: {
     name: "InitiateCheckout",
     params: (p) => {
-      const items = readItems(p);
+      // Filter once, up front: content_ids and contents must describe the SAME
+      // line items. Filtering only content_ids would let the two arrays
+      // disagree in length on an item with no id, which Meta reads as a
+      // malformed payload rather than an error.
+      const items = readItems(p).filter((item) => asContentId(item.item_id) !== null);
       return {
         currency: p.currency,
         value: p.value,
         content_type: "product",
-        content_ids: items.map((item) => asContentId(item.item_id)).filter((id) => id !== null),
+        content_ids: items.map((item) => asContentId(item.item_id)),
         contents: items.map((item) => ({
-          id: asContentId(item.item_id) ?? "",
+          id: asContentId(item.item_id),
           quantity: typeof item.quantity === "number" ? item.quantity : 1,
-          item_price: item.price,
+          item_price: typeof item.price === "number" ? item.price : undefined,
         })),
         num_items: items.length,
       };
@@ -94,8 +105,11 @@ const MAPPINGS: Record<string, { name: string; params: (p: MetaEventParams) => R
  * event has no Meta equivalent (the common case — most events aren't sent).
  */
 export function toMetaEvent(eventName: string, params: MetaEventParams = {}): MetaEvent | null {
+  // hasOwn, not a truthiness check: a bare lookup would resolve inherited
+  // Object.prototype keys, so an event literally named "constructor" or
+  // "toString" would return a truthy non-mapping and throw on the call below.
+  if (!Object.hasOwn(MAPPINGS, eventName)) return null;
   const mapping = MAPPINGS[eventName];
-  if (!mapping) return null;
 
   // Drop undefined values so the payload stays clean — Meta raises a
   // diagnostic in Events Manager for params it receives as undefined.

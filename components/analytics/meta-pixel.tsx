@@ -22,7 +22,18 @@ const PIXEL_ID_PATTERN = /^\d{15,16}$/;
 
 export function MetaPixel() {
   const id = process.env.NEXT_PUBLIC_META_PIXEL_ID;
-  if (!id || !PIXEL_ID_PATTERN.test(id)) return null;
+  if (!id) return null;
+  if (!PIXEL_ID_PATTERN.test(id)) {
+    // A *set but malformed* id (stray whitespace, wrong digit count, the value
+    // stored as an encrypted secret the build can't read) is the dangerous
+    // case: it looks configured in the dashboard while rendering nothing, so
+    // the pixel reads as installed for weeks. An unset id is the documented
+    // "disabled" path and stays silent.
+    console.warn(
+      `[MetaPixel] NEXT_PUBLIC_META_PIXEL_ID is set but not a 15-16 digit id — pixel not rendered. Received: ${JSON.stringify(id)}`,
+    );
+    return null;
+  }
 
   const inlineScript =
     `!function(f,b,e,v,n,t,s)` +
