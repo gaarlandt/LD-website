@@ -2,8 +2,9 @@
 
 A complete reference of every analytics event the website emits, for building dashboards/funnels (e.g. in PostHog) — here or in another project that consumes the shared PostHog project.
 
-- **Project:** PostHog EU project **143695** (`https://eu.i.posthog.com`) + GA4 **`G-0FCGXJHMMY`** (shared across all Let's dog domains).
+- **Project:** PostHog EU project **143695** (`https://eu.i.posthog.com`) + GA4 **`G-0FCGXJHMMY`** (shared across all Let's dog domains) + Meta Pixel **`1789754812188603`**.
 - **Dual-fire:** every event below is sent to **both** GA4 (gtag) and PostHog through one chokepoint — `trackEvent(name, params)` in [`lib/analytics.ts`](../lib/analytics.ts). Each sink is guarded independently (a blocked sink never suppresses the other). **Add events only via `trackEvent`** — never call `gtag`/`posthog` directly.
+- **Meta Pixel is a third sink on that same chokepoint, but it receives only a mapped subset** — see [Meta Pixel](#meta-pixel) below.
 - **App identifier:** this is the **`website`** app. App-side events (`sign_up`, `purchase`) live on `app.letsdog.nl` and are owned separately — not emitted here.
 
 ## PostHog super-properties (on every PostHog event)
@@ -67,6 +68,31 @@ For a consumer project building dashboards off project 143695 (filter all on `ap
 - **Lead conversion:** `contact_form_submitted` (and the `identify` that accompanies it) as the marketing-site conversion; lowercased-email join lets you stitch to app-side `sign_up`/`purchase`.
 - **Reach:** `$pageview` by `$pathname`.
 
+## Meta Pixel
+
+Pixel **`1789754812188603`**, installed 2026-08-07. Base code renders from the root layout's `<head>` ([`meta-pixel.tsx`](../components/analytics/meta-pixel.tsx)); the id comes from `NEXT_PUBLIC_META_PIXEL_ID` and **must be set in Cloudflare Pages → Variables and Secrets for Production *and* Preview**, or the component renders nothing and the pixel silently does not exist.
+
+Unlike GA4/PostHog, Meta gets only the events that map onto a **standard event** — the mapping lives in [`lib/meta-events.ts`](../lib/meta-events.ts) and is unit-tested. Standard events are what an Ads Manager campaign can optimise and bid on; a custom event can't be bid on, so unmapped events are deliberately not sent.
+
+| Internal event | Meta standard event | Params sent |
+|---|---|---|
+| `begin_checkout` | `InitiateCheckout` | `currency`, `value`, `content_type: "product"`, `content_ids`, `contents`, `num_items` |
+| `contact_form_submitted` | `Lead` | `content_name: "contact_form"` |
+| `creator_form_submitted` | `Lead` | `content_name: "creator_form"`, `content_category` (= `collaboration`) |
+| `view_item_list` | `ViewContent` | `content_type: "product_group"`, `content_name`, `content_category` (= `source`) |
+| *(page loads + soft navigation)* | `PageView` | — |
+
+**`cta_clicked` is deliberately not mapped.** It is the busiest event on the site and has no standard-event equivalent; sending it would add volume no campaign can act on.
+
+### Two limitations worth knowing before you build a campaign on this
+
+1. **`Purchase` never fires here, and can't.** Payment happens on another domain — WooCommerce on `app.letsdog.nl` today, `mijn.letsdog.nl` after the platform cutover. This pixel sees the funnel only up to `InitiateCheckout`. Attributing revenue in Meta needs the pixel and/or the **Conversions API** on the platform side; that's separately-owned work (the GA4 half of it is planned in `docs/plans/2026-08-06-001-feat-ga4-platform-cutover-plan.md`, which scopes the Meta pixel out explicitly).
+2. **No environment split.** GA4 tags non-production hostnames `traffic_type: "internal"` and PostHog tags `environment: "preview"`; Meta has no equivalent mechanism, so **preview and localhost events land in the same pixel dataset as production**. Testing a form on a preview URL emits a real `Lead`. Keep that in mind when reading Events Manager, and when testing conversion events prefer Meta's **Test Events** tab (Events Manager → Test Events) over a normal preview visit.
+
+`PageView` fires **exactly once per page a visitor actually sees**, via two mechanisms that hand off to each other: the base code fires it on hard load, and [`meta-pixel-pageview.tsx`](../components/analytics/meta-pixel-pageview.tsx) fires it on each subsequent App Router **soft** navigation. The first client render is deliberately skipped so the landing page isn't counted twice. Without that component the whole site would report a single PageView per session and page-based retargeting audiences would stay empty. Verified on the dev server: one beacon on load, a second with the new URL after a soft nav to `/prijzen/`.
+
 ## Consent posture
 
-Cookiebot is **display-only** — GA4 + PostHog fire regardless of consent state (a deliberate, documented decision; see the comment in [`ga4.tsx`](../components/analytics/ga4.tsx) for how to restore real gating). `respect_dnt: true` on PostHog means PostHog undercounts DNT users vs GA4.
+Cookiebot is **display-only** — GA4 + PostHog + the Meta Pixel all fire regardless of consent state (a deliberate, documented decision; see the comment in [`ga4.tsx`](../components/analytics/ga4.tsx) for how to restore real gating). `respect_dnt: true` on PostHog means PostHog undercounts DNT users vs GA4.
+
+The Meta Pixel was added to that same ungated posture on 2026-08-07 by an explicit product-owner decision, risk accepted. Note that it widens the gap from analytics to **advertising**: `content/cookieverklaring.md` §3.3 and §5 state that advertentiepixels are placed only after consent, and §4 names Meta Pixel specifically. Loop decision **D-1** carries this; gating the pixel later is two attributes on one script tag (documented in [`meta-pixel.tsx`](../components/analytics/meta-pixel.tsx)).
