@@ -6,6 +6,11 @@ folder is its own private git repo (`gaarlandt/LD-website-loop`) and carries the
 loop — open tasks, decisions, session log. **Two nested repos: know which one you're in.**
 
 - **Code changes** → this repo (`gaarlandt/LD-website`), branch + PR + Cloudflare preview.
+  **Target every git command explicitly — `git -C <path> …` — instead of relying on `cd`.**
+  The shell cwd is session state that snaps back between tool calls, and a command aimed at
+  the wrong one of these two repos still exits 0: on 2026-08-06 a `cat >> LOG.md` created a
+  stray LOG in *this* repo, and on 2026-08-07 a `git checkout main && git pull` ran in the
+  loop repo. Only reading the output caught either. Same rule for file writes: absolute paths.
 - **Open work, decisions, session state** → the werkmap: `../loop/INDEX.md` (generated),
   `../loop/sessies.md` (which session is next), `../JUR.md` (what waits on Jur), `../LOG.md`.
   Mint items only with `bash ../scripts/loop/new.sh t|d "titel"`; close a session with
