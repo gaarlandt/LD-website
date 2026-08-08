@@ -65,6 +65,18 @@ type CookiebotApi = {
   consent: CookiebotConsent;
   /** a Date once a choice exists, null before (verified on the live banner) */
   consentUTC: Date | number | string | null;
+  /**
+   * Cookiebot's own public way to record a choice without the banner — the same
+   * call its dialog makes, used on the live banner during T-23. Optional because
+   * it is third-party state: an ad blocker or a failed uc.js leaves the object
+   * absent or half-built, and a missing method must degrade to "no sync", not to
+   * a TypeError in a consent path.
+   */
+  submitCustomConsent?: (
+    preferences: boolean,
+    statistics: boolean,
+    marketing: boolean,
+  ) => void;
 };
 
 declare global {
@@ -241,25 +253,73 @@ export function readConsentCookie(): ConsentPayload | null {
 }
 
 /**
- * Writes the handover cookie, skipping the write when an identical one is
- * already there. Skipping keeps `t` byte-stable across pageviews; because `t`
- * comes from Cookiebot, a cookie that expired (Safari caps script-written
- * cookies at seven days) is rewritten with the same value it had, so the
- * platform sees a repeat rather than a new choice.
+ * Do these two payloads record the same CHOICE? The three categories and the
+ * contract version — deliberately not `t`.
+ *
+ * `t` says when a choice was made, not what it was, and the two consumers of
+ * this cookie only ever act on what it was. Keeping the distinction in one
+ * function is what stops it from being quietly re-decided per call site.
+ */
+function isSameChoice(a: ConsentPayload, b: ConsentPayload): boolean {
+  return a.v === b.v && a.p === b.p && a.s === b.s && a.m === b.m;
+}
+
+/**
+ * Was `a` recorded strictly later than `b`?
+ *
+ * An unreadable stamp on either side answers no. Both consumers of this want the
+ * same thing from a NaN — rather not act than act on a comparison that could not
+ * be made — and it is the answer the platform's own `isConsentNewerThanRecord`
+ * gives too.
+ */
+function isStrictlyNewer(a: ConsentPayload, b: ConsentPayload): boolean {
+  const left = Date.parse(a.t);
+  const right = Date.parse(b.t);
+  if (Number.isNaN(left) || Number.isNaN(right)) return false;
+  return left > right;
+}
+
+/**
+ * Writes the handover cookie, staying silent when the choice it records is
+ * already there — even if the timestamps differ.
+ *
+ * IGNORING `t` HERE IS THE POINT, not a shortcut. Two reasons, and the second
+ * one is a trap this exact comparison used to walk into:
+ *
+ * 1. Byte-stability across pageviews. The platform appends a consent row for
+ *    every cookie newer than its last one (R8), so a `t` that moved on each
+ *    pageview would append a duplicate row per pageview.
+ * 2. THE READ-BACK LOOP. `submitConsentToCookiebot` below adopts a newer choice
+ *    made on the platform, and Cookiebot stamps its own `consentUTC` at NOW when
+ *    it accepts one (measured 2026-08-08). Its consent event then arrives here
+ *    carrying the same p/s/m with a fresher `t` — and comparing on `t` would
+ *    rewrite the cookie with that fresher stamp. The platform would read a
+ *    cookie newer than its last row and record a second choice that nobody made,
+ *    timestamped as if it happened on the marketing site. No infinite loop, just
+ *    a phantom row and a lying timestamp per platform change.
+ *
+ * The cost of ignoring `t`: re-answering the banner with the identical choice
+ * does not refresh the stamp. That is the same thing the platform's own R8 rule
+ * wants ("two starts with the same cookie yield one row"), because the recorded
+ * decision is unchanged.
+ *
+ * AND IT NEVER OVERWRITES A NEWER CHOICE. The cookie is not this site's record of
+ * what Cookiebot thinks; it is the latest choice known on EITHER host, and two
+ * repos write it. Cookiebot only knows what it was told here, so replaying its
+ * answer over a fresher one destroys a choice made on the platform — measured on
+ * 2026-08-08 while building the return leg, where this ran first on Cookiebot's
+ * consent event and overwrote the platform's refusal with the stale grant from
+ * this host, before the read-back below ever got to compare them. The platform
+ * would then have gone on measuring against a refusal it had recorded itself,
+ * because its client-side gate reads this cookie. Newest choice wins, both ways;
+ * it is the same rule as R8, and it makes the two directions independent of which
+ * component's effect happens to run first.
  */
 export function writeConsentCookie(payload: ConsentPayload, hostname: string): void {
   if (typeof document === "undefined") return;
   const existing = readConsentCookie();
-  if (
-    existing &&
-    existing.v === payload.v &&
-    existing.t === payload.t &&
-    existing.p === payload.p &&
-    existing.s === payload.s &&
-    existing.m === payload.m
-  ) {
-    return;
-  }
+  if (existing && isSameChoice(existing, payload)) return;
+  if (existing && isStrictlyNewer(existing, payload)) return;
   document.cookie = buildConsentCookie(payload, hostname);
 }
 
@@ -280,6 +340,14 @@ export function writeConsentCookie(payload: ConsentPayload, hostname: string): v
  *   silence the legitimate-interest measurement the platform is allowed to do.
  * - It never rewrites an already-all-false cookie, so `t` stays put instead of
  *   moving on every pageview (the platform appends a row per newer timestamp).
+ *
+ * AND ONE THING IT CANNOT JUDGE FOR ITSELF, so the caller owes it: that a
+ * withdrawal actually happened. A cookie holding a granted choice is no longer
+ * proof of one, because the platform writes this cookie too — that choice may
+ * have been made on a host where Cookiebot was never involved, and stamping a
+ * refusal over it would fabricate a withdrawal. ConsentCookie only calls this
+ * after it has seen a consent go away within one page load; the reasoning is
+ * there, next to the subscription whose lifetime gives "one page load" a meaning.
  */
 export function recordConsentWithdrawal(
   hostname: string,
@@ -293,4 +361,113 @@ export function recordConsentWithdrawal(
     { v: CONSENT_COOKIE_VERSION, t: at, p: false, s: false, m: false },
     hostname,
   );
+}
+
+/**
+ * The handler that keeps the handover cookie in step with Cookiebot: hand it
+ * every consent state Cookiebot reports, in the order it reports them.
+ *
+ * It is a closure and not a plain function because one of its two rules is about
+ * a SEQUENCE, and that rule is the reason this exists at all.
+ *
+ * A WITHDRAWAL IS ONLY A WITHDRAWAL IF WE SAW THE CONSENT IT TOOK BACK.
+ * Cookiebot's `withdraw()` clears `hasResponse`, so a withdrawal arrives as an
+ * absence — and "never answered on this host" is that same absence. Until the
+ * platform started writing this cookie, an existing granting cookie told them
+ * apart on its own: only this site wrote it, so it could only have come from a
+ * Cookiebot answer here. That inference is now wrong, and expensively so.
+ * Measured on 2026-08-08: a visitor who granted consent on mijn.letsdog.nl and
+ * then opened letsdog.nl, where they had never answered the banner, had that
+ * grant rewritten to an explicit refusal on Cookiebot's `OnLoad` event — and the
+ * platform's own gate reads this cookie, so it would have stopped measuring on
+ * the strength of a withdrawal nobody performed.
+ *
+ * What separates the two is a TRANSITION. A real withdrawal always follows a
+ * consent within the life of one subscription, because it takes a widget that
+ * Cookiebot only renders once it has a stored answer. A withdrawal made in an
+ * earlier session needs no second opinion: the cookie already records it as
+ * all-false.
+ */
+export function createConsentRecorder(
+  hostname: string,
+): (consent: ConsentPayload | null) => void {
+  let sawConsent = false;
+  return (consent) => {
+    if (consent) {
+      sawConsent = true;
+      writeConsentCookie(consent, hostname);
+    } else if (sawConsent) {
+      recordConsentWithdrawal(hostname);
+    }
+  };
+}
+
+// =============================================================================
+// THE RETURN LEG: a choice changed on mijn.letsdog.nl reaching Cookiebot here.
+// =============================================================================
+// Everything above carries a choice OUT of this site. This carries one back IN.
+// The platform's Cookie preferences screen promises the visitor, in as many
+// words, "Je keuze geldt op letsdog.nl en in de app" — and until now it did not:
+// Cookiebot reads its own host-only CookieConsent cookie and has never heard of
+// ld_consent, so changing your mind on the platform changed nothing here. At a
+// withdrawal that is the worst possible place to be wrong.
+//
+// The rule is the platform's own (R8), pointed the other way: a strictly newer
+// recorded choice wins, equal or older does nothing.
+
+/**
+ * Should the handover cookie override what Cookiebot currently records?
+ *
+ * `cookiebot` is what Cookiebot reports right now, or null when it reports no
+ * choice at all. Four ways to answer no, and each one is load-bearing:
+ *
+ * - A VERSION WE DO NOT KNOW. `parseConsentPayload` keeps an unrecognised `v` so
+ *   that the reader can decide; this is the reader, and it declines. A later
+ *   version may add a category, and pushing its three known fields into the CMP
+ *   would silently drop whatever it added.
+ * - COOKIEBOT RECORDS NOTHING. There is no timestamp to be newer than — but the
+ *   real reason is sharper than that: `withdraw()` also leaves Cookiebot with no
+ *   response, and at that moment ld_consent holds the all-false record that
+ *   `recordConsentWithdrawal` just wrote, stamped NOW. Treating "nothing" as
+ *   "older than anything" would feed this site's own withdrawal straight back
+ *   into its own CMP, turning "withdrawn" into "declined" and taking the banner
+ *   away from a visitor who is entitled to see it again. This branch is what
+ *   makes the whole return leg provably one-directional: a cookie written HERE
+ *   carries Cookiebot's own `t` (equal, so it loses) or is a withdrawal (no
+ *   response, so it stops here). Anything that gets past this predicate was
+ *   written by the other host.
+ * - THE SAME CHOICE. Nothing to change, and submitting anyway would move
+ *   Cookiebot's `consentUTC` to now and re-fire its events for no reason. It
+ *   also makes the sync idempotent by construction: one submit and the
+ *   categories match, so no second submit can follow whatever the clocks say.
+ * - AN UNREADABLE TIMESTAMP on either side. Same choice the platform makes on a
+ *   NaN: rather not act than act on a comparison we could not make.
+ */
+export function consentCookieSupersedes(
+  cookie: ConsentPayload,
+  cookiebot: ConsentPayload | null,
+): boolean {
+  if (cookie.v !== CONSENT_COOKIE_VERSION) return false;
+  if (cookiebot === null) return false;
+  if (isSameChoice(cookie, cookiebot)) return false;
+  return isStrictlyNewer(cookie, cookiebot);
+}
+
+/**
+ * Puts Cookiebot into the choice the cookie records, through its own public API.
+ *
+ * Cookiebot then does the rest by itself, and that is why this is the whole
+ * write: it pushes the full Consent Mode v2 update to the dataLayer (measured
+ * during T-23, all seven signals) and fires the consent events that MetaPixel
+ * and ConsentCookie already subscribe to. So one call reaches Google, Meta and
+ * the handover cookie without any of them learning about this path.
+ *
+ * Returns whether the call was actually made, so a caller can tell "declined to
+ * sync" from "Cookiebot was not there to sync with".
+ */
+export function submitConsentToCookiebot(payload: ConsentPayload): boolean {
+  const cb = typeof window === "undefined" ? undefined : window.Cookiebot;
+  if (typeof cb?.submitCustomConsent !== "function") return false;
+  cb.submitCustomConsent(payload.p, payload.s, payload.m);
+  return true;
 }

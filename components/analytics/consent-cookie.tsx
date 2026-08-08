@@ -20,22 +20,16 @@
 // needs to hear.
 
 import { useEffect } from "react";
-import {
-  onCookiebotConsent,
-  recordConsentWithdrawal,
-  writeConsentCookie,
-} from "@/lib/consent";
+import { createConsentRecorder, onCookiebotConsent } from "@/lib/consent";
 
 export function ConsentCookie() {
   useEffect(() => {
-    return onCookiebotConsent((consent) => {
-      // A withdrawal reaches us as an absence, not as an all-false choice —
-      // Cookiebot's withdraw() clears hasResponse. recordConsentWithdrawal
-      // turns that back into the explicit refusal the platform needs to read,
-      // and declines to invent one for a visitor who never answered.
-      if (consent) writeConsentCookie(consent, window.location.hostname);
-      else recordConsentWithdrawal(window.location.hostname);
-    });
+    // One recorder per subscription, because "a withdrawal is only a withdrawal
+    // if we saw the consent it took back" is a rule about the ORDER of the
+    // states Cookiebot reports, and the subscription's life is what gives that
+    // order a boundary. Why the rule exists — and what it cost before it did —
+    // is in lib/consent.ts, next to the writers it governs.
+    return onCookiebotConsent(createConsentRecorder(window.location.hostname));
   }, []);
 
   return null;

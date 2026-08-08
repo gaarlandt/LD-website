@@ -89,11 +89,20 @@ content). Tone is "je/jouw", empathy-first, no jargon, and no exclamation-marks-
   consent, so it keeps measuring when no choice has been made (Cookiebot still clears its
   cookie on an explicit refusal). The scope line is the *purpose*: advertising needs
   consent, product analytics at a processor does not.
-- **`ld_consent` — the handover cookie** — the visitor answers the banner on `letsdog.nl`,
-  but the platform on `mijn.letsdog.nl` is what has to honour it. Cookiebot's own cookie is
-  host-only and cannot cross, so the site writes its own first-party cookie on the shared
-  `.letsdog.nl` domain. Its shape is a fixed cross-repo contract (`lib/consent.ts`); a
-  one-character deviation makes the platform read nothing and silently assume refusal.
+- **`ld_consent` — the handover cookie** — the consent choice as both hosts can see it. The
+  visitor answers the banner on `letsdog.nl`, but the platform on `mijn.letsdog.nl` has to
+  honour the same answer, and Cookiebot's own cookie is host-only and cannot cross — so the
+  choice travels in a first-party cookie on the shared `.letsdog.nl` domain instead. Its shape
+  is a fixed cross-repo contract; a one-character deviation makes the platform read nothing and
+  silently assume refusal.
+
+  **Both hosts write it, so it records the latest choice known on either one — not one host's
+  view of the other.** The merge rule at every writer is newest-wins, compared on the moment of
+  the choice: an older choice never overwrites a newer one, and a repeat of the same choice
+  never rewrites the stamp. Two consequences worth knowing, because both failed silently before
+  they were rules: a host replaying its own stored answer must not clobber a fresher choice made
+  elsewhere, and the *absence* of a local answer is not evidence of a withdrawal — a withdrawal
+  is a transition, and only the host that witnessed it can record one.
 - **Features not in marketing copy** — AI Coach, "plan op maat", gezin-/herstart-modules,
   health tracker / digitaal paspoort, walker-service, insurance: these are not live for
   marketing and must not appear in site copy.
