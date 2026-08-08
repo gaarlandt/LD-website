@@ -17,6 +17,12 @@ tags: [consent, cookiebot, cmp, cross-host, shared-state, last-write-wins, gdpr,
 
 # A shared record with two writers needs a merge rule, and absence is not an event
 
+> **↑ promoted to contract.** The portable rules from this write-up now govern both halves of the
+> consent chain and are stated canonically in the cross-knowledge hub:
+> `/Users/jurriaan/Documents/Coding/ldcoding/LD - project cross knowledge/contracts/cross-host-consent-handover.md`
+> (owner: **PF**, the Let's Dog platform on `mijn.letsdog.nl`). Read the contract before changing
+> either side's consent writing; this doc stays as the war story and the measurements.
+
 ## Problem
 
 `ld_consent` is a first-party cookie on `.letsdog.nl` carrying the visitor's consent choice
