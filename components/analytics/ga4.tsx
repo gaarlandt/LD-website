@@ -9,22 +9,25 @@ const GA_ID_PATTERN = /^G-[A-Z0-9]{6,12}$/;
 // events still show up there for verification. PROD_HOSTS lives in
 // lib/prod-hosts.ts so the PostHog provider tags environment the same way.
 
-// NOTE: GA4 scripts here intentionally render WITHOUT Cookiebot's
-// type="text/plain" + data-cookieconsent gating. Tracking fires
-// immediately on page load regardless of consent banner state. Cookiebot
-// (in cookiebot.tsx) still loads and shows the banner for UX, but
-// because our scripts aren't tagged with the gating attrs, Cookiebot's
-// auto-blocker leaves them alone.
+// CONSENT: governed by Google Consent Mode v2, not by tag blocking.
 //
-// This is "consent theater" — legally non-compliant for non-essential
-// cookies under EU/NL law. The trade-off was explicitly accepted by
-// the product owner to keep tracking continuous on every visit.
+// These scripts still render untagged — no type="text/plain", no
+// data-cookieconsent — and that is deliberate under Consent Mode: gtag.js
+// loads, but components/analytics/consent-default.tsx has already put
+// analytics_storage and every ad signal on 'denied', so it writes no _ga
+// cookie and sends no advertising data until Cookiebot's update flips those
+// signals. This is Google's "advanced" consent mode, the shape Cookiebot's own
+// integration is built for, and it is why the config command below can stay
+// unconditional. Reverses the earlier ungated posture per loop decision D-93.
 //
-// If you want real consent gating back: add
+// The residual, stated plainly rather than left implicit: with the tag loaded,
+// a pre-consent pageview still reaches Google as a cookieless ping carrying an
+// IP address. Consent Mode is designed that way (it feeds Google's modelling).
+// Refusing even that means holding gtag.js itself back — add
 //   type="text/plain" data-cookieconsent="statistics"
-// to both <script> tags below. Cookiebot will then hold them inert
-// until the user accepts the "statistics" category, at which point
-// Cookiebot transforms type to "text/javascript" and they execute.
+// to both <script> tags below, which turns this into "basic" consent mode:
+// nothing reaches Google before consent, and the modelling is given up. That is
+// a business call for Jur, not a code cleanup.
 
 export function GA4() {
   const id = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
