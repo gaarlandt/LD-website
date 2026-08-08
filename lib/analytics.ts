@@ -1,5 +1,16 @@
 import posthog from "posthog-js";
 import { toMetaEvent, type MetaEventParams } from "@/lib/meta-events";
+import { readCookiebotConsent } from "@/lib/consent";
+
+// `typeof window.fbq === "function"` is no longer enough on its own to mean
+// "we may send to Meta". fbevents.js cannot be unloaded once it has loaded, so
+// after a withdrawal fbq is still a callable function; Meta holds the events
+// rather than sending them, but a re-grant later in the same page would flush
+// what was queued while consent was withdrawn. Asking Cookiebot directly costs
+// a property read and removes the question.
+function metaConsentGranted(): boolean {
+  return readCookiebotConsent()?.m === true;
+}
 
 declare global {
   interface Window {
@@ -37,7 +48,7 @@ export function trackEvent(eventName: string, params?: EventParams): void {
   // ordering (they already fired above); this keeps the caller safe too.
   try {
     const metaEvent = toMetaEvent(eventName, params);
-    if (metaEvent && typeof window.fbq === "function") {
+    if (metaEvent && typeof window.fbq === "function" && metaConsentGranted()) {
       window.fbq("track", metaEvent.name, metaEvent.params);
     }
   } catch {
@@ -53,6 +64,7 @@ export function trackEvent(eventName: string, params?: EventParams): void {
 // event to both of those datasets instead of completing Meta's.
 export function trackMetaPageView(): void {
   if (typeof window === "undefined" || typeof window.fbq !== "function") return;
+  if (!metaConsentGranted()) return;
   try {
     window.fbq("track", "PageView");
   } catch {

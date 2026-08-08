@@ -7,7 +7,9 @@ import "./ld-components.css";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { WhatsAppButton } from "@/components/shared/whatsapp-button";
+import { ConsentDefault } from "@/components/analytics/consent-default";
 import { Cookiebot } from "@/components/analytics/cookiebot";
+import { ConsentCookie } from "@/components/analytics/consent-cookie";
 import { GA4 } from "@/components/analytics/ga4";
 import { MetaPixel } from "@/components/analytics/meta-pixel";
 import { MetaPixelPageView } from "@/components/analytics/meta-pixel-pageview";
@@ -85,13 +87,21 @@ export default function RootLayout({
   return (
     <html lang="nl">
       <head suppressHydrationWarning>
-        {/* Cookiebot stays first: its auto-blocker has to be in place before
-            any tracker it might govern loads. */}
+        {/* Order matters here. The Consent Mode default has to reach the
+            dataLayer before any Google tag acts on it, and Cookiebot's
+            auto-blocker has to be in place before any tracker it governs
+            loads. Both are <head>-only for that reason; the components
+            themselves explain the mechanics. */}
+        <ConsentDefault />
         <Cookiebot />
-        <MetaPixel />
       </head>
       <body className="bg-[#EFE8E4] text-[#141414] antialiased">
         <PostHogProvider>
+          {/* MetaPixel and ConsentCookie render nothing — they subscribe to
+              Cookiebot's consent state and act on it, so they sit with the
+              other client-side analytics rather than in <head>. */}
+          <ConsentCookie />
+          <MetaPixel />
           <GA4 />
           <JsonLd data={siteGraph} />
           <a
