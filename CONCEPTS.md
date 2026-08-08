@@ -81,11 +81,19 @@ content). Tone is "je/jouw", empathy-first, no jargon, and no exclamation-marks-
 
 - **"Binnenkort" (app status)** — the website and web-app are live; the iOS/Android apps
   are "binnenkort". Don't promise a date or claim the app works everywhere yet.
-- **Cookiebot is display-only** — the consent banner is informational; GA4, PostHog *and*
-  the Meta Pixel all fire regardless of consent state (a deliberate, documented decision,
-  with the risk accepted by the owner). Note this now spans advertising as well as
-  analytics, and that the published cookieverklaring still promises advertentiepixels are
-  placed only after consent — so code and policy currently disagree.
+- **Consent is enforced for Google and Meta** (since 2026-08-08, loop decision D-93 —
+  this reverses the earlier "Cookiebot is display-only" posture). Google tags start from a
+  Consent Mode v2 **denied** default and only measure once Cookiebot's update grants it;
+  the Meta Pixel does not load at all until marketing is granted, and stops on withdrawal.
+  **PostHog is deliberately outside this** — it runs on legitimate interest rather than
+  consent, so it keeps measuring when no choice has been made (Cookiebot still clears its
+  cookie on an explicit refusal). The scope line is the *purpose*: advertising needs
+  consent, product analytics at a processor does not.
+- **`ld_consent` — the handover cookie** — the visitor answers the banner on `letsdog.nl`,
+  but the platform on `mijn.letsdog.nl` is what has to honour it. Cookiebot's own cookie is
+  host-only and cannot cross, so the site writes its own first-party cookie on the shared
+  `.letsdog.nl` domain. Its shape is a fixed cross-repo contract (`lib/consent.ts`); a
+  one-character deviation makes the platform read nothing and silently assume refusal.
 - **Features not in marketing copy** — AI Coach, "plan op maat", gezin-/herstart-modules,
   health tracker / digitaal paspoort, walker-service, insurance: these are not live for
   marketing and must not appear in site copy.

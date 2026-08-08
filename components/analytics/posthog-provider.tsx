@@ -6,7 +6,9 @@ import { PostHogProvider as PHProvider } from "posthog-js/react";
 import { isProdHost } from "@/lib/prod-hosts";
 
 // Browser-only PostHog init for the static-export site (no server runtime).
-// Fires always — matching the GA4 consent posture (Cookiebot is display-only).
+// Fires always, and deliberately so: PostHog sits OUTSIDE the consent gate that
+// covers Google and Meta since 2026-08-08 (D-93 part C — legitimate interest,
+// not consent). Cookiebot still clears its cookie on an explicit refusal.
 // Identity + event conventions follow the Let's Dog cross-product contract:
 // EU host, defaults '2026-01-30', session recording off, respect DNT, the
 // shared project key, and an `app` super-property. cross_subdomain_cookie lets
