@@ -10,9 +10,16 @@
 // can bid on, so it is deliberately left out rather than sent as noise.
 //
 // NOT mapped, and not an oversight: `Purchase`. Payment happens on another
-// domain (WooCommerce on app.letsdog.nl today, mijn.letsdog.nl after the
-// platform cutover), so this pixel can never observe it. Revenue attribution
-// needs the pixel and/or the Conversions API on that side — separate work.
+// domain, so this pixel can never observe it. That gap is now closed on the
+// other side rather than here: since 2026-08-10 the platform sends `Purchase`
+// server-side over Meta's Conversions API.
+//
+// WHICH HOST OWNS WHICH EVENT is therefore a real question, and it is settled in
+// loop decision D-101 rather than per file. Both hosts receive ad traffic, so
+// anything both could fire would be counted twice. This host owns the top of the
+// funnel it can actually witness — `PageView`, `ViewContent`, `AddToCart`,
+// `Lead`. The platform owns `InitiateCheckout` and `Purchase`. Before adding a
+// mapping here, check that table.
 
 // Defined here rather than in lib/analytics.ts, and imported *from* here by the
 // chokepoint. This module is a leaf with no imports of its own, so owning the
@@ -51,10 +58,25 @@ function asContentId(value: unknown): string | null {
 // spelling and are matched case-sensitively: "Lead" is a standard event that a
 // campaign can optimise for, "lead" is an unbiddable custom event.
 const MAPPINGS: Record<string, { name: string; params: (p: MetaEventParams) => Record<string, unknown> }> = {
-  // Pricing tier CTA clicked. Carries value + currency so Ads Manager reports
-  // cost-per-checkout against real euros instead of a bare count.
+  // Pricing tier CTA CLICKED — intent, not arrival. Carries value + currency so
+  // Ads Manager reports against real euros instead of a bare count.
+  //
+  // WHY AddToCart AND NOT InitiateCheckout (loop decision D-101, 2026-08-11).
+  // What this trigger can honestly claim is that someone clicked a price on this
+  // site. It cannot claim the visitor reached the checkout: the checkout is on
+  // another host, and a click is not an arrival. The platform CAN see that, and
+  // it sees it for BOTH ways in — straight to the checkout from an ad, or
+  // through the quiz funnel — so `InitiateCheckout` is owned there and fires
+  // there. Two hosts firing the same event would simply count it twice, which is
+  // why ownership is settled per event rather than per host.
+  //
+  // AddToCart is Meta's own standard step between ViewContent and
+  // InitiateCheckout in the same ladder, so the event stays biddable and the
+  // funnel keeps its order. Do not "fix" this into a custom event: a custom
+  // event cannot be optimised or bid on, which is the whole reason this mapping
+  // table only ever emits standard events.
   begin_checkout: {
-    name: "InitiateCheckout",
+    name: "AddToCart",
     params: (p) => {
       // Filter once, up front: content_ids and contents must describe the SAME
       // line items. Filtering only content_ids would let the two arrays
@@ -99,6 +121,14 @@ const MAPPINGS: Record<string, { name: string; params: (p: MetaEventParams) => R
     }),
   },
 };
+
+/**
+ * Every internal event this host maps, exported so a test can assert on the
+ * WHOLE table instead of a list someone has to remember to extend. The
+ * ownership split in D-101 is only worth anything if a new mapping cannot
+ * quietly reintroduce an event the platform owns.
+ */
+export const MAPPED_EVENTS = Object.keys(MAPPINGS);
 
 /**
  * Translate an internal event into its Meta standard event, or null when the

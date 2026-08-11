@@ -12,6 +12,7 @@ import { Cookiebot } from "@/components/analytics/cookiebot";
 import { ConsentCookie } from "@/components/analytics/consent-cookie";
 import { ConsentSync } from "@/components/analytics/consent-sync";
 import { GA4 } from "@/components/analytics/ga4";
+import { AttributionCapture } from "@/components/analytics/attribution-capture";
 import { MetaPixel } from "@/components/analytics/meta-pixel";
 import { MetaPixelPageView } from "@/components/analytics/meta-pixel-pageview";
 import { CTATracker } from "@/components/analytics/cta-tracker";
@@ -98,14 +99,17 @@ export default function RootLayout({
       </head>
       <body className="bg-[#EFE8E4] text-[#141414] antialiased">
         <PostHogProvider>
-          {/* MetaPixel, ConsentCookie and ConsentSync render nothing — they
-              subscribe to Cookiebot's consent state and act on it, so they sit
-              with the other client-side analytics rather than in <head>.
-              ConsentSync comes LAST on purpose: it is the only one that can
-              *cause* a consent event, and effects run in tree order, so the two
-              subscribers above it must already be listening when it does. */}
+          {/* MetaPixel, ConsentCookie, AttributionCapture and ConsentSync render
+              nothing — they subscribe to Cookiebot's consent state and act on
+              it, so they sit with the other client-side analytics rather than in
+              <head>. ConsentSync comes LAST on purpose: it is the only one that
+              can *cause* a consent event, and effects run in tree order, so
+              every subscriber above it must already be listening when it does.
+              AttributionCapture belongs to that group — a choice arriving from
+              the platform is exactly when a first touch may become storable. */}
           <ConsentCookie />
           <MetaPixel />
+          <AttributionCapture />
           <ConsentSync />
           <GA4 />
           <JsonLd data={siteGraph} />
