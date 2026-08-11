@@ -11,8 +11,8 @@ export function Hero() {
       {/* Mobile: visible image at top */}
       <div className="relative w-full aspect-[16/10] lg:hidden">
         <OptimizedImage
-          src="/images/hero.jpeg"
-          alt="Twee vrouwen lachen met hun honden"
+          src="/images/family.jpeg"
+          alt="Gezin met hun puppy op een houten brug"
           fill
           priority
           preload
@@ -26,8 +26,8 @@ export function Hero() {
       {/* Desktop: absolute right-half background */}
       <div className="absolute inset-0 left-[45%] hidden lg:block">
         <OptimizedImage
-          src="/images/hero.jpeg"
-          alt="Twee vrouwen lachen met hun honden"
+          src="/images/family.jpeg"
+          alt="Gezin met hun puppy op een houten brug"
           fill
           priority
           preload
