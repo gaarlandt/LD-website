@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toMetaEvent } from "./meta-events";
+import { MAPPED_EVENTS, toMetaEvent } from "./meta-events";
 
 describe("toMetaEvent", () => {
   it("returns null for events with no Meta standard equivalent", () => {
@@ -9,7 +9,7 @@ describe("toMetaEvent", () => {
     expect(toMetaEvent("some_future_event")).toBeNull();
   });
 
-  it("maps begin_checkout to InitiateCheckout with value and content ids", () => {
+  it("maps begin_checkout to AddToCart with value and content ids", () => {
     const result = toMetaEvent("begin_checkout", {
       currency: "EUR",
       value: 59,
@@ -26,7 +26,7 @@ describe("toMetaEvent", () => {
     });
 
     expect(result).toEqual({
-      name: "InitiateCheckout",
+      name: "AddToCart",
       params: {
         currency: "EUR",
         value: 59,
@@ -36,6 +36,22 @@ describe("toMetaEvent", () => {
         num_items: 1,
       },
     });
+  });
+
+  it("emits only the events D-101 gives this host", () => {
+    // D-101 splits ownership per event because both hosts now carry a pixel into
+    // the same dataset: InitiateCheckout is the platform's (only it can see a
+    // real checkout arrival, for both ways in) and Purchase is server-side there.
+    // An event both hosts fire is an event counted twice.
+    //
+    // Asserted over MAPPED_EVENTS — the real table — rather than a list written
+    // out here, because the failure this guards against is a FUTURE mapping. A
+    // hardcoded list cannot see one, and `checkout_started -> InitiateCheckout`
+    // is exactly the kind of addition that reads as obviously correct to someone
+    // who has not met D-101.
+    const emitted = new Set(MAPPED_EVENTS.map((name) => toMetaEvent(name, { items: [] })!.name));
+
+    expect(emitted).toEqual(new Set(["AddToCart", "Lead", "ViewContent"]));
   });
 
   it("coerces a numeric item_id to a string so catalogue matching still works", () => {
@@ -51,7 +67,7 @@ describe("toMetaEvent", () => {
   it("survives begin_checkout without an items array", () => {
     const result = toMetaEvent("begin_checkout", { currency: "EUR", value: 59 });
 
-    expect(result?.name).toBe("InitiateCheckout");
+    expect(result?.name).toBe("AddToCart");
     expect(result?.params.content_ids).toEqual([]);
     expect(result?.params.num_items).toBe(0);
   });

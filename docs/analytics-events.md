@@ -2,7 +2,7 @@
 
 A complete reference of every analytics event the website emits, for building dashboards/funnels (e.g. in PostHog) — here or in another project that consumes the shared PostHog project.
 
-- **Project:** PostHog EU project **143695** (`https://eu.i.posthog.com`) + GA4 **`G-0FCGXJHMMY`** (shared across all Let's dog domains) + Meta Pixel **`1789754812188603`**.
+- **Project:** PostHog EU project **143695** (`https://eu.i.posthog.com`) + GA4 **`G-0FCGXJHMMY`** (shared across all Let's dog domains) + Meta Pixel **`958837033882897`**.
 - **Dual-fire:** every event below is sent to **both** GA4 (gtag) and PostHog through one chokepoint — `trackEvent(name, params)` in [`lib/analytics.ts`](../lib/analytics.ts). Each sink is guarded independently (a blocked sink never suppresses the other). **Add events only via `trackEvent`** — never call `gtag`/`posthog` directly.
 - **Meta Pixel is a third sink on that same chokepoint, but it receives only a mapped subset** — see [Meta Pixel](#meta-pixel) below.
 - **App identifier:** this is the **`website`** app. App-side events (`sign_up`, `purchase`) live on `app.letsdog.nl` and are owned separately — not emitted here.
@@ -70,13 +70,17 @@ For a consumer project building dashboards off project 143695 (filter all on `ap
 
 ## Meta Pixel
 
-Pixel **`1789754812188603`**, installed 2026-08-07. Loaded client-side from the root layout's `<body>`, and only once marketing consent is granted (see Consent posture below) ([`meta-pixel.tsx`](../components/analytics/meta-pixel.tsx)); the id comes from `NEXT_PUBLIC_META_PIXEL_ID` and **must be set in Cloudflare Pages → Variables and Secrets for Production *and* Preview**, or the component renders nothing and the pixel silently does not exist.
+Pixel **`958837033882897`** — dataset **"Letsdog A team"** — in use here since **2026-08-11**. Loaded client-side from the root layout's `<body>`, and only once marketing consent is granted (see Consent posture below) ([`meta-pixel.tsx`](../components/analytics/meta-pixel.tsx)); the id comes from `NEXT_PUBLIC_META_PIXEL_ID` and **must be set in Cloudflare Pages → Variables and Secrets for Production *and* Preview**, or the component renders nothing and the pixel silently does not exist.
+
+**Why the dataset changed on 2026-08-11.** The site moved off its first pixel because that one could never issue a Conversions API token, and the platform needs CAPI to send `Purchase` server-side. Reasoning and the ownership details are in platform loop decision **D-99** — not repeated here. What matters on this side: the pixel and the platform's CAPI must point at the **same** dataset, or the funnel splits and neither half reports a purchase. Owner is business portfolio **letsdogworld** (`1979628589535333`), shared with ad account **"Lets dog"** (`27044699391857143`).
+
+**Custom conversions and audiences do not migrate.** Anything defined against the previous pixel stopped receiving data at this cutover and has to be rebuilt on the new dataset by whoever runs the campaigns.
 
 Unlike GA4/PostHog, Meta gets only the events that map onto a **standard event** — the mapping lives in [`lib/meta-events.ts`](../lib/meta-events.ts) and is unit-tested. Standard events are what an Ads Manager campaign can optimise and bid on; a custom event can't be bid on, so unmapped events are deliberately not sent.
 
 | Internal event | Meta standard event | Params sent |
 |---|---|---|
-| `begin_checkout` | `InitiateCheckout` | `currency`, `value`, `content_type: "product"`, `content_ids`, `contents`, `num_items` |
+| `begin_checkout` | `AddToCart` | `currency`, `value`, `content_type: "product"`, `content_ids`, `contents`, `num_items` |
 | `contact_form_submitted` | `Lead` | `content_name: "contact_form"` |
 | `creator_form_submitted` | `Lead` | `content_name: "creator_form"`, `content_category` (= `collaboration`) |
 | `view_item_list` | `ViewContent` | `content_type: "product_group"`, `content_name`, `content_category` (= `source`) |
@@ -84,9 +88,21 @@ Unlike GA4/PostHog, Meta gets only the events that map onto a **standard event**
 
 **`cta_clicked` is deliberately not mapped.** It is the busiest event on the site and has no standard-event equivalent; sending it would add volume no campaign can act on.
 
+### Event ownership is split across two hosts (D-101)
+
+Ads land on **both** `letsdog.nl` and the platform, and both now carry a Meta pixel into the same dataset. Any event both hosts could fire would simply be counted twice, so ownership is settled **per event**, not per host:
+
+| Meta event | Fired by | Why that side |
+|---|---|---|
+| `PageView`, `ViewContent`, `AddToCart`, `Lead` | **this site** | The top of the funnel this host can actually witness |
+| `InitiateCheckout` | **the platform** | A checkout arrival is only observable where the checkout lives — and the platform sees it for *both* ways in (straight from an ad, or via the quiz funnel) |
+| `Purchase` | **the platform, server-side (CAPI) only** | Never fired in a browser, on either host. That is what keeps deduplication unnecessary: there is only ever one source per event |
+
+**`begin_checkout` → `AddToCart` (changed 2026-08-11).** It used to map to `InitiateCheckout`. The trigger is a *click on a pricing CTA* — intent, not arrival — so the old name overclaimed, and once the platform started firing the real `InitiateCheckout` it would also have double-counted. `AddToCart` is Meta's own standard step between `ViewContent` and `InitiateCheckout`, so the ladder keeps its order and the event stays biddable. **Rebuild any campaign, custom conversion or audience that optimised on `InitiateCheckout` from this host.**
+
 ### Two limitations worth knowing before you build a campaign on this
 
-1. **`Purchase` never fires here, and can't.** Payment happens on another domain — WooCommerce on `app.letsdog.nl` today, `mijn.letsdog.nl` after the platform cutover. This pixel sees the funnel only up to `InitiateCheckout`. Attributing revenue in Meta needs the pixel and/or the **Conversions API** on the platform side; that's separately-owned work (the GA4 half of it is planned in `docs/plans/2026-08-06-001-feat-ga4-platform-cutover-plan.md`, which scopes the Meta pixel out explicitly).
+1. **`Purchase` never fires here, and can't.** Payment happens on another domain. That is no longer a hole in the reporting, though: since **2026-08-10** the platform sends `Purchase` **server-side over Meta's Conversions API**, into this same dataset — which is exactly why the pixel here had to move datasets too (see above). This host sees the funnel up to `AddToCart`.
 2. **Production hosts only — the pixel does not exist on previews.** Meta has no `traffic_type`/`environment` equivalent, so a single dataset receives everything; the only way to keep preview and localhost out of the numbers campaigns optimise against is not to fire there at all. Since 2026-08-07 the base code is wrapped in a runtime `PROD_HOSTS` check (`letsdog.nl`, `www.letsdog.nl`), so off production nothing loads — no `fbevents.js`, no `window.fbq` — and the guards in `lib/analytics.ts` skip the Meta sink on their own. The check is at runtime because one static export serves both hosts. **Consequence: you cannot verify the pixel on a branch preview.** Verify on production with Meta Pixel Helper or Events Manager → Test Events. Meta's `<noscript>` fallback pixel is omitted for the same reason — it cannot be host-gated.
 
 `PageView` fires **exactly once per page a visitor actually sees**, via two mechanisms that hand off to each other: the base code fires it when the pixel loads (a hard load for a visitor whose marketing consent is already stored, otherwise the moment they grant it), and [`meta-pixel-pageview.tsx`](../components/analytics/meta-pixel-pageview.tsx) fires it on each subsequent App Router **soft** navigation. The first client render is deliberately skipped so the landing page isn't counted twice. Without that component the whole site would report a single PageView per session and page-based retargeting audiences would stay empty. Verified on the dev server: one beacon on load, a second with the new URL after a soft nav to `/prijzen/`.
@@ -97,6 +113,7 @@ Unlike GA4/PostHog, Meta gets only the events that map onto a **standard event**
 
 - **Google (GA4)** — [`consent-default.tsx`](../components/analytics/consent-default.tsx) sets a Consent Mode v2 default of `denied` on everything except `security_storage`, before any Google tag can act on it; Cookiebot sends the `update` on a choice. gtag.js still loads and still sends a **cookieless ping** pre-consent (Google's "advanced" consent mode) — it writes no `_ga` cookie and no advertising data. Holding the tag back entirely is a one-line change documented in [`ga4.tsx`](../components/analytics/ga4.tsx), and it is a business call, not a cleanup.
 - **Meta Pixel** — [`meta-pixel.tsx`](../components/analytics/meta-pixel.tsx) does not request `fbevents.js` at all until marketing consent is granted, and on withdrawal calls `fbq('consent','revoke')` and deletes `_fbp`/`_fbc`. It does **not** rely on Cookiebot's auto-blocker: the blocker demonstrably never caught this pixel (it rewrites tags it recognises, and the `fbevents.js` element is created at runtime), which is exactly how `_fbp` survived an explicit refusal until 2026-08-08.
+- **Campaign attribution (`ld_attribution`, added 2026-08-11)** — [`attribution-capture.tsx`](../components/analytics/attribution-capture.tsx) + [`lib/attribution.ts`](../lib/attribution.ts) store the seven campaign parameters an ad click arrives with in a second first-party cookie on `.letsdog.nl`, 90-day `Max-Age`, so the checkout on `mijn.letsdog.nl` can attribute the sale. **Two gates, not one:** `utm_*` + `gclid` need **statistics**, `fbclid` needs **marketing** — a visitor who accepts one and refuses the other keeps exactly half. Nothing is stored before a gate opens (the values sit in memory for the page load only), a gate closing later narrows or deletes the record, and a withdrawal recorded in `ld_consent` is honoured even when it was made in an earlier session. **First touch wins**, which is the inverse of `ld_consent`'s newest-wins on the same domain — the cross-repo contract is `contracts/cross-host-attribution-handover.md` in the knowledge hub.
 - **PostHog is deliberately out of scope** — it runs on legitimate interest, not consent (D-93 part C), so it keeps measuring when no choice has been made. Cookiebot already clears its cookie on an explicit refusal. `respect_dnt: true` means PostHog undercounts DNT users vs GA4.
 - **`ld_consent`** — every choice and every change is written to a first-party cookie on `.letsdog.nl` so `mijn.letsdog.nl` can honour it. The shape is a fixed cross-repo contract; see [`lib/consent.ts`](../lib/consent.ts).
 
