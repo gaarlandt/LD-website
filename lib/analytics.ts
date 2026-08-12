@@ -74,7 +74,7 @@ export function trackMetaPageView(): void {
 }
 
 // The one identify opportunity on the marketing site (contact-form success).
-// Email is lowercased — it's the cross-product join key per the Let's Dog
+// Email is lowercased — it's the cross-product join key per the Let's dog
 // PostHog identity contract. No alias() chains, no GA4 user-id mapping.
 export function identifyLead(
   email: string,

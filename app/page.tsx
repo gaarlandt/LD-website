@@ -11,7 +11,7 @@ import { RassenkeuzeStrip } from "@/components/sections/rassenkeuze-strip";
 export const metadata = pageMetadata({
   title: "Let's dog — online puppycursus",
   description:
-    "Nieuwe pup in huis en even de kluts kwijt? Let's dog geeft je week voor week een plan, videolessen van gecertificeerde trainers en een community die je begrijpt.",
+    "Nieuwe pup in huis en even de kluts kwijt? Let's dog geeft je week voor week een plan, videolessen van gecertificeerde trainers en rust in wat je vandaag te doen staat.",
   path: "/",
 });
 

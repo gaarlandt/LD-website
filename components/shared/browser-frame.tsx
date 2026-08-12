@@ -23,7 +23,7 @@ export function BrowserFrame({
   alt,
   width,
   height,
-  url = "app.letsdog.nl/agenda",
+  url = "mijn.letsdog.nl/agenda",
   sizes,
   priority,
   className,

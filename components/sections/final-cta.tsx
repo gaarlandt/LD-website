@@ -16,7 +16,7 @@ export function FinalCta() {
           hoe makkelijker het gaat.
         </h2>
         <p className="text-[var(--ld-text-muted)] text-lg leading-relaxed mb-10 max-w-md mx-auto">
-          Meld je aan en start direct. De puppyagenda, je eerste videoles en de community staan voor je klaar.
+          Meld je aan en start direct. De puppyagenda en je eerste videoles staan voor je klaar.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

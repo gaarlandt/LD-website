@@ -19,12 +19,25 @@ export type Tier = {
   highlighted?: boolean;
   topBadge?: string;
   // Annual list price (the post-launch "Daarna €119/jaar" figure), rendered
-  // struck-through above the intro price on the yearly view.
+  // struck-through above the intro price on the yearly view. Purely visual, so
+  // it stays inclusive of VAT.
   listPriceValue?: number;
-  // Analytics (begin_checkout) — kept beside ctaHref so a cutover product-ID
-  // swap updates the tracked id in lockstep with the checkout link.
-  productId: number;
+  // Analytics (begin_checkout) — the shared item contract with the platform,
+  // owned by docs/plans/2026-08-06-001-feat-ga4-platform-cutover-plan.md. GA4's
+  // item-scoped reports join begin_checkout → purchase on `item_id`, so both
+  // hosts must send these exact values. Kept beside ctaHref so a checkout swap
+  // updates the tracked item in the same gesture (that coupling is why the SKU
+  // change and the platform checkout link ship in one commit).
+  itemId: "ld_maand" | "ld_jaar";
+  itemName: string;
+  itemVariant: string;
+  // The consumer price, inclusive of VAT — display only.
   priceValue: number;
+  // The same plan excluding 21% VAT: the revenue figure GA4 reports and Google
+  // Ads bids on. Deliberately an explicit value rather than a division in the
+  // component, so a reviewer sees both numbers side by side and the displayed
+  // price can never move because an analytics value changed.
+  priceValueExVat: number;
   billingPeriod: "monthly" | "yearly";
 };
 
@@ -39,13 +52,16 @@ export const tiers: Tier[] = [
     features: [
       "Volledige puppycursus",
       "Alle video's & checklists",
-      "Let's dog Community",
+      "Weekplan op de leeftijd van je pup",
     ],
     ctaLabel: "Start Maandelijks",
-    ctaHref: "https://app.letsdog.nl/checkout/?add-to-cart=2234&quantity=1",
+    ctaHref: "https://mijn.letsdog.nl/checkout?plan=monthly",
     footerNote: "Maandelijks opzegbaar · geen restitutie",
-    productId: 2234,
+    itemId: "ld_maand",
+    itemName: "Maandabonnement",
+    itemVariant: "Maand",
     priceValue: 19.99,
+    priceValueExVat: 16.52,
     billingPeriod: "monthly",
   },
   {
@@ -58,17 +74,20 @@ export const tiers: Tier[] = [
     features: [
       "Volledige puppycursus",
       "Alle video's & checklists",
-      "Let's dog Community",
+      "Weekplan op de leeftijd van je pup",
       "Early Member status",
     ],
     ctaLabel: "Claim Early Member Prijs",
-    ctaHref: "https://app.letsdog.nl/checkout/?add-to-cart=2233&quantity=1",
+    ctaHref: "https://mijn.letsdog.nl/checkout?plan=yearly",
     footerNote: "Pas na 7 dagen betalen · eerste jaar €59",
     highlighted: true,
     topBadge: "Meest gekozen",
     listPriceValue: 119,
-    productId: 2233,
+    itemId: "ld_jaar",
+    itemName: "Jaarabonnement",
+    itemVariant: "Jaar",
     priceValue: 59,
+    priceValueExVat: 48.76,
     billingPeriod: "yearly",
   },
 ];

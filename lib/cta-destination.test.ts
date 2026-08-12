@@ -19,6 +19,22 @@ describe("resolveCtaDestination", () => {
     expect(resolve("https://app.letsdog.nl/checkout/2234")).toBe("checkout");
   });
 
+  it("the platform host attributes like the app host, on both sides of the split", () => {
+    // mijn.letsdog.nl replaced app.letsdog.nl at the 2026-08-12 cutover. Missing
+    // it here is not a gap in coverage but a silent loss of attribution on every
+    // checkout click, because the live pricing CTAs now point at this host only.
+    expect(resolve("https://mijn.letsdog.nl/")).toBe("app");
+    expect(resolve("https://mijn.letsdog.nl/checkout")).toBe("checkout");
+  });
+
+  it("the live pricing CTA hrefs resolve to checkout, query string and all", () => {
+    // Pins the exact strings in components/sections/pricing-data.ts. The plan
+    // parameter lives in the QUERY, not the path, so a path-based split has to
+    // keep working with it present — that is the thing that would break quietly.
+    expect(resolve("https://mijn.letsdog.nl/checkout?plan=monthly")).toBe("checkout");
+    expect(resolve("https://mijn.letsdog.nl/checkout?plan=yearly")).toBe("checkout");
+  });
+
   it("keuzehulp and agenda hosts keep their own attribution", () => {
     expect(resolve("https://keuzehulp.letsdog.nl/")).toBe("keuzehulp");
     expect(resolve("https://agenda.letsdog.nl/")).toBe("agenda");

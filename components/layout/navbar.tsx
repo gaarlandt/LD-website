@@ -124,7 +124,7 @@ export function Navbar() {
         {/* Desktop CTAs */}
         <div className="hidden md:flex items-center gap-3">
           <Button variant="secondary" pill asChild>
-            <a href="https://app.letsdog.nl" target="_blank" rel="noopener noreferrer">
+            <a href="https://mijn.letsdog.nl" target="_blank" rel="noopener noreferrer">
               Inloggen
             </a>
           </Button>
@@ -155,7 +155,7 @@ export function Navbar() {
         {/* Mobile login pill — glass fill flips with scrolled, not whiteHeader: it
             needs to render on every route, not just the homepage's photo hero. */}
         <a
-          href="https://app.letsdog.nl"
+          href="https://mijn.letsdog.nl"
           target="_blank"
           rel="noopener noreferrer"
           className={`order-4 md:hidden inline-flex items-center justify-center rounded-full px-[15px] py-2 text-[12.5px] font-semibold transition-colors duration-200 ${

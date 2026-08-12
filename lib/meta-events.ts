@@ -47,9 +47,9 @@ function readItems(params: MetaEventParams): CheckoutItem[] {
   return items.filter((item): item is CheckoutItem => typeof item === "object" && item !== null);
 }
 
-// Meta expects content ids as strings. item_id is already String(productId)
-// upstream, but coerce defensively — a numeric id silently breaks catalogue
-// matching rather than erroring.
+// Meta expects content ids as strings. item_id is already a string SKU upstream
+// (the shared item contract: ld_maand / ld_jaar), but coerce defensively — a
+// numeric id silently breaks catalogue matching rather than erroring.
 function asContentId(value: unknown): string | null {
   return value === undefined || value === null ? null : String(value);
 }

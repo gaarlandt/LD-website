@@ -17,14 +17,19 @@ export function PlanCTA({ tier }: { tier: Tier }) {
         onClick={() =>
           trackEvent("begin_checkout", {
             currency: "EUR",
-            value: tier.priceValue,
+            // Revenue excluding VAT, not the consumer price: Google Ads bids on
+            // this number, and the platform's `purchase` reports the same basis.
+            value: tier.priceValueExVat,
+            // Event-level, and NOT replaced by item_variant — the two live side
+            // by side and `billing_period` is the older registered dimension.
             billing_period: tier.billingPeriod,
             items: [
               {
-                item_id: String(tier.productId),
-                item_name: tier.name,
-                item_category: "membership",
-                price: tier.priceValue,
+                item_id: tier.itemId,
+                item_name: tier.itemName,
+                item_variant: tier.itemVariant,
+                item_category: "abonnement",
+                price: tier.priceValueExVat,
                 quantity: 1,
               },
             ],
