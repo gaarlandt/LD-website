@@ -46,7 +46,8 @@
 
 import { useEffect } from "react";
 import { isProdHost } from "@/lib/prod-hosts";
-import { consentCookieDomain, onCookiebotConsent } from "@/lib/consent";
+import { consentCookieDomain, onCookiebotConsent, readConsentCookie } from "@/lib/consent";
+import { metaLoadGranted } from "@/lib/meta-consent";
 
 const PIXEL_ID_PATTERN = /^\d{15,16}$/;
 const FBEVENTS_SRC = "https://connect.facebook.net/en_US/fbevents.js";
@@ -139,8 +140,17 @@ export function MetaPixel() {
     // refusal. That is what stops a withdrawal from leaving the pixel running,
     // and it also clears the _fbp that visitors still carry from the period
     // when this pixel fired ungated.
+    //
+    // The handover cookie is read alongside Cookiebot so that a refusal recorded
+    // on mijn.letsdog.nl AFTER a grant here means fbevents.js is never fetched at
+    // all — that cookie carries the newer answer for a beat before ConsentSync
+    // hands it to Cookiebot, and since ads land straight on the platform (D-103)
+    // that is now the normal path, not an edge case. `metaLoadGranted` can only
+    // ever SUBTRACT from Cookiebot's answer; lib/meta-consent.ts says why, and in
+    // particular why letting it add would make the revoke path above depend on
+    // which consent subscriber's effect happens to run first.
     return onCookiebotConsent((consent) => {
-      if (consent?.m) loadMetaPixel(id);
+      if (metaLoadGranted(consent, readConsentCookie())) loadMetaPixel(id);
       else revokeMetaPixel(window.location.hostname);
     });
   }, []);
