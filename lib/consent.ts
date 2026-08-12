@@ -156,11 +156,40 @@ export function buildConsentCookie(payload: ConsentPayload, hostname: string): s
   ].join("; ");
 }
 
-/** Reads a cookie value out of a raw document.cookie string. */
-export function readCookie(cookieString: string, name: string): string | null {
+/**
+ * The first value for `name` in a raw document.cookie string that `parse`
+ * accepts — deliberately NOT the first one carrying that name.
+ *
+ * THE DISTINCTION IS THE WHOLE FUNCTION. Both handover cookies have to be
+ * readable from every *.letsdog.nl host, so they sit on the shared parent domain
+ * and a `__Host-` prefix is ruled out by contract. That means any subdomain —
+ * keuzehulp, agenda, the platform, an expired or parked one — can set its own
+ * host-only `ld_consent` or `ld_attribution`. Per RFC 6265 §5.4 the browser
+ * hands us document.cookie sorted longest-Path first, so a host-only copy with a
+ * deeper Path arrives BEFORE the legitimate `Domain=.letsdog.nl` one. Stopping
+ * at the first match lets that copy shadow the real record, and the caller then
+ * reads "nothing stored": on ld_attribution that overwrites a first touch which
+ * can never be recovered, on ld_consent it narrates a consent nobody gave.
+ *
+ * This is rule 1 of the cross-host attribution contract — "the reader takes the
+ * first PARSEABLE record, not the first match" — and the platform implements the
+ * same rule on its side. Both readers here go through this one function so the
+ * two cookies cannot drift apart from each other or from that side.
+ *
+ * `parse` returning null is what "not parseable" means. The name match itself
+ * stays exact, so `old_ld_consent` is still not `ld_consent`.
+ */
+export function readFirstParseableCookie<T>(
+  cookieString: string,
+  name: string,
+  parse: (raw: string) => T | null,
+): T | null {
+  const prefix = `${name}=`;
   for (const part of cookieString.split(";")) {
     const trimmed = part.trim();
-    if (trimmed.startsWith(`${name}=`)) return trimmed.slice(name.length + 1);
+    if (!trimmed.startsWith(prefix)) continue;
+    const parsed = parse(trimmed.slice(prefix.length));
+    if (parsed !== null) return parsed;
   }
   return null;
 }
@@ -253,11 +282,16 @@ export function onCookiebotConsent(
   };
 }
 
-/** The handover cookie as it currently stands, or null. */
+/**
+ * The handover cookie as it currently stands, or null.
+ *
+ * The first PARSEABLE `ld_consent`, not the first one by that name — see
+ * `readFirstParseableCookie` for the shadowing copy that distinction defends
+ * against.
+ */
 export function readConsentCookie(): ConsentPayload | null {
   if (typeof document === "undefined") return null;
-  const raw = readCookie(document.cookie, CONSENT_COOKIE_NAME);
-  return raw === null ? null : parseConsentPayload(raw);
+  return readFirstParseableCookie(document.cookie, CONSENT_COOKIE_NAME, parseConsentPayload);
 }
 
 /**
