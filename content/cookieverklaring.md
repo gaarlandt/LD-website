@@ -1,88 +1,107 @@
 ---
 title: Cookieverklaring
-description: Informatie over het gebruik van cookies op de Let's dog website.
-lead: Laatst bijgewerkt op 17 juni 2026.
+description: Welke cookies Let's dog gebruikt op letsdog.nl en mijn.letsdog.nl, waarom, en hoe je je keuze op elk moment weer omzet.
+lead: Laatst bijgewerkt op 12 augustus 2026.
 ---
 
-Deze cookieverklaring legt uit welke cookies en vergelijkbare technieken Let's dog gebruikt, waarom deze worden gebruikt en hoe bezoekers hun voorkeuren kunnen beheren. Deze verklaring hoort bij het Privacybeleid van Let's dog.
+Deze verklaring legt uit welke cookies en vergelijkbare technieken Let's dog gebruikt, waarom, en hoe je je keuze op elk moment weer omzet. Hij hoort bij het [Privacybeleid](/privacybeleid).
 
-## 1. Wat zijn cookies?
+## 1. Waar deze verklaring over gaat
 
-Cookies zijn kleine tekstbestanden die tijdens een bezoek aan een website of webapplicatie op een apparaat worden geplaatst. Vergelijkbare technieken zijn bijvoorbeeld pixels, SDK's, local storage, tags en scripts. Daarmee kan de website functioneren, kunnen voorkeuren worden onthouden en kan gebruik worden gemeten of, met toestemming, marketing worden ondersteund.
+- **letsdog.nl**: de website, met de rassenkeuzehulp, de informatie over de cursus en de prijzen.
+- **mijn.letsdog.nl**: je eigen omgeving, waar je aanmeldt, afrekent en de lessen volgt.
 
-## 2. Voor welke omgevingen geldt deze verklaring?
+Onze apps voor iOS en Android zijn nog niet uit. Zodra ze er zijn, werken we deze verklaring bij, want in een app gelden andere regels dan op het web.
 
-- de website letsdog.nl;
-- de webapplicatie, waaronder app.letsdog.nl;
-- landingspagina's, checkoutpagina's en accountomgevingen;
-- gekoppelde marketing- en analyticsomgeving;
-- waar van toepassing: webviews of gekoppelde webpagina's die vanuit de mobiele app worden geopend.
+## 2. Wat cookies zijn, kort
 
-Voor de mobiele iOS- en Android-app geldt dat tracking in de app alleen plaatsvindt als dit feitelijk is ingericht en de benodigde toestemming is gevraagd. De iOS-app gebruikt User ID, naam, telefoonnummer of e-mailadres niet voor tracking in de betekenis van Apple's App Tracking Transparency-regels, tenzij Let's dog dit later anders inricht en vooraf toestemming vraagt.
+Een cookie is een klein bestandje dat een website op je apparaat zet. Sommige zijn nodig om de boel te laten werken, bijvoorbeeld om je ingelogd te houden. Andere meten hoe de site gebruikt wordt, of laten ons zien welke advertentie je hier bracht.
 
-## 3. Welke soorten cookies gebruiken wij?
+Waar we hieronder "cookies" schrijven, bedoelen we ook vergelijkbare technieken zoals lokale opslag in je browser. Dat is geen slag om de arm: in je eigen omgeving bewaart onze gebruiksmeting zijn gegevens juist in lokale opslag en niet in een cookie.
 
-### 3.1 Functionele en noodzakelijke cookies
+## 3. De vier soorten
 
-Deze cookies zijn nodig om de website en webapp goed te laten werken. Denk aan inloggen, sessiebeheer, beveiliging, winkelwagen, checkout, taalinstellingen, cookievoorkeuren en accountfunctionaliteit. Voor deze cookies is geen toestemming vereist, omdat de dienst zonder deze cookies niet goed kan functioneren.
+### 3.1 Noodzakelijk
 
-### 3.2 Analytische cookies
+Deze staan altijd aan. Zonder deze kun je niet inloggen en niet veilig betalen.
 
-Analytische cookies helpen ons te begrijpen hoe bezoekers de website, webapp en content gebruiken. Wij gebruiken deze gegevens om de werking, stabiliteit, content, navigatie en conversiefunnel te verbeteren. Waar analytische cookies meer dan beperkte privacy-impact hebben, vragen wij toestemming.
+| Cookie | Wie | Waarvoor | Hoe lang |
+|---|---|---|---|
+| `__stripe_mid` | Stripe | Fraude tegengaan bij het afrekenen | 1 jaar |
+| `__stripe_sid` | Stripe | Hetzelfde, binnen één bezoek | Je bezoek |
+| `m` | Stripe | Hetzelfde, over Stripe's eigen domein | 400 dagen |
+| Inlogsessie | Let's dog | Je ingelogd houden | Je bezoek |
+| `ld_consent` | Let's dog | Onthouden welke keuze je hier maakt | 1 jaar |
+| `CookieConsent` | Cookiebot | Hetzelfde, voor het keuzevenster op de website | 1 jaar |
 
-### 3.3 Marketing- en trackingcookies
+Die laatste twee zijn er die je makkelijk over het hoofd ziet: om te onthouden dat je iets geweigerd hebt, moeten we dat ergens vastleggen. Daarom staan ze er ook als je alles weigert.
 
-Marketing- en trackingcookies, zoals advertentiepixels, worden alleen geplaatst als de gebruiker daarvoor toestemming geeft. Deze cookies kunnen helpen om advertenties te meten, doelgroepen te bouwen, campagnes te verbeteren of relevante communicatie te tonen.
+### 3.2 Voorkeuren
 
-### 3.4 Voorkeurscookies
+Kleine instellingen die het gebruik prettiger maken: je taal, en of je licht of donker gebruikt. Deze blijven in je browser en gaan nergens heen.
 
-Voorkeurscookies onthouden instellingen zoals cookievoorkeuren, taal, weergave of andere keuzes die de gebruikerservaring verbeteren.
+### 3.3 Statistiek
 
-## 4. Voorbeelden van gebruikte tools
+Hiermee meten we hoe de site en je eigen omgeving gebruikt worden, zodat we zien waar mensen vastlopen.
 
-Afhankelijk van de feitelijke inrichting kan Let's dog gebruikmaken van tools zoals:
+| Wie | Wat | Grondslag | Hoe lang |
+|---|---|---|---|
+| PostHog | Productgebruik: welke schermen, waar het misgaat | Gerechtvaardigd belang | 1 jaar |
+| Google Analytics | Bezoek en verkeer (`_ga`, `_ga_0FCGXJHMMY`) | Jouw toestemming | 400 dagen |
+| `ld_attribution` | Via welke campagne je binnenkwam: de `utm_`-velden en het Google-klik-id `gclid` | Jouw toestemming | 90 dagen |
 
-- Google Analytics 4 of vergelijkbare analytics;
-- Google Tag Manager;
-- Meta Pixel;
-- TikTok Pixel;
-- Hotjar of vergelijkbare gebruiksanalyse;
-- WooCommerce- en checkoutcookies;
-- Mollie- of betaalprovidergerelateerde cookies;
-- BuddyBoss-, LearnDash- of WordPress-gerelateerde sessie- en accountcookies;
-- cookieconsent- of CMP-tooling voor het beheren van toestemming.
+**PostHog werkt anders dan al het andere hier, en dat zeggen we met opzet hardop.** Hij meet door zolang je niets kiest, omdat we hem alleen gebruiken om het product te verbeteren en niet om te adverteren. Zeg je nee tegen statistiek, dan stopt hij meteen. Je gegevens staan op Europese servers en we nemen geen schermopnames. Normaal koppelen we je gebruik aan een willekeurig nummer; vul je zelf een formulier in, dan koppelen we je e-mailadres eraan, zodat we je vraag kunnen terugvinden bij wat je op de site deed.
 
-Deze lijst moet periodiek worden gecontroleerd tegen de feitelijk actieve tools in de website, app, tagmanager, plugins en cookiebanner.
+### 3.4 Marketing
 
-## 5. Toestemming en cookie-instellingen
+Hiermee zien we welke advertentie of pagina je naar ons bracht, zodat we ons geld aan de juiste plekken besteden. Deze staan alleen aan als je daar ja op zegt.
 
-Bij het eerste bezoek tonen wij een cookiebanner of consentmanagementplatform waarmee bezoekers hun voorkeuren kunnen instellen. Bezoekers kunnen noodzakelijke cookies niet uitschakelen via de cookiebanner, omdat deze nodig zijn voor de werking van de dienst. Analytische, marketing- en trackingcookies worden alleen geplaatst als daarvoor toestemming is gegeven, voor zover wettelijk vereist.
+| Cookie of gegeven | Wie | Waarvoor | Hoe lang |
+|---|---|---|---|
+| `_fbp`, `_fbc` | Meta (Facebook en Instagram) | Herkennen dat een advertentieklik tot een aanmelding leidde | 90 dagen |
+| Klik-id `fbclid` in `ld_attribution` | Let's dog, voor Meta | Onthouden dat je via een Meta-advertentie binnenkwam | 90 dagen |
 
-Bezoekers kunnen hun toestemming op elk moment wijzigen of intrekken via de cookie-instellingen op de website of via browserinstellingen. Het intrekken van toestemming heeft geen terugwerkende kracht.
+**Let op waar de grens ligt, want die loopt niet waar je hem verwacht.** Van de campagnegegevens hierboven hangt alleen het Meta-klik-id aan je marketing-keuze. Waar je vandaan kwam volgens de `utm_`-velden en het Google-klik-id `gclid` hoort bij statistiek, en staat daarom in de tabel hierboven. Zeg je nee tegen marketing maar ja tegen statistiek, dan bewaren we dus nog wel via welke campagne je binnenkwam, maar niet het Meta-klik-id.
 
-## 6. Cookies van derden
+Koop je een abonnement, dan sturen we Meta een gehashte versie van je e-mailadres, zodat zij die aankoop aan de juiste advertentie kunnen koppelen. Gehasht betekent: omgezet in een vaste reeks tekens waar je adres zelf niet meer uit te halen is, en die Meta alleen kan matchen met een adres dat zij al hebben. Ook dat gebeurt alleen als je marketing hebt toegestaan.
 
-Sommige cookies worden geplaatst door derden die diensten leveren aan Let's dog, zoals analytics, marketing, hosting, video, betaalverwerking of platformfunctionaliteit. Deze partijen kunnen eigen privacy- en cookieverklaringen hebben. Let's dog probeert het gebruik van derden te beperken tot wat nodig of nuttig is voor de dienst en sluit waar nodig passende afspraken met leveranciers.
+## 4. Waar je je keuze maakt, en waarom je hem maar één keer ziet
 
-## 7. Bewaartermijnen
+Je krijgt de vraag op de plek waar je binnenkomt:
 
-Cookies worden niet langer bewaard dan noodzakelijk voor het doel waarvoor ze zijn geplaatst. In algemene zin geldt:
+- Op **letsdog.nl** via het keuzevenster, meteen bij je eerste bezoek.
+- Op **mijn.letsdog.nl** via een korte vraag onderaan het scherm, als je daar rechtstreeks binnenkomt en het venster op de website dus nooit gezien hebt.
 
-| Cookietype | Bewaartermijn |
-| --- | --- |
-| Functionele en noodzakelijke cookies | Zolang nodig voor sessie, login, beveiliging of voorkeuren, vaak maximaal 12 maanden |
-| Analytische cookies | Volgens de ingestelde bewaartermijn van de tool, bij voorkeur zo kort mogelijk en niet langer dan noodzakelijk |
-| Marketing- en trackingcookies | Volgens de bewaartermijn van de gekozen tool en alleen na toestemming |
-| Cookievoorkeuren | Zolang nodig om toestemming of weigering te onthouden |
+**Je keuze geldt op allebei.** Kies je op de website, dan weet je eigen omgeving dat, en andersom. Je krijgt de vraag dus niet twee keer als je van de een naar de ander gaat.
 
-## 8. Browserinstellingen
+Weigeren kost je precies evenveel klikken als toestemmen, en er verdwijnt niets van de dienst als je nee zegt.
 
-Gebruikers kunnen cookies ook blokkeren of verwijderen via hun browserinstellingen. Dit kan gevolgen hebben voor het functioneren van de website, webapp, login, checkout of accountomgeving.
+## 5. Je keuze omzetten of intrekken
 
-## 9. Wijzigingen
+Op elk moment, en net zo makkelijk als je hem gaf:
 
-Deze cookieverklaring kan worden aangepast wanneer de website, app, gebruikte tools of wettelijke vereisten veranderen. De meest actuele versie is beschikbaar via de website.
+- Op **letsdog.nl**: via Cookie-instellingen onderaan elke pagina.
+- Op **mijn.letsdog.nl**: via Meer, dan Cookievoorkeuren. Ook bereikbaar als je nog geen account hebt.
+- In je **browser**: cookies blokkeren of verwijderen kan altijd. Let op dat we dan ook niet meer kunnen onthouden dat je iets geweigerd hebt.
 
-## 10. Contact
+Trek je marketing in, dan wissen we meteen de advertentiecookies die er al stonden: `_fbp`, `_fbc` en het Meta-klik-id. Dat gebeurt op het moment zelf en niet pas bij je volgende bezoek. Trek je statistiek in, dan verdwijnt ook de rest van `ld_attribution`.
 
-Voor vragen over cookies of privacy kan contact worden opgenomen via [support@letsdog.nl](mailto:support@letsdog.nl).
+## 6. Wat we niet doen
+
+- We verkopen je gegevens niet, aan niemand.
+- We plaatsen geen advertentiecookies voordat je ja hebt gezegd.
+- We nemen geen schermopnames van wat je doet.
+- We volgen je niet over websites van anderen heen.
+- We gebruiken geen cookiemuur: je kunt alles weigeren en de dienst gewoon blijven gebruiken.
+
+## 7. Cookies van anderen
+
+Stripe, Google, Meta, Cloudflare en Cookiebot plaatsen hun eigen cookies wanneer je de bijbehorende categorie toestaat. PostHog is de uitzondering die in 3.3 staat: die meet door zolang je niets kiest, en stopt zodra je nee zegt tegen statistiek. Zij zijn allemaal zelf verantwoordelijk voor hun cookies, en wat zij ermee doen staat in hun eigen verklaringen op hun eigen sites.
+
+## 8. Wijzigingen
+
+Verandert er iets aan de site, je eigen omgeving of de diensten die we gebruiken, dan passen we deze verklaring aan. De datum bovenaan zegt wanneer dat voor het laatst gebeurde.
+
+## 9. Vragen
+
+Mail ons op privacy@letsdog.nl. Vragen over je gegevens beantwoorden we altijd, ook als je geen klant bent.

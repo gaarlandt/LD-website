@@ -2,6 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { asset } from "@/lib/utils";
 import { Container, Eyebrow } from "@/components/ui";
+import { AppStoreComingSoon } from "@/components/layout/app-store-coming-soon";
+import { CookieSettingsLink } from "@/components/layout/cookie-settings-link";
 
 // Canonical order (matches components/layout/navbar.tsx + CLAUDE.md), bracketed
 // by the two footer-only links: Homepage first, FAQ last. FAQ left the top nav
@@ -74,7 +76,9 @@ export function Footer() {
               </a>
             </div>
 
-            {/* App download — both stores live (iOS app launched 2026-07-02).
+            {/* App badges — NO LONGER LINKS since the 2026-08-12 platform cutover:
+                both render through AppStoreComingSoon, because the listings they
+                pointed at belong to the retired environment (see that component).
                 Both official badges are kept untouched, but they don't render at equal
                 visual size at the same CSS height: Apple's artwork fills its SVG canvas,
                 while Google's PNG bakes in a symmetric ~33% transparent clear-space margin
@@ -86,39 +90,25 @@ export function Footer() {
                 keeps them aligned (Google's clear-space margin is symmetric). */}
             <div className="mt-8">
               <Eyebrow tone="onGreen" className="block mb-4">
-                Download de app
+                Apps binnenkort beschikbaar
               </Eyebrow>
               <div className="flex items-center gap-3">
-                <a
-                  href="https://play.google.com/store/apps/details?id=nl.letsdog.app"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Download de Let's dog app in Google Play"
-                  className="opacity-90 hover:opacity-100 transition-opacity duration-200"
-                >
-                  <Image
-                    src={asset("/images/google-play-badge.png")}
-                    alt="Ontdek het op Google Play"
-                    width={646}
-                    height={250}
-                    className="h-[4.09rem] w-auto"
-                  />
-                </a>
-                <a
-                  href="https://apps.apple.com/nl/app/lets-dog/id6759001260"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Download de Let's dog app in de App Store"
-                  className="opacity-90 hover:opacity-100 transition-opacity duration-200"
-                >
-                  <Image
-                    src={asset("/images/app-store-badge.svg")}
-                    alt="Download in de App Store"
-                    width={140}
-                    height={42}
-                    className="h-11 w-auto"
-                  />
-                </a>
+                <AppStoreComingSoon
+                  src="/images/google-play-badge.png"
+                  alt="Ontdek het op Google Play"
+                  width={646}
+                  height={250}
+                  imageClassName="h-[4.09rem] w-auto"
+                  ariaLabel="Google Play — binnenkort beschikbaar"
+                />
+                <AppStoreComingSoon
+                  src="/images/app-store-badge.svg"
+                  alt="Download in de App Store"
+                  width={140}
+                  height={42}
+                  imageClassName="h-11 w-auto"
+                  ariaLabel="App Store — binnenkort beschikbaar"
+                />
               </div>
             </div>
           </div>
@@ -158,6 +148,9 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
+              {/* Not a page: reopens Cookiebot's own dialog. Renders only once
+                  Cookiebot is actually present — see the component. */}
+              <CookieSettingsLink />
             </ul>
           </div>
         </div>

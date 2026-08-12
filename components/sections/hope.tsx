@@ -2,7 +2,7 @@ import Link from "next/link";
 import { OptimizedImage } from "@/components/shared/optimized-image";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { Eyebrow } from "@/components/ui";
-import { CheckCircle, VideoCamera, DeviceMobile, Users } from "@phosphor-icons/react/dist/ssr";
+import { CheckCircle, VideoCamera, DeviceMobile, Headphones } from "@phosphor-icons/react/dist/ssr";
 
 const outcomes = [
   {
@@ -24,10 +24,10 @@ const outcomes = [
       "Bekijk samen de video's zodat iedereen op dezelfde wijze traint en opvoedt.",
   },
   {
-    icon: Users,
-    title: "Een community waar je echt wat aan hebt.",
+    icon: Headphones,
+    title: "Luister onderweg, lees terug wanneer je wilt.",
     description:
-      "Praat met andere puppy-eigenaren, trainers en gedragstherapeuten. Geen oordeel, wel erkenning en steun.",
+      "Audiolessen voor tijdens het uitlaten, en een bibliotheek waarin je elke les terugvindt wanneer je hem nodig hebt.",
   },
 ];
 

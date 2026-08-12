@@ -3,7 +3,7 @@ import { Eyebrow } from "@/components/ui";
 import { PricingToggleCard } from "./pricing-toggle-card";
 
 const trustItems = [
-  { icon: ShieldCheck, label: "Veilig betalen via Mollie" },
+  { icon: ShieldCheck, label: "Veilig betalen via Stripe" },
   { icon: Wallet, label: "Geen verborgen kosten" },
 ];
 
@@ -30,7 +30,7 @@ export function Pricing() {
             met Let&apos;s dog
           </h2>
           <p className="text-[var(--ld-on-green)]/75 text-lg max-w-2xl mx-auto leading-relaxed">
-            Krijg direct toegang tot de volledige puppycursus, praktische video&apos;s, checklists en de Let&apos;s dog-community. Alles stap voor stap, zodat je weet wat je pup nodig heeft in elke fase.
+            Krijg direct toegang tot de volledige puppycursus, praktische video&apos;s, audiolessen en checklists. Alles stap voor stap, zodat je weet wat je pup nodig heeft in elke fase.
           </p>
         </div>
 

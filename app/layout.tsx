@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "Let's dog — Rust en vertrouwen met je pup",
   description:
-    "Nieuwe pup in huis en even de kluts kwijt? Let's dog geeft je week voor week een plan, videolessen van gecertificeerde trainers en een community die je begrijpt.",
+    "Nieuwe pup in huis en even de kluts kwijt? Let's dog geeft je week voor week een plan, videolessen van gecertificeerde trainers en rust in wat je vandaag te doen staat.",
   keywords: ["puppytraining", "hondentraining", "puppy opvoeding", "hond training", "puppycursus"],
   // Fallback OG/Twitter block. Real pages set their own complete openGraph
   // (incl. a self-referential og:url) via lib/seo.ts → pageMetadata(); this
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Let's dog — Rust en vertrouwen met je pup",
     description:
-      "Meer rust en vertrouwen, samen met je pup. Videolessen, puppyagenda en community.",
+      "Meer rust en vertrouwen, samen met je pup. Videolessen, audiolessen en een puppyagenda die meeloopt.",
     siteName: "Let's dog",
     locale: "nl_NL",
     type: "website",

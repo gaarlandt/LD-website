@@ -122,7 +122,7 @@ describe("the ld_attribution contract", () => {
     expect(parseAttributionPayload(serialised)?.utm_campaign).toBe("zomer; actie=1");
   });
 
-  it("writes Domain=.letsdog.nl on a Let's Dog host and omits it elsewhere", () => {
+  it("writes Domain=.letsdog.nl on a Let's dog host and omits it elsewhere", () => {
     expect(attributionCookieDomain("letsdog.nl")).toBe(".letsdog.nl");
     expect(attributionCookieDomain("mijn.letsdog.nl")).toBe(".letsdog.nl");
     expect(attributionCookieDomain("feat-x.website-letsdog.pages.dev")).toBeNull();
@@ -393,7 +393,7 @@ describe("applyConsentToStored — a gate that closes later", () => {
 });
 
 describe("deleting the record", () => {
-  it("emits a host-only and a Domain deletion on a Let's Dog host, one elsewhere", () => {
+  it("emits a host-only and a Domain deletion on a Let's dog host, one elsewhere", () => {
     // A cookie can only be deleted with the same Domain it was written with; the
     // host-only attempt covers a preview host, where there is none.
     const onProd = buildAttributionDeletion("letsdog.nl");

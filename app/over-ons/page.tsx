@@ -1,5 +1,5 @@
 import { pageMetadata } from "@/lib/seo";
-import { CONSULT_AVAILABLE } from "@/lib/feature-flags";
+import { CONSULT_AVAILABLE, CONSULT_URL } from "@/lib/feature-flags";
 import Link from "next/link";
 import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { JsonLd } from "@/components/shared/json-ld";
@@ -231,18 +231,20 @@ export default function OverOns() {
             Klaar om te beginnen?
           </h2>
           <p className="text-[var(--ld-text-muted)] text-lg mb-8 max-w-md mx-auto">
-            Meld je aan en start direct met de puppyagenda, videolessen en de
-            community.
+            Meld je aan en start direct met de puppyagenda en de videolessen.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="brand" pill asChild>
               <Link href="/prijzen">Start vandaag</Link>
             </Button>
-            {/* Hidden while CONSULT_AVAILABLE is false — see lib/feature-flags.ts */}
-            {CONSULT_AVAILABLE && (
+            {/* Hidden while the offer is off — see lib/feature-flags.ts. Gated on
+                the URL as well as the flag: the old app.letsdog.nl link died at
+                the cutover and the consult is not rebuilt on the platform yet, so
+                flipping the flag alone must not ship a link to nowhere. */}
+            {CONSULT_AVAILABLE && CONSULT_URL && (
               <Button variant="ghost" pill asChild>
                 <a
-                  href="https://app.letsdog.nl/consult/"
+                  href={CONSULT_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

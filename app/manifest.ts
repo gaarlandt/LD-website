@@ -8,7 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Let's dog — Rust en vertrouwen met je pup",
     short_name: "Let's dog",
     description:
-      "Rust en vertrouwen met je pup: week voor week een plan, videolessen van gecertificeerde trainers en een community die je begrijpt.",
+      "Rust en vertrouwen met je pup: week voor week een plan, videolessen van gecertificeerde trainers en een agenda die meeloopt met zijn leeftijd.",
     start_url: "/",
     display: "standalone",
     background_color: "#EFE8E4",

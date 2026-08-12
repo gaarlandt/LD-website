@@ -15,7 +15,7 @@ import {
 export const metadata = pageMetadata({
   title: "Prijzen — Let's dog",
   description:
-    "Twee manieren om te starten met Let's dog: Flexibel maandelijks of Early Member jaar. Vanaf €4,92 per maand. Betalen via Mollie.",
+    "Twee manieren om te starten met Let's dog: Flexibel maandelijks of Early Member jaar. Vanaf €4,92 per maand. Betalen via iDEAL, creditcard of SEPA-incasso.",
   path: "/prijzen/",
 });
 
@@ -31,19 +31,19 @@ const faqs = [
   },
   {
     q: "Via welke betaalmethoden kan ik betalen?",
-    a: "Betaling verloopt via Mollie. Je kunt betalen met iDEAL en creditcard.",
+    a: "Betalen gaat via Stripe. Je kunt kiezen uit iDEAL, creditcard en SEPA-incasso. Betaal je met iDEAL, dan geef je bij die betaling meteen een machtiging af waarmee we de verlenging later automatisch incasseren.",
   },
   {
-    q: "Waarom wordt er eerst €0,10 afgeschreven?",
-    a: "Om je abonnement automatisch te kunnen verlengen, zetten we via Mollie een doorlopende machtiging op. iDEAL ondersteunt zelf geen automatische incasso, daarom doen we een eenmalige verificatiebetaling van €0,10 om je betaalmethode te activeren. Daarna wordt het abonnementsbedrag automatisch afgeschreven — bij Early Member pas na 7 dagen.",
+    q: "Waarom zie ik bij het jaarabonnement eerst €0,01 op mijn afschrift?",
+    a: "Dat is een controle van je bank, geen betaling. Om de machtiging voor de automatische verlenging te kunnen afgeven, schrijft Stripe eenmalig 1 cent af en boekt die direct weer terug. Op je afschrift zie je dus 1 cent af en 1 cent terug. Daarna gebeurt er tijdens je proefperiode niets: pas na 7 dagen schrijven we het jaarbedrag af. Bij het maandabonnement gebeurt dit niet, daar betaal je meteen het maandbedrag.",
   },
   {
     q: "Wat als het toch niet bij jullie past?",
-    a: "Je kunt je abonnement op elk moment opzeggen via de accountinstellingen in de app. Bij een jaarabonnement (Early Member) wordt het volledige bedrag pas na 7 dagen afgeschreven: zeg je binnen die 7 dagen op, dan gaat de afschrijving niet door en betaal je niets. Het maandabonnement is niet restitueerbaar, maar je kunt elke maand opzeggen.",
+    a: "Je kunt je abonnement op elk moment opzeggen via je account op mijn.letsdog.nl, onder Profiel en dan Abonnement. Bij een jaarabonnement (Early Member) wordt het volledige bedrag pas na 7 dagen afgeschreven: zeg je binnen die 7 dagen op, dan gaat de afschrijving niet door en betaal je niets. Het maandabonnement is niet restitueerbaar, maar je kunt elke maand opzeggen.",
   },
   {
     q: "Krijg ik mijn geld terug als ik snel opzeg?",
-    a: "Bij een jaarabonnement (Early Member) wordt het volledige bedrag pas na 7 dagen automatisch afgeschreven. Zeg je binnen die 7 dagen op via de accountinstellingen? Dan gaat die afschrijving niet door — je betaalt dus niets en er valt ook niets terug te storten. Bij het maandabonnement (Flexibel) is geen restitutie mogelijk, je kunt wel elke maand opzeggen zodat er de volgende maand niets wordt afgeschreven.",
+    a: "Bij een jaarabonnement (Early Member) wordt het volledige bedrag pas na 7 dagen automatisch afgeschreven. Zeg je binnen die 7 dagen op via je account op mijn.letsdog.nl, onder Profiel en dan Abonnement? Dan gaat die afschrijving niet door: je betaalt dus niets en er valt ook niets terug te storten. Bij het maandabonnement (Flexibel) is geen restitutie mogelijk, je kunt wel elke maand opzeggen zodat er de volgende maand niets wordt afgeschreven.",
   },
 ];
 

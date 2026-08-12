@@ -1,12 +1,12 @@
 ---
 title: Privacybeleid
 description: Hoe Let's dog omgaat met je persoonsgegevens, je rechten en onze beveiligingsmaatregelen.
-lead: Laatst bijgewerkt op 17 juni 2026.
+lead: Laatst bijgewerkt op 12 augustus 2026.
 ---
 
 Voor website, webapp, iOS-app, Android-app en platformomgeving.
 
-Laatst bijgewerkt: 17 juni 2026
+Laatst bijgewerkt: 12 augustus 2026
 
 Let's dog B.V. verwerkt persoonsgegevens van gebruikers van de website letsdog.nl, de webapplicatie, de mobiele apps, de community, de academy, de shop en daarmee samenhangende diensten. In dit privacybeleid leggen wij uit welke gegevens wij verwerken, waarom wij dat doen, met wie wij gegevens delen, hoe lang wij gegevens bewaren en welke rechten gebruikers hebben.
 
@@ -27,7 +27,7 @@ Website: letsdog.nl
 Dit privacybeleid geldt voor:
 
 - de website letsdog.nl;
-- de webapplicatie, waaronder app.letsdog.nl;
+- de webapplicatie, waaronder mijn.letsdog.nl;
 - de iOS- en Android-app van Let's dog;
 - het aanmaken en gebruiken van een account;
 - het bekijken van cursussen, artikelen, video's, community-content en profielinformatie;
@@ -164,6 +164,7 @@ Wij delen persoonsgegevens alleen als dat nodig is voor de werking van de dienst
 - bezorg- of fulfilmentpartners indien fysieke producten worden verkocht;
 - support- en communicatieleveranciers;
 - AI- of automatiseringsleveranciers voor zover Let's dog AI-functionaliteit aanbiedt;
+- advertentie- en analyseplatforms die wij informeren over een geslaagde aankoop, ook zonder cookie: wij sturen daarvoor versleutelde gegevens vanaf onze eigen server naar Meta en Google, uitsluitend om te meten welke advertentie tot een aankoop leidde;
 - bevoegde instanties indien wij daartoe wettelijk verplicht zijn.
 
 Wij verkopen geen persoonsgegevens aan derden. Wij delen User ID, naam, telefoonnummer of e-mailadres niet met derden om gebruikers te tracken en wij delen deze gegevens niet met databrokers. Leveranciers mogen persoonsgegevens alleen verwerken voor de afgesproken dienst, zoals werking, beveiliging, support, foutanalyse, betaling, fulfilment of verbetering van de app en webomgeving.
@@ -179,6 +180,8 @@ Voor verbetering van AI-functionaliteit gebruikt Let's dog bij voorkeur geanonim
 ## 9. Internationale doorgifte
 
 Indien persoonsgegevens buiten de Europese Economische Ruimte worden verwerkt, zorgen wij voor passende waarborgen, zoals standaardcontractbepalingen, aanvullende beveiligingsmaatregelen of vergelijkbare beschermingsmaatregelen.
+
+Concreet gaat het om doorgifte naar de Verenigde Staten. Dat gebeurt bij de conversiemeting die in hoofdstuk 7 is beschreven: wij informeren Meta Platforms en Google over een geslaagde aankoop. Voor die doorgifte baseren wij ons op standaardcontractbepalingen en, waar de partij daarvoor gecertificeerd is, op het EU-US Data Privacy Framework. Onze gebruiksmeting (PostHog) en onze hostingpartij draaien op Europese servers.
 
 ## 10. Bewaartermijnen
 
@@ -228,9 +231,7 @@ Verzoeken kunnen worden ingediend via [support@letsdog.nl](mailto:support@letsdo
 
 ## 14. Accountverwijdering
 
-Gebruikers kunnen accountverwijdering rechtstreeks vanuit de app starten. De app moet hiervoor een zichtbare accountverwijderingsoptie bevatten binnen het account- of profielgedeelte, bijvoorbeeld via Profiel, Instellingen, Account verwijderen. Deze optie moet rechtstreeks bereikbaar zijn vanuit de app en mag niet uitsluitend via e-mail of klantenservice lopen.
-
-Bij het starten van accountverwijdering vanuit de app krijgt de gebruiker een duidelijke bevestigingsstap om onbedoelde verwijdering te voorkomen. Daarna wordt het account verwijderd of wordt de gebruiker rechtstreeks doorgestuurd naar de specifieke pagina waar de verwijdering volledig kan worden afgerond.
+Gebruikers kunnen hun account verwijderen vanuit hun eigen accountinstellingen, of verwijdering aanvragen via support@letsdog.nl. Bij een aanvraag per e-mail bevestigen wij de aanvraag, controleren wij de identiteit van de aanvrager en verwijderen wij daarna het account met de daaraan gekoppelde gegevens.
 
 Wij verwijderen accountgegevens en gekoppelde persoonsgegevens voor zover dit mogelijk en wettelijk toegestaan is. Bepaalde gegevens kunnen alleen worden bewaard wanneer dat noodzakelijk is voor wettelijke verplichtingen, administratie, geschillen, fraude- of beveiligingsdoeleinden. Als verwijdering via een webpagina wordt afgerond, moet de app rechtstreeks linken naar de specifieke verwijderpagina en niet slechts naar een algemene website of contactpagina.
 

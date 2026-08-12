@@ -1,4 +1,4 @@
-// The consent handover contract between this marketing site and the Let's Dog
+// The consent handover contract between this marketing site and the Let's dog
 // platform (mijn.letsdog.nl), plus the small Cookiebot reader both consumers
 // share.
 //
@@ -77,6 +77,14 @@ type CookiebotApi = {
     statistics: boolean,
     marketing: boolean,
   ) => void;
+  /**
+   * Reopens Cookiebot's own preference dialog with the current choice filled in.
+   * This is the withdrawal route the cookie declaration promises, surfaced as
+   * the footer's "Cookie-instellingen" control. Optional for the same reason as
+   * submitCustomConsent: it is third-party state, and a blocked or half-built
+   * uc.js must degrade to a control that says so rather than to a TypeError.
+   */
+  renew?: () => void;
 };
 
 declare global {
@@ -116,7 +124,7 @@ export function parseConsentPayload(raw: string): ConsentPayload | null {
 }
 
 /**
- * `.letsdog.nl` on any Let's Dog host, null anywhere else.
+ * `.letsdog.nl` on any Let's dog host, null anywhere else.
  *
  * The Domain attribute is what makes the cookie cross to mijn.letsdog.nl, and a
  * browser silently drops a Set-Cookie whose Domain it does not own — so on a
@@ -277,6 +285,39 @@ function isStrictlyNewer(a: ConsentPayload, b: ConsentPayload): boolean {
   const right = Date.parse(b.t);
   if (Number.isNaN(left) || Number.isNaN(right)) return false;
   return left > right;
+}
+
+/**
+ * The newest choice on record across BOTH writers, or null when neither has one.
+ *
+ * WHO THIS IS FOR: a subscriber whose action cannot be taken back. Most consent
+ * subscribers here may safely read Cookiebot alone, because their action is
+ * self-correcting — a cookie gets rewritten by newest-wins on the next event, a
+ * pixel that did not load loads on the next one. A subscriber that SENDS
+ * something the moment it decides has no such second chance, and Cookiebot's
+ * answer can legitimately be the older of the two: a choice made on
+ * mijn.letsdog.nl arrives here in `ld_consent` first, and ConsentSync only pushes
+ * it into Cookiebot a beat later. Reading Cookiebot at that instant means acting
+ * on a stale refusal — the same shape as the bug review caught on T-27, where the
+ * attribution recorder read the source instead of the merged state.
+ *
+ * Deliberately NOT the same function as `consentCookieSupersedes`: that one asks
+ * "should the cookie be pushed INTO Cookiebot", answers no when Cookiebot holds
+ * nothing (there is no local state to correct), and is a write-side question.
+ * This is the read-side question, and it must answer with the cookie precisely
+ * when Cookiebot holds nothing.
+ *
+ * Ties go to Cookiebot: equal timestamps mean the two hosts already agree (the
+ * measured rest state), so the choice is the same either way.
+ */
+export function newestRecordedConsent(
+  cookiebot: ConsentPayload | null,
+  cookie: ConsentPayload | null,
+): ConsentPayload | null {
+  const valid = cookie !== null && cookie.v === CONSENT_COOKIE_VERSION ? cookie : null;
+  if (cookiebot === null) return valid;
+  if (valid === null) return cookiebot;
+  return isStrictlyNewer(valid, cookiebot) ? valid : cookiebot;
 }
 
 /**

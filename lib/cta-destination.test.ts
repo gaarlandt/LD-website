@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { resolveCtaDestination } from "./cta-destination";
+import { tiers } from "@/components/sections/pricing-data";
 
 // Extracted from components/analytics/cta-tracker.tsx so the attribution rules
 // are testable off the DOM (same move as lib/prod-hosts.ts). These tests pin the
@@ -17,6 +18,26 @@ describe("resolveCtaDestination", () => {
 
   it("app host under /checkout → checkout, not app", () => {
     expect(resolve("https://app.letsdog.nl/checkout/2234")).toBe("checkout");
+  });
+
+  it("the platform host attributes like the app host, on both sides of the split", () => {
+    // mijn.letsdog.nl replaced app.letsdog.nl at the 2026-08-12 cutover. Missing
+    // it here is not a gap in coverage but a silent loss of attribution on every
+    // checkout click, because the live pricing CTAs now point at this host only.
+    expect(resolve("https://mijn.letsdog.nl/")).toBe("app");
+    expect(resolve("https://mijn.letsdog.nl/checkout")).toBe("checkout");
+  });
+
+  it("every live pricing CTA href resolves to checkout, query string and all", () => {
+    // Reads the REAL hrefs rather than copies of them. A literal here would keep
+    // passing while someone edited pricing-data.ts, which is precisely the drift
+    // that silently kills checkout attribution. The plan parameter lives in the
+    // QUERY, not the path, so this also pins that the path-based split survives
+    // a query string — the part most likely to break quietly.
+    expect(tiers.length).toBeGreaterThan(0);
+    for (const tier of tiers) {
+      expect(resolve(tier.ctaHref)).toBe("checkout");
+    }
   });
 
   it("keuzehulp and agenda hosts keep their own attribution", () => {

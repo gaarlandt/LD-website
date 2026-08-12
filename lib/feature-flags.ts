@@ -27,3 +27,21 @@
  * does not read as statically unreachable.
  */
 export const CONSULT_AVAILABLE: boolean = false;
+
+/**
+ * Where a consult is bought. **Empty on purpose, and that is the current state of
+ * the world, not a placeholder someone forgot to fill in.**
+ *
+ * It used to be `https://app.letsdog.nl/consult/`. That host is the WordPress
+ * environment that retired at the 2026-08-12 platform cutover, and the consult has
+ * NOT been rebuilt on the platform yet — so there is no URL to point at. The dead
+ * one was removed rather than repointed at a guessed `mijn.letsdog.nl/consult/`,
+ * because a plausible-looking 404 is harder to notice than an absent link, and it
+ * would read to the next person as already-done work.
+ *
+ * The two surfaces render only when this is non-empty AND the flag above is true,
+ * so switching the offer back on is deliberately two facts, not one: flipping
+ * CONSULT_AVAILABLE alone cannot ship a link to nowhere. Loop item T-4 carries the
+ * real URL/SKU.
+ */
+export const CONSULT_URL: string = "";

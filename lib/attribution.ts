@@ -221,7 +221,7 @@ export function parseAttributionPayload(raw: string): AttributionPayload | null 
 }
 
 /**
- * `.letsdog.nl` on a Let's Dog host, null anywhere else — the same rule the
+ * `.letsdog.nl` on a Let's dog host, null anywhere else — the same rule the
  * consent handover uses, and shared rather than copied so the two cookies can
  * never disagree about which hosts count as ours.
  *

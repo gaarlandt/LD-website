@@ -1,7 +1,7 @@
 ---
 title: Algemene voorwaarden
 description: De algemene voorwaarden voor website, app, cursussen, community, digitale diensten, abonnementen en producten van Let's dog B.V.
-lead: Laatst bijgewerkt op 17 juni 2026.
+lead: Laatst bijgewerkt op 12 augustus 2026.
 ---
 
 ## 1. Definities
@@ -49,6 +49,8 @@ Betaalde onderdelen kunnen worden aangeboden als maandabonnement, jaarabonnement
 De actuele prijs, looptijd, proefperiode, verlenging en belangrijkste voorwaarden worden vóór aankoop getoond in de checkout. Bij abonnementen wordt duidelijk vermeld of en wanneer automatische verlenging plaatsvindt.
 
 Betalingen verlopen via externe betaalproviders of via de webomgeving. De mobiele app verwerkt geen volledige betaalkaartgegevens en biedt op dit moment geen native in-app aankoopflow.
+
+Bij betaling met iDEAL geeft de gebruiker tegelijk een doorlopende SEPA-machtiging af. Daarmee incasseert Let's dog de verlenging automatisch van dezelfde rekening. De gebruiker ziet vooraf in de checkout welk bedrag wanneer wordt afgeschreven en kan de machtiging stopzetten door het abonnement op te zeggen.
 
 Bij niet-betaling, mislukte incasso of stornering mag Let's dog toegang beperken of opschorten totdat betaling is ontvangen.
 

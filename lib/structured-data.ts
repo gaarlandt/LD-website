@@ -84,7 +84,7 @@ export function productLd(tiers: PricingTier[]) {
     "@type": "Product",
     name: "Let's dog lidmaatschap",
     description:
-      "Volledige puppycursus met videolessen, checklists, puppyagenda en de Let's dog-community. Twee manieren om te starten.",
+      "Volledige puppycursus met videolessen, audiolessen, checklists en een puppyagenda die meeloopt met de leeftijd van je pup. Twee manieren om te starten.",
     brand: { "@type": "Brand", name: SITE_NAME },
     url: `${SITE_URL}/prijzen/`,
     offers: tiers.map((t) => ({

@@ -12,15 +12,15 @@ export const faqCategories: FaqCategory[] = [
     faqs: [
       {
         q: "Wat is Let's dog precies?",
-        a: "Let's dog is een web app voor puppy-eigenaren. Je vindt er een puppyagenda, videolessen van gecertificeerde trainers, audio-lessen voor onderweg en een community van andere eigenaren. Alles op één plek, stap voor stap opgebouwd.",
+        a: "Let's dog is een web app voor puppy-eigenaren. Je vindt er een puppyagenda, videolessen van gecertificeerde trainers en audiolessen voor onderweg. Alles op één plek, stap voor stap opgebouwd.",
       },
       {
         q: "Heb ik een smartphone nodig?",
-        a: "Nee. De web app werkt op elke browser, laptop, tablet of telefoon. Je kunt ook inloggen via de mobiele app als je video's in het veld wilt bekijken tijdens een trainingssessie.",
+        a: "Nee. Let's dog werkt in elke browser, op je telefoon, tablet of laptop. Je kunt de website op je beginscherm zetten, dan opent hij als een app. Een echte app voor iOS en Android komt later.",
       },
       {
         q: "Wanneer is de app beschikbaar?",
-        a: "De web app is nu live op app.letsdog.nl. Meld je aan en begin direct.",
+        a: "De web app is live op mijn.letsdog.nl. Meld je aan en begin direct.",
       },
     ],
   },
@@ -48,19 +48,19 @@ export const faqCategories: FaqCategory[] = [
     faqs: [
       {
         q: "Wat kost het abonnement?",
-        a: "Twee smaken: Flexibel €19,99/maand (maandelijks opzegbaar, niet restitueerbaar) of Early Member €59/eerste jaar (onze launch-prijs, daarna €119,-). Je betaalt pas na 7 dagen, dus de eerste 7 dagen zijn vrijblijvend.",
+        a: "Twee smaken. Flexibel is €19,99 per maand, maandelijks opzegbaar en zonder proefperiode: je betaalt direct bij het afsluiten. Early Member is €59 voor het eerste jaar (onze launchprijs, daarna €119) en begint met 7 dagen gratis proberen. Zeg je binnen die 7 dagen op, dan betaal je niets.",
       },
       {
         q: "Kan ik opzeggen wanneer ik wil?",
-        a: "Ja, opzeggen kan altijd via de accountinstellingen in de app. Bij het maandabonnement stopt het abonnement aan het einde van de lopende maand; terugbetaling van die maand is niet mogelijk. Bij een jaarabonnement stopt het abonnement aan het einde van het jaar. Zeg je binnen de eerste 7 dagen op, dan gaat de afschrijving niet door en betaal je niets, en stopt je abonnement na die 7 dagen.",
+        a: "Ja, opzeggen kan altijd via je account op mijn.letsdog.nl, onder Profiel en dan Abonnement. Bij het maandabonnement stopt het abonnement aan het einde van de lopende maand; terugbetaling van die maand is niet mogelijk. Bij een jaarabonnement stopt het abonnement aan het einde van het jaar. Zeg je binnen de eerste 7 dagen op, dan gaat de afschrijving niet door en betaal je niets, en stopt je abonnement na die 7 dagen.",
       },
       {
         q: "Via welke betaalmethoden kan ik betalen?",
-        a: "Via Mollie accepteren we iDEAL en de creditcard.",
+        a: "Betalen gaat via Stripe. Je kunt kiezen uit iDEAL, creditcard en SEPA-incasso. Betaal je met iDEAL, dan geef je bij die betaling meteen een machtiging af waarmee we de verlenging later automatisch incasseren.",
       },
       {
-        q: "Waarom wordt er eerst €0,10 afgeschreven?",
-        a: "Om je abonnement automatisch te kunnen verlengen, zetten we via Mollie een doorlopende machtiging op. iDEAL ondersteunt zelf geen automatische incasso, daarom doen we een eenmalige verificatiebetaling van €0,10 om je betaalmethode te activeren. Daarna wordt het abonnementsbedrag automatisch afgeschreven — bij Early Member pas na 7 dagen.",
+        q: "Waarom zie ik bij het jaarabonnement eerst €0,01 op mijn afschrift?",
+        a: "Dat is een controle van je bank, geen betaling. Om de machtiging voor de automatische verlenging te kunnen afgeven, schrijft Stripe eenmalig 1 cent af en boekt die direct weer terug. Op je afschrift zie je dus 1 cent af en 1 cent terug. Daarna gebeurt er tijdens je proefperiode niets: pas na 7 dagen schrijven we het jaarbedrag af. Bij het maandabonnement gebeurt dit niet, daar betaal je meteen het maandbedrag.",
       },
     ],
   },
@@ -70,11 +70,11 @@ export const faqCategories: FaqCategory[] = [
     faqs: [
       {
         q: "Werkt de app ook offline?",
-        a: "De web app vereist een internetverbinding. Voor offline gebruik kun je sommige video's downloaden via de mobiele app (iOS/Android).",
+        a: "Nog niet. Je hebt een internetverbinding nodig. Offline lessen bekijken staat op de planning maar is er bij de start niet.",
       },
       {
         q: "Hoe beveiligen jullie mijn gegevens?",
-        a: "Je gegevens worden veilig opgeslagen en worden nooit gedeeld met derden. Betaalinformatie wordt uitsluitend verwerkt via Mollie en is bij ons nooit zichtbaar.",
+        a: "Je gegevens worden veilig opgeslagen en worden nooit verkocht. Je betaalgegevens gaan rechtstreeks naar onze betaalprovider Stripe en zijn bij ons nooit zichtbaar.",
       },
     ],
   },

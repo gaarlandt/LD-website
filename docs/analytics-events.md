@@ -2,10 +2,10 @@
 
 A complete reference of every analytics event the website emits, for building dashboards/funnels (e.g. in PostHog) — here or in another project that consumes the shared PostHog project.
 
-- **Project:** PostHog EU project **143695** (`https://eu.i.posthog.com`) + GA4 **`G-0FCGXJHMMY`** (shared across all Let's dog domains) + Meta Pixel **`958837033882897`**.
+- **Project:** the platform PostHog project on EU (`https://eu.i.posthog.com`) — moved off the shared project 143695 at the 2026-08-12 cutover + GA4 **`G-0FCGXJHMMY`** (shared across all Let's dog domains) + Meta Pixel **`958837033882897`**.
 - **Dual-fire:** every event below is sent to **both** GA4 (gtag) and PostHog through one chokepoint — `trackEvent(name, params)` in [`lib/analytics.ts`](../lib/analytics.ts). Each sink is guarded independently (a blocked sink never suppresses the other). **Add events only via `trackEvent`** — never call `gtag`/`posthog` directly.
 - **Meta Pixel is a third sink on that same chokepoint, but it receives only a mapped subset** — see [Meta Pixel](#meta-pixel) below.
-- **App identifier:** this is the **`website`** app. App-side events (`sign_up`, `purchase`) live on `app.letsdog.nl` and are owned separately — not emitted here.
+- **App identifier:** this is the **`website`** app. App-side events (`sign_up`, `purchase`) live on the platform (`mijn.letsdog.nl`) and are owned separately — not emitted here.
 
 ## PostHog super-properties (on every PostHog event)
 
@@ -13,7 +13,7 @@ Registered once at init ([`components/analytics/posthog-provider.tsx`](../compon
 
 | Property | Value | Notes |
 |---|---|---|
-| `app` | `"website"` | Distinguishes this app from BreedSelector / Puppy Agenda / app.letsdog.nl in the shared project. **Filter every website dashboard on `app = "website"`.** |
+| `app` | `"website"` | Distinguishes this site from the platform (`mijn.letsdog.nl`), which reports into the SAME project since 2026-08-12. That makes this property load-bearing rather than descriptive. **Filter every website dashboard on `app = "website"`.** |
 | `platform` | `"web"` | |
 | `environment` | `"production"` \| `"preview"` | `production` only on `www.letsdog.nl` / `letsdog.nl`; everything else (`*.pages.dev`, localhost) is `preview`. **Filter dashboards on `environment = "production"`** to drop preview/QA noise. Pre-cutover there is *no* production data yet. |
 
@@ -34,7 +34,7 @@ All events are dual-fired (GA4 + PostHog) and carry the PostHog super-properties
 | `$pageleave` | Page/tab leave (PostHog automatic) | PostHog-standard | — |
 | `cta_clicked` | Click on any tracked outbound / pricing / mail CTA — delegated document listener ([`cta-tracker.tsx`](../components/analytics/cta-tracker.tsx)), rules in [`lib/cta-destination.ts`](../lib/cta-destination.ts) | `link_url`, `link_text`, `link_location` (`"navbar"` \| `"body"`), `link_destination` (`"app"` \| `"keuzehulp"` \| `"agenda"` \| `"checkout"` \| `"pricing"` \| `"email"`) | `link_location` + `link_destination` are **registered GA4 custom dimensions — do not rename**. Adding a new *value* (as `"email"` was, 2026-08-03) is fine; renaming the dimension is not |
 | `view_item_list` | Pricing section scrolls into view (IntersectionObserver, once per page) ([`pricing-view-tracker.tsx`](../components/sections/pricing-view-tracker.tsx)) | `item_list_name` (`"pricing"`), `source` (`"prijzen_page"` \| `"homepage"`) | GA4 ecommerce |
-| `begin_checkout` | Click on a pricing tier CTA ([`plan-cta.tsx`](../components/sections/plan-cta.tsx)) | `currency` (`"EUR"`), `value` (number), `billing_period` (`"monthly"` \| `"yearly"`), `items: [{ item_id, item_name, item_category: "membership", price, quantity }]` | GA4 ecommerce. `item_id` = the WooCommerce product id (`2234` monthly / `2233` yearly) |
+| `begin_checkout` | Click on a pricing tier CTA ([`plan-cta.tsx`](../components/sections/plan-cta.tsx)) | `currency` (`"EUR"`), `value` (number, **excl. VAT**), `billing_period` (`"monthly"` \| `"yearly"`), `items: [{ item_id, item_name, item_variant, item_category: "abonnement", price, quantity }]` | GA4 ecommerce. **Shared item contract with the platform since 2026-08-12** — GA4 joins `begin_checkout` → `purchase` on `item_id`, so both hosts must send these exact values: `ld_maand` / `ld_jaar` (`item_name` `Maandabonnement` / `Jaarabonnement`, `item_variant` `Maand` / `Jaar`). `value` and `price` are **excluding 21% VAT** (`16.52` / `48.76`) because Google Ads bids on them; the customer still sees €19,99 / €59. Replaces the WooCommerce product ids `2234`/`2233`, so item history breaks at that date by design. `billing_period` stays alongside `item_variant`; it is the older registered dimension and is not replaced by it. |
 | `contact_form_submitted` | Contact form submits successfully ([`contact-form-modal.tsx`](../app/contact/contact-form-modal.tsx)) | *(none)* — `identifyLead(email)` fires alongside it | conversion event |
 | `creator_form_submitted` | Creator application submits successfully on `/partners` ([`creator-form-modal.tsx`](../components/sections/partners/creator-form-modal.tsx)) | `collaboration` (`"ambassador"` \| `"ugc"` \| `"both"` \| `"unsure"`) | conversion event — `identifyLead(email)` fires alongside it, same lowercased-email join key. **This is the `/partners` conversion metric**, not `cta_clicked` |
 
@@ -61,7 +61,7 @@ The legal pages previously emitted only `$pageview` (autocapture is off), so a G
 
 ## Suggested funnels / dashboards
 
-For a consumer project building dashboards off project 143695 (filter all on `app = "website"` + `environment = "production"`):
+For a consumer project building dashboards off the platform project (filter all on `app = "website"` + `environment = "production"`):
 
 - **Pricing funnel:** `view_item_list` → `begin_checkout`, broken down by `billing_period` and `source` (homepage vs prijzen page).
 - **CTA attribution:** `cta_clicked` broken down by `link_destination` (and `link_location`) — which surfaces drive clicks to app / checkout / keuzehulp / agenda.
@@ -114,7 +114,7 @@ Ads land on **both** `letsdog.nl` and the platform, and both now carry a Meta pi
 - **Google (GA4)** — [`consent-default.tsx`](../components/analytics/consent-default.tsx) sets a Consent Mode v2 default of `denied` on everything except `security_storage`, before any Google tag can act on it; Cookiebot sends the `update` on a choice. gtag.js still loads and still sends a **cookieless ping** pre-consent (Google's "advanced" consent mode) — it writes no `_ga` cookie and no advertising data. Holding the tag back entirely is a one-line change documented in [`ga4.tsx`](../components/analytics/ga4.tsx), and it is a business call, not a cleanup.
 - **Meta Pixel** — [`meta-pixel.tsx`](../components/analytics/meta-pixel.tsx) does not request `fbevents.js` at all until marketing consent is granted, and on withdrawal calls `fbq('consent','revoke')` and deletes `_fbp`/`_fbc`. It does **not** rely on Cookiebot's auto-blocker: the blocker demonstrably never caught this pixel (it rewrites tags it recognises, and the `fbevents.js` element is created at runtime), which is exactly how `_fbp` survived an explicit refusal until 2026-08-08.
 - **Campaign attribution (`ld_attribution`, added 2026-08-11)** — [`attribution-capture.tsx`](../components/analytics/attribution-capture.tsx) + [`lib/attribution.ts`](../lib/attribution.ts) store the seven campaign parameters an ad click arrives with in a second first-party cookie on `.letsdog.nl`, 90-day `Max-Age`, so the checkout on `mijn.letsdog.nl` can attribute the sale. **Two gates, not one:** `utm_*` + `gclid` need **statistics**, `fbclid` needs **marketing** — a visitor who accepts one and refuses the other keeps exactly half. Nothing is stored before a gate opens (the values sit in memory for the page load only), a gate closing later narrows or deletes the record, and a withdrawal recorded in `ld_consent` is honoured even when it was made in an earlier session. **First touch wins**, which is the inverse of `ld_consent`'s newest-wins on the same domain — the cross-repo contract is `contracts/cross-host-attribution-handover.md` in the knowledge hub.
-- **PostHog is deliberately out of scope** — it runs on legitimate interest, not consent (D-93 part C), so it keeps measuring when no choice has been made. Cookiebot already clears its cookie on an explicit refusal. `respect_dnt: true` means PostHog undercounts DNT users vs GA4.
+- **PostHog runs on legitimate interest, not consent** (D-93 part C) — which is two halves, and the second one landed on 2026-08-12 (T-24). It keeps measuring while no choice has been made, and it **stops on an explicit refusal of statistics**: no init at all if the refusal is already on record, otherwise `reset()` + `opt_out_capturing()`, and it resumes if statistics are re-allowed. Before that date only the first half existed, so the real posture was "always measure" and the published cookie declaration was not yet true. The refusal is read from the merged state of Cookiebot **and** `ld_consent`, so a choice made on `mijn.letsdog.nl` is honoured here before Cookiebot even loads. `respect_dnt: true` means PostHog undercounts DNT users vs GA4.
 - **`ld_consent`** — every choice and every change is written to a first-party cookie on `.letsdog.nl` so `mijn.letsdog.nl` can honour it. The shape is a fixed cross-repo contract; see [`lib/consent.ts`](../lib/consent.ts).
 
 Verifying any of this needs the real banner, and **Cookiebot's banner does not render on `*.pages.dev`** (that host is not in the domain group) — so a branch preview can show you the denied path but never the granted one.
