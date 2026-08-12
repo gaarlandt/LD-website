@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { resolveCtaDestination } from "./cta-destination";
+import { tiers } from "@/components/sections/pricing-data";
 
 // Extracted from components/analytics/cta-tracker.tsx so the attribution rules
 // are testable off the DOM (same move as lib/prod-hosts.ts). These tests pin the
@@ -27,12 +28,16 @@ describe("resolveCtaDestination", () => {
     expect(resolve("https://mijn.letsdog.nl/checkout")).toBe("checkout");
   });
 
-  it("the live pricing CTA hrefs resolve to checkout, query string and all", () => {
-    // Pins the exact strings in components/sections/pricing-data.ts. The plan
-    // parameter lives in the QUERY, not the path, so a path-based split has to
-    // keep working with it present — that is the thing that would break quietly.
-    expect(resolve("https://mijn.letsdog.nl/checkout?plan=monthly")).toBe("checkout");
-    expect(resolve("https://mijn.letsdog.nl/checkout?plan=yearly")).toBe("checkout");
+  it("every live pricing CTA href resolves to checkout, query string and all", () => {
+    // Reads the REAL hrefs rather than copies of them. A literal here would keep
+    // passing while someone edited pricing-data.ts, which is precisely the drift
+    // that silently kills checkout attribution. The plan parameter lives in the
+    // QUERY, not the path, so this also pins that the path-based split survives
+    // a query string — the part most likely to break quietly.
+    expect(tiers.length).toBeGreaterThan(0);
+    for (const tier of tiers) {
+      expect(resolve(tier.ctaHref)).toBe("checkout");
+    }
   });
 
   it("keuzehulp and agenda hosts keep their own attribution", () => {

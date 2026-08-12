@@ -48,8 +48,9 @@ Hiermee meten we hoe de site en je eigen omgeving gebruikt worden, zodat we zien
 |---|---|---|---|
 | PostHog | Productgebruik: welke schermen, waar het misgaat | Gerechtvaardigd belang | 1 jaar |
 | Google Analytics | Bezoek en verkeer (`_ga`, `_ga_0FCGXJHMMY`) | Jouw toestemming | 400 dagen |
+| `ld_attribution` | Via welke campagne je binnenkwam: de `utm_`-velden en het Google-klik-id `gclid` | Jouw toestemming | 90 dagen |
 
-**PostHog werkt anders dan al het andere hier, en dat zeggen we met opzet hardop.** Hij meet door zolang je niets kiest, omdat we hem alleen gebruiken om het product te verbeteren en niet om te adverteren. Zeg je nee tegen statistiek, dan stopt hij meteen. Wat wij daarbij bewust niet doen: je gegevens staan op Europese servers, we koppelen ze aan een willekeurig nummer en niet aan je e-mailadres, en we nemen geen schermopnames.
+**PostHog werkt anders dan al het andere hier, en dat zeggen we met opzet hardop.** Hij meet door zolang je niets kiest, omdat we hem alleen gebruiken om het product te verbeteren en niet om te adverteren. Zeg je nee tegen statistiek, dan stopt hij meteen. Je gegevens staan op Europese servers en we nemen geen schermopnames. Normaal koppelen we je gebruik aan een willekeurig nummer; vul je zelf een formulier in, dan koppelen we je e-mailadres eraan, zodat we je vraag kunnen terugvinden bij wat je op de site deed.
 
 ### 3.4 Marketing
 
@@ -58,10 +59,11 @@ Hiermee zien we welke advertentie of pagina je naar ons bracht, zodat we ons gel
 | Cookie of gegeven | Wie | Waarvoor | Hoe lang |
 |---|---|---|---|
 | `_fbp`, `_fbc` | Meta (Facebook en Instagram) | Herkennen dat een advertentieklik tot een aanmelding leidde | 90 dagen |
-| Klik-id `gclid` | Google Ads | Hetzelfde, voor advertenties bij Google | 90 dagen |
-| `ld_attribution` | Let's dog | Onthouden via welke campagne je binnenkwam | 90 dagen |
+| Klik-id `fbclid` in `ld_attribution` | Let's dog, voor Meta | Onthouden dat je via een Meta-advertentie binnenkwam | 90 dagen |
 
-Koop je een abonnement, dan sturen we Meta een versleutelde versie van je e-mailadres, zodat zij die aankoop aan de juiste advertentie kunnen koppelen. Versleuteld betekent hier: omgezet in een reeks tekens waar het adres zelf niet meer uit te halen is. Ook dat gebeurt alleen als je marketing hebt toegestaan.
+**Let op waar de grens ligt, want die loopt niet waar je hem verwacht.** Van de campagnegegevens hierboven hangt alleen het Meta-klik-id aan je marketing-keuze. Waar je vandaan kwam volgens de `utm_`-velden en het Google-klik-id `gclid` hoort bij statistiek, en staat daarom in de tabel hierboven. Zeg je nee tegen marketing maar ja tegen statistiek, dan bewaren we dus nog wel via welke campagne je binnenkwam, maar niet het Meta-klik-id.
+
+Koop je een abonnement, dan sturen we Meta een gehashte versie van je e-mailadres, zodat zij die aankoop aan de juiste advertentie kunnen koppelen. Gehasht betekent: omgezet in een vaste reeks tekens waar je adres zelf niet meer uit te halen is, en die Meta alleen kan matchen met een adres dat zij al hebben. Ook dat gebeurt alleen als je marketing hebt toegestaan.
 
 ## 4. Waar je je keuze maakt, en waarom je hem maar één keer ziet
 
@@ -82,7 +84,7 @@ Op elk moment, en net zo makkelijk als je hem gaf:
 - Op **mijn.letsdog.nl**: via Meer, dan Cookievoorkeuren. Ook bereikbaar als je nog geen account hebt.
 - In je **browser**: cookies blokkeren of verwijderen kan altijd. Let op dat we dan ook niet meer kunnen onthouden dat je iets geweigerd hebt.
 
-Trek je marketing in, dan wissen we de advertentiecookies die er al stonden. Dat gebeurt meteen en niet pas bij je volgende bezoek.
+Trek je marketing in, dan wissen we meteen de advertentiecookies die er al stonden: `_fbp`, `_fbc` en het Meta-klik-id. Dat gebeurt op het moment zelf en niet pas bij je volgende bezoek. Trek je statistiek in, dan verdwijnt ook de rest van `ld_attribution`.
 
 ## 6. Wat we niet doen
 
@@ -94,7 +96,7 @@ Trek je marketing in, dan wissen we de advertentiecookies die er al stonden. Dat
 
 ## 7. Cookies van anderen
 
-Stripe, Google, Meta, Cloudflare, Cookiebot en PostHog plaatsen hun eigen cookies wanneer je ze toestaat. Zij zijn daar zelf verantwoordelijk voor, en wat zij ermee doen staat in hun eigen verklaringen op hun eigen sites.
+Stripe, Google, Meta, Cloudflare en Cookiebot plaatsen hun eigen cookies wanneer je de bijbehorende categorie toestaat. PostHog is de uitzondering die in 3.3 staat: die meet door zolang je niets kiest, en stopt zodra je nee zegt tegen statistiek. Zij zijn allemaal zelf verantwoordelijk voor hun cookies, en wat zij ermee doen staat in hun eigen verklaringen op hun eigen sites.
 
 ## 8. Wijzigingen
 

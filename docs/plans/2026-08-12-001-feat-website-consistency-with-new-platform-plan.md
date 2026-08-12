@@ -128,8 +128,13 @@ geschreven **zonder kastlijntje**, want dat is de huisregel voor klantzichtbare 
 
 **Let op.** `app/prijzen/page.tsx` heeft zijn **eigen** FAQ-lijst, los van `faq-data.ts`. Twee vragen
 staan in allebei de bestanden met bijna, maar niet exact, dezelfde tekst. Werk ze allebei bij en houd
-ze gelijk, anders loopt de FAQ-structured-data uit de pas met het scherm (`faqPageLd` bouwt de JSON-LD
-uit precies deze data en Google straft dat af).
+ze gelijk, anders leest een bezoeker twee verschillende antwoorden op dezelfde vraag.
+
+> **Correctie bij de uitvoering (2026-08-12, gevonden in de code-review).** De reden die hierboven
+> stond klopte niet: de lijst in `app/prijzen/page.tsx` voedt **geen** JSON-LD. Die pagina rendert
+> alleen `productLd(tiers)`; `faqPageLd` wordt uitsluitend uit `app/veelgestelde-vragen/faq-data.ts`
+> gebouwd (en uit de eigen lijst van /partners). De twee lijsten gelijk houden blijft nodig, maar om
+> de gewone reden — anders spreekt de site zichzelf tegen — niet vanwege structured data.
 
 **Betaalmethodenvraag** (beide bestanden):
 

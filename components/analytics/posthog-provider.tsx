@@ -42,13 +42,13 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     if (!key) return;
 
-    // Refused = a RECORDED choice whose statistics category is false. `null`
-    // (loaded, nothing recorded) is not a refusal — under legitimate interest it
-    // is the case we are allowed to measure in.
-    const refusesStatistics = (consent: ConsentPayload | null): boolean =>
-      newestRecordedConsent(consent, readConsentCookie())?.s === false;
+    // The newest choice across BOTH writers. Reading Cookiebot alone would act on
+    // a stale answer when the visitor decided on mijn.letsdog.nl, and a $pageview
+    // cannot be un-sent.
+    const merged = (consent: ConsentPayload | null): ConsentPayload | null =>
+      newestRecordedConsent(consent, readConsentCookie());
 
-    const start = () => {
+    const start = (liftOptOut: boolean) => {
       if (!posthog.__loaded) {
         posthog.init(key, {
           api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com",
@@ -60,25 +60,45 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
           person_profiles: "identified_only", // marketing site is mostly anon
           autocapture: false, // we fire deliberate, named events only
         });
-        posthog.register({
-          app: "website",
-          platform: "web",
-          environment: isProdHost(window.location.hostname) ? "production" : "preview",
-        });
       }
-      // Whether we just initialised or were already running: an opt-out from an
-      // earlier refusal PERSISTS across page loads, so it has to be lifted here
-      // or re-allowing statistics leaves PostHog permanently silent — which is
-      // indistinguishable from a working gate and would go unnoticed for weeks.
-      if (posthog.has_opted_out_capturing()) {
+      // OUTSIDE the init guard on purpose. stop() calls reset(), and reset()
+      // empties the same props store register() writes into — so a visitor who
+      // refuses and then re-allows statistics (newly reachable via the footer's
+      // Cookie-instellingen control) would resume capturing with no `app`,
+      // `platform` or `environment`. Those events would then be invisible in
+      // every website dashboard, because both hosts share one project and every
+      // dashboard filters on app = "website". register() is idempotent, so
+      // calling it on an already-running client costs nothing.
+      posthog.register({
+        app: "website",
+        platform: "web",
+        environment: isProdHost(window.location.hostname) ? "production" : "preview",
+      });
+      // An opt-out PERSISTS across page loads, so re-allowing statistics has to
+      // lift it or PostHog stays permanently silent — indistinguishable from a
+      // working gate. But lift it ONLY on an explicit yes, never on the mere
+      // absence of a refusal: otherwise a visitor who refused and later lost
+      // their cookies (localStorage survives) is silently re-enabled, and a
+      // Do-Not-Track visitor — for whom has_opted_out_capturing() is always
+      // true — gets an opt-in written that would take effect the moment they
+      // turn DNT off, with no choice ever recorded.
+      if (liftOptOut && posthog.has_opted_out_capturing()) {
         posthog.opt_in_capturing({ captureEventName: false });
       }
     };
 
     const stop = () => {
       // Never started: not starting IS the stop, and there is nothing to opt out
-      // of or reset. This is the strongest outcome of the two — no init means no
-      // request, no cookie and no $pageview ever happened.
+      // of or reset. This is the strongest of the two outcomes — no init means no
+      // request to PostHog and no captured event, ever.
+      //
+      // It does NOT mean no cookie, and that is worth stating because it is easy
+      // to assume: importing posthog-js instantiates its persistence layer, which
+      // writes its own `ph_…` cookie carrying a random device id and the landing
+      // URL even when init never runs (measured 2026-08-12: `__loaded` false,
+      // zero network entries to the ingestion host, cookie present anyway).
+      // Nothing is transmitted, and Cookiebot deletes that cookie on an explicit
+      // refusal — but do not read this branch as "no trace was left".
       if (!posthog.__loaded) return;
       // ORDER IS LOAD-BEARING AND IT IS THE OPPOSITE OF THE INTUITIVE ONE.
       // reset() drops the identifiers, but it ALSO calls consent.reset()
@@ -90,18 +110,24 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
       posthog.opt_out_capturing();
     };
 
+    // Refused = a RECORDED choice whose statistics category is false. `null`
+    // (nothing recorded anywhere) is not a refusal — under legitimate interest it
+    // is exactly the case we are allowed to measure in. A grant is the mirror:
+    // an explicit true, which is the only thing that may lift a stored opt-out.
+    const apply = (consent: ConsentPayload | null) => {
+      const choice = merged(consent);
+      if (choice?.s === false) stop();
+      else start(choice?.s === true);
+    };
+
     // The pre-Cookiebot decision. Cookiebot loads async and a refusal may already
     // be on record in ld_consent (including one made on mijn.letsdog.nl), so
     // starting unconditionally here would fire an irreversible $pageview for a
     // visitor who already said no. Reading the handover cookie first costs one
     // synchronous cookie read and closes that window.
-    if (refusesStatistics(null)) stop();
-    else start();
+    apply(null);
 
-    return onCookiebotConsent((consent) => {
-      if (refusesStatistics(consent)) stop();
-      else start();
-    });
+    return onCookiebotConsent(apply);
   }, []);
 
   return <PHProvider client={posthog}>{children}</PHProvider>;

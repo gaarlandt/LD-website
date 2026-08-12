@@ -76,7 +76,9 @@ export function Footer() {
               </a>
             </div>
 
-            {/* App download — both stores live (iOS app launched 2026-07-02).
+            {/* App badges — NO LONGER LINKS since the 2026-08-12 platform cutover:
+                both render through AppStoreComingSoon, because the listings they
+                pointed at belong to the retired environment (see that component).
                 Both official badges are kept untouched, but they don't render at equal
                 visual size at the same CSS height: Apple's artwork fills its SVG canvas,
                 while Google's PNG bakes in a symmetric ~33% transparent clear-space margin
