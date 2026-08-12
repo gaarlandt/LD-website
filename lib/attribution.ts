@@ -40,6 +40,7 @@ import {
   consentCookieDomain,
   consentCookieSupersedes,
   readConsentCookie,
+  readFirstParseableCookie,
   type ConsentPayload,
 } from "./consent";
 
@@ -270,16 +271,28 @@ export function buildAttributionDeletion(hostname: string): string[] {
   return domain ? [base, `${base}; Domain=${domain}`] : [base];
 }
 
-/** The stored record as it currently stands, or null. */
+/**
+ * The stored record as it currently stands, or null.
+ *
+ * THE FIRST PARSEABLE RECORD, NOT THE FIRST MATCH — contract rule 1, and it
+ * costs more here than on `ld_consent`. Any *.letsdog.nl subdomain can set its
+ * own host-only `ld_attribution`, and RFC 6265 §5.4 puts a deeper Path first, so
+ * a corrupt copy would be read before the shared one. The caller's next question
+ * is "does a touch exist" (`recordFirstTouch`), so a shadowed read answers "no"
+ * and spends the first-touch slot on the current visit — for ninety days, with
+ * nothing logged and the columns full of the wrong campaign.
+ *
+ * Shared with `readConsentCookie` rather than copied, for the same reason
+ * `attributionCookieDomain` delegates: the two cookies must not drift apart on a
+ * rule the platform implements once on its side.
+ */
 export function readAttributionCookie(): AttributionPayload | null {
   if (typeof document === "undefined") return null;
-  for (const part of document.cookie.split(";")) {
-    const trimmed = part.trim();
-    if (trimmed.startsWith(`${ATTRIBUTION_COOKIE_NAME}=`)) {
-      return parseAttributionPayload(trimmed.slice(ATTRIBUTION_COOKIE_NAME.length + 1));
-    }
-  }
-  return null;
+  return readFirstParseableCookie(
+    document.cookie,
+    ATTRIBUTION_COOKIE_NAME,
+    parseAttributionPayload,
+  );
 }
 
 /**
