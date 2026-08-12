@@ -60,6 +60,17 @@ export function LegalPageLayout({ data, content, children }: LegalPageLayoutProp
                   {children}
                 </strong>
               ),
+              // Literal identifiers — cookie names, header names. Without an
+              // override these render as an unstyled browser-default <code>,
+              // which drops to a monospace face the brand doesn't carry and
+              // reads as a rendering bug. The cookie declaration names a dozen
+              // cookies this way, so it earns a style rather than backtick-free
+              // prose that can't distinguish `m` the cookie from m the word.
+              code: ({ children }) => (
+                <code className="rounded bg-[var(--ld-beige)] px-1.5 py-0.5 text-[0.9em] text-[var(--ld-text)]">
+                  {children}
+                </code>
+              ),
               table: ({ children }) => (
                 <div className="bg-[var(--ld-beige)] rounded-[var(--ld-r-md)] p-6 my-4">
                   <table className="w-full text-[15px] border-collapse">
