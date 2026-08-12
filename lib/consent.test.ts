@@ -6,6 +6,7 @@ import {
   consentCookieDomain,
   consentCookieSupersedes,
   createConsentRecorder,
+  newestRecordedConsent,
   parseConsentPayload,
   readCookie,
   recordConsentWithdrawal,
@@ -93,7 +94,7 @@ describe("parseConsentPayload", () => {
 });
 
 describe("consentCookieDomain", () => {
-  it("returns the shared parent domain on Let's Dog hosts", () => {
+  it("returns the shared parent domain on Let's dog hosts", () => {
     expect(consentCookieDomain("letsdog.nl")).toBe(".letsdog.nl");
     expect(consentCookieDomain("www.letsdog.nl")).toBe(".letsdog.nl");
     expect(consentCookieDomain("mijn.letsdog.nl")).toBe(".letsdog.nl");
@@ -126,7 +127,7 @@ describe("buildConsentCookie", () => {
     expect(buildConsentCookie(payload, "letsdog.nl")).not.toContain("HttpOnly");
   });
 
-  it("omits Domain off the Let's Dog hosts so the write still lands", () => {
+  it("omits Domain off the Let's dog hosts so the write still lands", () => {
     const cookie = buildConsentCookie(payload, "website-letsdog.pages.dev");
     expect(cookie).not.toContain("Domain=");
     expect(cookie).toContain("SameSite=Lax");
@@ -276,6 +277,66 @@ describe("createConsentRecorder", () => {
 
 // The return leg (T-26): the platform's choice reaching Cookiebot here. The rule
 // is the platform's own R8 pointed the other way — strictly newer wins.
+// The read-side counterpart of consentCookieSupersedes, for the one subscriber
+// whose action cannot be undone: PostHog sends a $pageview the moment it starts.
+// The bug these pin is the one review caught on T-27 in another guise — reading
+// the SOURCE (Cookiebot) at a moment when the merged state already says no.
+describe("newestRecordedConsent", () => {
+  const cookiebot: ConsentPayload = {
+    v: 1,
+    t: "2026-08-08T06:00:00.000Z",
+    p: false,
+    s: true,
+    m: false,
+  };
+  const refusal = { ...cookiebot, t: "2026-08-08T08:00:00.000Z", s: false };
+
+  it("returns null when neither source records a choice", () => {
+    expect(newestRecordedConsent(null, null)).toBeNull();
+  });
+
+  it("returns the cookie when Cookiebot has not loaded or holds nothing", () => {
+    // THE CASE THAT MATTERS ON PAGE LOAD. Cookiebot arrives async; a refusal
+    // made on mijn.letsdog.nl is already sitting in ld_consent. Answering null
+    // here would let PostHog start and fire a $pageview for someone who said no,
+    // and no later event can take that back.
+    expect(newestRecordedConsent(null, refusal)).toEqual(refusal);
+    expect(newestRecordedConsent(null, refusal)?.s).toBe(false);
+  });
+
+  it("returns Cookiebot's answer when the cookie is absent", () => {
+    expect(newestRecordedConsent(cookiebot, null)).toEqual(cookiebot);
+  });
+
+  it("takes the strictly newer of the two, in both directions", () => {
+    expect(newestRecordedConsent(cookiebot, refusal)).toEqual(refusal);
+    const staleCookie = { ...refusal, t: "2026-08-08T05:00:00.000Z" };
+    expect(newestRecordedConsent(cookiebot, staleCookie)).toEqual(cookiebot);
+  });
+
+  it("prefers Cookiebot on an equal timestamp", () => {
+    // Equal stamps are the measured rest state: the two hosts already agree, so
+    // either answer is the same choice. Pinned so a future edit has to be
+    // deliberate rather than incidental.
+    const sameMoment = { ...refusal, t: cookiebot.t };
+    expect(newestRecordedConsent(cookiebot, sameMoment)).toEqual(cookiebot);
+  });
+
+  it("ignores a cookie from a different contract version", () => {
+    // A v2 cookie is not ours to interpret. Falling back to Cookiebot is the
+    // same "rather not act than act on something we could not read" the rest of
+    // this module applies.
+    const wrongVersion = { ...refusal, v: 2 };
+    expect(newestRecordedConsent(cookiebot, wrongVersion)).toEqual(cookiebot);
+    expect(newestRecordedConsent(null, wrongVersion)).toBeNull();
+  });
+
+  it("does not treat an unreadable timestamp as newer", () => {
+    const unparseable = { ...refusal, t: "not-a-date" };
+    expect(newestRecordedConsent(cookiebot, unparseable)).toEqual(cookiebot);
+  });
+});
+
 describe("consentCookieSupersedes", () => {
   const cookiebot: ConsentPayload = {
     v: 1,
