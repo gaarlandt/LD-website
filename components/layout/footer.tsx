@@ -90,7 +90,7 @@ export function Footer() {
                 keeps them aligned (Google's clear-space margin is symmetric). */}
             <div className="mt-8">
               <Eyebrow tone="onGreen" className="block mb-4">
-                Mobile Apps Coming Soon
+                Apps binnenkort beschikbaar
               </Eyebrow>
               <div className="flex items-center gap-3">
                 <AppStoreComingSoon
