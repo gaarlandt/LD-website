@@ -8,7 +8,8 @@ import {
   createConsentRecorder,
   newestRecordedConsent,
   parseConsentPayload,
-  readCookie,
+  readConsentCookie,
+  readFirstParseableCookie,
   recordConsentWithdrawal,
   serializeConsentPayload,
   submitConsentToCookiebot,
@@ -138,15 +139,40 @@ describe("buildConsentCookie", () => {
   });
 });
 
-describe("readCookie", () => {
+// Rule 1 of the cross-host contract: the reader takes the first PARSEABLE
+// record, not the first match. A browser sends SEVERAL cookies of one name when
+// they differ in Domain or Path, and per RFC 6265 §5.4 document.cookie arrives
+// sorted longest-Path first — so a host-only copy set by any *.letsdog.nl
+// subdomain is handed over before the legitimate Domain=.letsdog.nl one.
+describe("readFirstParseableCookie", () => {
+  const identity = (raw: string) => raw;
+  const valid = serializeConsentPayload(payload);
+
   it("finds the value among neighbours", () => {
     const jar = `_ga=GA1.1.x; ${CONSENT_COOKIE_NAME}=abc123; _fbp=fb.1.y`;
-    expect(readCookie(jar, CONSENT_COOKIE_NAME)).toBe("abc123");
+    expect(readFirstParseableCookie(jar, CONSENT_COOKIE_NAME, identity)).toBe("abc123");
   });
 
   it("returns null when absent, and does not match a suffix", () => {
-    expect(readCookie("_ga=1; other=2", CONSENT_COOKIE_NAME)).toBeNull();
-    expect(readCookie(`old_${CONSENT_COOKIE_NAME}=nope`, CONSENT_COOKIE_NAME)).toBeNull();
+    expect(readFirstParseableCookie("_ga=1; other=2", CONSENT_COOKIE_NAME, identity)).toBeNull();
+    expect(
+      readFirstParseableCookie(`old_${CONSENT_COOKIE_NAME}=nope`, CONSENT_COOKIE_NAME, identity),
+    ).toBeNull();
+  });
+
+  it("walks past a broken duplicate to the copy that parses", () => {
+    const jar = `${CONSENT_COOKIE_NAME}=corrupted; ${CONSENT_COOKIE_NAME}=${valid}`;
+    expect(readFirstParseableCookie(jar, CONSENT_COOKIE_NAME, parseConsentPayload)).toEqual(payload);
+  });
+
+  it("takes the copy that parses when it comes first as well", () => {
+    const jar = `${CONSENT_COOKIE_NAME}=${valid}; ${CONSENT_COOKIE_NAME}=corrupted`;
+    expect(readFirstParseableCookie(jar, CONSENT_COOKIE_NAME, parseConsentPayload)).toEqual(payload);
+  });
+
+  it("returns null when no copy parses", () => {
+    const jar = `${CONSENT_COOKIE_NAME}=corrupted; ${CONSENT_COOKIE_NAME}=${encodeURIComponent("[]")}`;
+    expect(readFirstParseableCookie(jar, CONSENT_COOKIE_NAME, parseConsentPayload)).toBeNull();
   });
 });
 
@@ -178,6 +204,49 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/**
+ * document.cookie exactly as given, duplicates and all. The Map-backed jar above
+ * cannot express this — it holds one value per name, and two cookies sharing one
+ * name is the entire failure mode below.
+ */
+function stubRawCookieJar(jar: string) {
+  vi.stubGlobal("document", { cookie: jar });
+}
+
+// The public half of rule 1. `ld_consent` must be readable from every
+// *.letsdog.nl host, so a __Host- prefix is ruled out by contract and any
+// subdomain — keuzehulp, agenda, the platform, a parked or expired one — can set
+// its own copy. Reading the shadowing copy here would report "no choice
+// recorded" for a visitor who did choose, and the platform gates its own
+// measurement on this cookie.
+describe("readConsentCookie — the first PARSEABLE ld_consent", () => {
+  const granted: ConsentPayload = { v: 1, t: "2026-08-12T10:00:00.000Z", p: true, s: true, m: true };
+  const shared = serializeConsentPayload(granted);
+
+  it("ignores a broken host-only copy that sorts ahead of the shared one", () => {
+    stubRawCookieJar(`${CONSENT_COOKIE_NAME}=corrupted; ${CONSENT_COOKIE_NAME}=${shared}; _ga=1`);
+    expect(readConsentCookie()).toEqual(granted);
+  });
+
+  it("still takes the shared copy when it happens to come first", () => {
+    stubRawCookieJar(`_ga=1; ${CONSENT_COOKIE_NAME}=${shared}; ${CONSENT_COOKIE_NAME}=corrupted`);
+    expect(readConsentCookie()).toEqual(granted);
+  });
+
+  it("reports no choice when no copy is readable", () => {
+    stubRawCookieJar(`${CONSENT_COOKIE_NAME}=corrupted; ${CONSENT_COOKIE_NAME}=%7Bnope`);
+    expect(readConsentCookie()).toBeNull();
+  });
+
+  it("reports no choice when there is no ld_consent at all", () => {
+    // The prefix discipline at the public level, and the sharpest form of it: a
+    // loosened match would return this perfectly valid payload under the wrong
+    // name.
+    stubRawCookieJar(`_ga=1; old_${CONSENT_COOKIE_NAME}=${shared}`);
+    expect(readConsentCookie()).toBeNull();
+  });
+});
+
 describe("writeConsentCookie", () => {
   it("writes the choice, then stays silent when nothing changed", () => {
     const { writes } = stubCookieJar();
@@ -194,7 +263,7 @@ describe("writeConsentCookie", () => {
     writeConsentCookie(payload, "letsdog.nl");
     writeConsentCookie({ ...payload, m: true, t: "2026-08-08T07:00:00.000Z" }, "letsdog.nl");
     expect(writes).toHaveLength(2);
-    expect(parseConsentPayload(readCookie(document.cookie, CONSENT_COOKIE_NAME)!)?.m).toBe(true);
+    expect(readConsentCookie()?.m).toBe(true);
   });
 
   // This is the read-back trap, and it is the reason the comparison ignores `t`.
@@ -207,7 +276,7 @@ describe("writeConsentCookie", () => {
     writeConsentCookie(payload, "letsdog.nl");
     writeConsentCookie({ ...payload, t: "2026-08-08T09:00:00.000Z" }, "letsdog.nl");
     expect(writes).toHaveLength(1);
-    expect(parseConsentPayload(readCookie(document.cookie, CONSENT_COOKIE_NAME)!)?.t).toBe(
+    expect(readConsentCookie()?.t).toBe(
       payload.t,
     );
   });
@@ -230,7 +299,7 @@ describe("writeConsentCookie", () => {
     writeConsentCookie(fromPlatform, "letsdog.nl");
     writeConsentCookie({ v: 1, t: "2026-08-08T06:00:00.000Z", p: false, s: true, m: false }, "letsdog.nl");
     expect(writes).toHaveLength(1);
-    expect(parseConsentPayload(readCookie(document.cookie, CONSENT_COOKIE_NAME)!)).toEqual(
+    expect(readConsentCookie()).toEqual(
       fromPlatform,
     );
   });
@@ -240,7 +309,7 @@ describe("writeConsentCookie", () => {
     writeConsentCookie({ ...payload, t: "2026-08-07T00:00:00.000Z", m: true }, "letsdog.nl");
     writeConsentCookie({ ...payload, t: "2026-08-08T10:00:00.000Z", m: false }, "letsdog.nl");
     expect(writes).toHaveLength(2);
-    expect(parseConsentPayload(readCookie(document.cookie, CONSENT_COOKIE_NAME)!)?.m).toBe(false);
+    expect(readConsentCookie()?.m).toBe(false);
   });
 });
 
@@ -256,7 +325,7 @@ describe("createConsentRecorder", () => {
     const record = createConsentRecorder("letsdog.nl");
     record(granted);
     record(null);
-    const after = parseConsentPayload(readCookie(document.cookie, CONSENT_COOKIE_NAME)!);
+    const after = readConsentCookie();
     expect([after?.p, after?.s, after?.m]).toEqual([false, false, false]);
   });
 
@@ -271,7 +340,7 @@ describe("createConsentRecorder", () => {
     record(null);
     record(null);
     expect(writes).toHaveLength(1);
-    expect(parseConsentPayload(readCookie(document.cookie, CONSENT_COOKIE_NAME)!)).toEqual(granted);
+    expect(readConsentCookie()).toEqual(granted);
   });
 });
 
@@ -421,7 +490,7 @@ describe("a choice changed on the platform, end to end", () => {
     );
     // 2. the visitor lands here, where Cookiebot still holds the older consent
     const stale: ConsentPayload = { v: 1, t: "2026-08-08T06:00:00.000Z", p: true, s: true, m: true };
-    const fromCookie = parseConsentPayload(readCookie(document.cookie, CONSENT_COOKIE_NAME)!)!;
+    const fromCookie = readConsentCookie()!;
     expect(consentCookieSupersedes(fromCookie, stale)).toBe(true);
 
     // 3. Cookiebot is put into that choice and stamps the moment at NOW
@@ -433,7 +502,7 @@ describe("a choice changed on the platform, end to end", () => {
     // 4. its consent event reaches the write side, which must stay silent
     writeConsentCookie(echoed, "letsdog.nl");
     expect(writes).toHaveLength(1);
-    expect(parseConsentPayload(readCookie(document.cookie, CONSENT_COOKIE_NAME)!)?.t).toBe(
+    expect(readConsentCookie()?.t).toBe(
       chosenOnPlatform,
     );
 
@@ -449,7 +518,7 @@ describe("recordConsentWithdrawal", () => {
     stubCookieJar();
     writeConsentCookie({ ...payload, p: true, s: true, m: true }, "letsdog.nl");
     recordConsentWithdrawal("letsdog.nl", withdrawnAt);
-    const after = parseConsentPayload(readCookie(document.cookie, CONSENT_COOKIE_NAME)!);
+    const after = readConsentCookie();
     expect(after).toEqual({ v: CONSENT_COOKIE_VERSION, t: withdrawnAt, p: false, s: false, m: false });
   });
 
@@ -459,7 +528,7 @@ describe("recordConsentWithdrawal", () => {
     // No prior cookie means no choice to withdraw. Recording "refused" here
     // would tell the platform the visitor said no when nobody asked.
     expect(writes).toHaveLength(0);
-    expect(readCookie(document.cookie, CONSENT_COOKIE_NAME)).toBeNull();
+    expect(readConsentCookie()).toBeNull();
   });
 
   it("leaves an already-refused cookie alone", () => {
@@ -467,7 +536,7 @@ describe("recordConsentWithdrawal", () => {
     writeConsentCookie({ v: 1, t: "2026-08-08T06:00:00.000Z", p: false, s: false, m: false }, "letsdog.nl");
     recordConsentWithdrawal("letsdog.nl", withdrawnAt);
     expect(writes).toHaveLength(1);
-    expect(parseConsentPayload(readCookie(document.cookie, CONSENT_COOKIE_NAME)!)?.t).toBe(
+    expect(readConsentCookie()?.t).toBe(
       "2026-08-08T06:00:00.000Z",
     );
   });

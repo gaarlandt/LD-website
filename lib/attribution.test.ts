@@ -58,6 +58,15 @@ function stubCookieJar() {
   return { writes };
 }
 
+/**
+ * document.cookie exactly as given, duplicates and all. The Map-backed jar holds
+ * one value per name, and two cookies sharing one name is the whole failure mode
+ * in `readAttributionCookie` below.
+ */
+function stubRawCookieJar(jar: string) {
+  vi.stubGlobal("document", { cookie: jar });
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
@@ -250,6 +259,63 @@ describe("the two consent gates", () => {
 
   it("keeps nothing when both gates are shut", () => {
     expect(hasAnyParam(consentedParams(all, NO_GATES))).toBe(false);
+  });
+});
+
+// Rule 1 of the cross-host contract, on the side where getting it wrong costs
+// the most. `ld_attribution` must be readable from every *.letsdog.nl host, so a
+// __Host- prefix is ruled out and any subdomain — keuzehulp, agenda, the
+// platform, a parked or expired one — can set its own host-only copy. Per RFC
+// 6265 §5.4 document.cookie arrives sorted longest-Path first, so a copy with a
+// deeper Path is handed over BEFORE the legitimate Domain=.letsdog.nl one.
+describe("readAttributionCookie — the first PARSEABLE record", () => {
+  const stored: AttributionPayload = {
+    v: 1,
+    t: "2026-08-11T09:00:00.000Z",
+    utm_source: "facebook",
+    utm_campaign: "zomer",
+  };
+  const shared = serializeAttributionPayload(stored);
+
+  it("walks past a broken host-only copy to the shared record", () => {
+    stubRawCookieJar(
+      `${ATTRIBUTION_COOKIE_NAME}=corrupted; ${ATTRIBUTION_COOKIE_NAME}=${shared}; _ga=1`,
+    );
+    expect(readAttributionCookie()).toEqual(stored);
+  });
+
+  it("still takes the shared record when it comes first", () => {
+    stubRawCookieJar(
+      `_ga=1; ${ATTRIBUTION_COOKIE_NAME}=${shared}; ${ATTRIBUTION_COOKIE_NAME}=corrupted`,
+    );
+    expect(readAttributionCookie()).toEqual(stored);
+  });
+
+  it("reports no record when no copy is readable", () => {
+    stubRawCookieJar(`${ATTRIBUTION_COOKIE_NAME}=corrupted; ${ATTRIBUTION_COOKIE_NAME}=%7Bnope`);
+    expect(readAttributionCookie()).toBeNull();
+  });
+
+  it("reports no record when there is no ld_attribution at all", () => {
+    // The prefix discipline, in its sharpest form: the value under the wrong
+    // name is a perfectly valid record, so a loosened match would return it.
+    stubRawCookieJar(`_ga=1; old_${ATTRIBUTION_COOKIE_NAME}=${shared}`);
+    expect(readAttributionCookie()).toBeNull();
+  });
+
+  // THE COST, and why this reader matters more than the consent one.
+  // recordFirstTouch only ever asks "does a touch exist". A shadowed read
+  // answers no, and the slot is spent on the current visit for ninety days —
+  // nothing errors, the columns fill, and the credit is on the wrong campaign.
+  it("does not let a shadowing copy hand the first touch to a later visit", () => {
+    const jar = `${ATTRIBUTION_COOKIE_NAME}=corrupted; ${ATTRIBUTION_COOKIE_NAME}=${shared}`;
+    stubRawCookieJar(jar);
+
+    expect(recordFirstTouch({ utm_source: "google", gclid: "g2" }, ALL_GATES, "letsdog.nl")).toBe(
+      false,
+    );
+    // A write would have replaced the stubbed property outright.
+    expect(document.cookie).toBe(jar);
   });
 });
 
