@@ -148,8 +148,10 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
-              {/* Not a page: reopens Cookiebot's own dialog. Renders only once
-                  Cookiebot is actually present — see the component. */}
+              {/* Reopens Cookiebot's own dialog when it is there, and falls back
+                  to a link to the cookie declaration when it is not, so this
+                  column always offers a way to change your mind — see the
+                  component for why (T-33). */}
               <CookieSettingsLink />
             </ul>
           </div>
