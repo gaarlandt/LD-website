@@ -307,6 +307,25 @@ function isSameChoice(a: ConsentPayload, b: ConsentPayload): boolean {
 }
 
 /**
+ * Does this payload allow at least one optional category?
+ *
+ * THE PREDICATE THAT SEPARATES A CHOICE FROM A WITHDRAWAL, and it is load-bearing
+ * in two places that must keep agreeing with each other:
+ *
+ * - `recordConsentWithdrawal` writes all-false BY DEFINITION — that is what a
+ *   withdrawal looks like on the wire, because Cookiebot's `withdraw()` clears
+ *   `hasResponse` instead of reporting a refusal.
+ * - `consentCookieSupersedes` therefore treats "allows something" as proof that a
+ *   payload did NOT come from this site's own withdrawal, which is the only thing
+ *   that makes adopting a choice on a host with no local answer safe.
+ *
+ * One function so the two cannot drift: widen this and the clamp widens with it.
+ */
+function allowsAnyCategory(c: ConsentPayload): boolean {
+  return c.p || c.s || c.m;
+}
+
+/**
  * Was `a` recorded strictly later than `b`?
  *
  * An unreadable stamp on either side answers no. Both consumers of this want the
@@ -335,11 +354,13 @@ function isStrictlyNewer(a: ConsentPayload, b: ConsentPayload): boolean {
  * on a stale refusal — the same shape as the bug review caught on T-27, where the
  * attribution recorder read the source instead of the merged state.
  *
- * Deliberately NOT the same function as `consentCookieSupersedes`: that one asks
- * "should the cookie be pushed INTO Cookiebot", answers no when Cookiebot holds
- * nothing (there is no local state to correct), and is a write-side question.
- * This is the read-side question, and it must answer with the cookie precisely
- * when Cookiebot holds nothing.
+ * Deliberately NOT the same function as `consentCookieSupersedes`. That one asks
+ * "should the cookie be pushed INTO Cookiebot", and when Cookiebot holds nothing
+ * it answers only for a cookie that allows something — an all-false cookie is
+ * indistinguishable from this site's own withdrawal, so it is clamped there. This
+ * is the read-side question and has no such ambiguity to resolve: it must report
+ * the cookie whenever Cookiebot holds nothing, INCLUDING an all-false one, because
+ * a refusal recorded on the platform still has to suppress an irreversible send.
  *
  * Ties go to Cookiebot: equal timestamps mean the two hosts already agree (the
  * measured rest state), so the choice is the same either way.
@@ -431,7 +452,7 @@ export function recordConsentWithdrawal(
   if (typeof document === "undefined") return;
   const existing = readConsentCookie();
   if (!existing) return;
-  if (!existing.p && !existing.s && !existing.m) return;
+  if (!allowsAnyCategory(existing)) return;
   document.cookie = buildConsentCookie(
     { v: CONSENT_COOKIE_VERSION, t: at, p: false, s: false, m: false },
     hostname,
@@ -488,42 +509,77 @@ export function createConsentRecorder(
 // withdrawal that is the worst possible place to be wrong.
 //
 // The rule is the platform's own (R8), pointed the other way: a strictly newer
-// recorded choice wins, equal or older does nothing.
+// recorded choice wins, equal or older does nothing. And where Cookiebot has no
+// answer to be newer than, a choice that ALLOWS something is adopted while an
+// all-false one is not — see consentCookieSupersedes for why the line sits there.
 
 /**
  * Should the handover cookie override what Cookiebot currently records?
  *
  * `cookiebot` is what Cookiebot reports right now, or null when it reports no
- * choice at all. Four ways to answer no, and each one is load-bearing:
+ * choice at all. Three ways to answer no when Cookiebot HOLDS an answer, and each
+ * one is load-bearing:
  *
  * - A VERSION WE DO NOT KNOW. `parseConsentPayload` keeps an unrecognised `v` so
  *   that the reader can decide; this is the reader, and it declines. A later
  *   version may add a category, and pushing its three known fields into the CMP
- *   would silently drop whatever it added.
- * - COOKIEBOT RECORDS NOTHING. There is no timestamp to be newer than — but the
- *   real reason is sharper than that: `withdraw()` also leaves Cookiebot with no
- *   response, and at that moment ld_consent holds the all-false record that
- *   `recordConsentWithdrawal` just wrote, stamped NOW. Treating "nothing" as
- *   "older than anything" would feed this site's own withdrawal straight back
- *   into its own CMP, turning "withdrawn" into "declined" and taking the banner
- *   away from a visitor who is entitled to see it again. This branch is what
- *   makes the whole return leg provably one-directional: a cookie written HERE
- *   carries Cookiebot's own `t` (equal, so it loses) or is a withdrawal (no
- *   response, so it stops here). Anything that gets past this predicate was
- *   written by the other host.
+ *   would silently drop whatever it added. Checked first, so it governs the
+ *   no-local-answer branch below as well.
  * - THE SAME CHOICE. Nothing to change, and submitting anyway would move
  *   Cookiebot's `consentUTC` to now and re-fire its events for no reason. It
  *   also makes the sync idempotent by construction: one submit and the
  *   categories match, so no second submit can follow whatever the clocks say.
  * - AN UNREADABLE TIMESTAMP on either side. Same choice the platform makes on a
  *   NaN: rather not act than act on a comparison we could not make.
+ *
+ * WHEN COOKIEBOT RECORDS NOTHING, THE ANSWER IS THE ALL-FALSE CLAMP — and this
+ * branch is the one to read before touching anything here (loop decision D-4,
+ * settled by the owner on 2026-08-13; the posture is his call, not this file's).
+ *
+ * There is no timestamp to be newer than, so the question is not "which is newer"
+ * but "could this cookie be our own withdrawal coming back at us". `withdraw()`
+ * leaves Cookiebot with no response, so "the visitor took it all back" and "nobody
+ * ever asked on this host" are the SAME observable state — and at the instant of a
+ * withdrawal, `recordConsentWithdrawal` has just written an all-false `ld_consent`
+ * stamped NOW. Adopting that would feed this site's own withdrawal straight back
+ * into its own CMP, turning "withdrawn" into "declined" and taking the banner away
+ * from a visitor who is entitled to see it again.
+ *
+ * What tells the two apart is `allowsAnyCategory`, and it tells them apart
+ * PROVABLY rather than heuristically: `recordConsentWithdrawal` writes all-false
+ * by definition, so a cookie allowing at least one category cannot have come from
+ * it. Hence:
+ *
+ * - allows ≥1 category → ADOPT. The visitor really did choose this, on a host
+ *   that shares the cookie (since platform decision D-103 that is the normal path
+ *   for ad traffic: the ad lands on mijn.letsdog.nl, the prompt is answered there,
+ *   and letsdog.nl is opened later). Honouring it is exactly what the platform's
+ *   preferences screen promises — "Je keuze geldt op letsdog.nl en in de app".
+ * - all-false → DO NOT ADOPT, so the banner is shown.
+ *
+ * THE PRICE, ACCEPTED AND NOT HIDDEN: someone who refused everything on the
+ * platform is asked once more here. That is the direction that is always safe —
+ * asking again costs a banner, suppressing one wrongly costs a consent nobody
+ * gave. The clamp is drawn at all-false and nowhere else precisely because that is
+ * the only line the withdrawal proof supports.
+ *
+ * A CLAIM THIS BRANCH USED TO MAKE AND NO LONGER CAN. Before D-4 the return leg
+ * was provably one-directional: nothing written HERE could get past the predicate,
+ * because such a cookie either carried Cookiebot's own `t` (equal, so it lost) or
+ * was a withdrawal (no response, so it stopped here). A granting cookie written
+ * here CAN now be adopted, in one narrow case: Cookiebot's own host-only cookie is
+ * gone while `ld_consent` still stands (cleared selectively, or the two 12-month
+ * lifetimes drifting apart). The visitor is then put back into the choice they
+ * themselves made here, from a record that is still live — the same act as for a
+ * platform choice, and not the failure the clamp exists to prevent, which is
+ * strictly about resurrecting a WITHDRAWAL.
  */
 export function consentCookieSupersedes(
   cookie: ConsentPayload,
   cookiebot: ConsentPayload | null,
 ): boolean {
   if (cookie.v !== CONSENT_COOKIE_VERSION) return false;
-  if (cookiebot === null) return false;
+  if (cookiebot === null) return allowsAnyCategory(cookie);
   if (isSameChoice(cookie, cookiebot)) return false;
   return isStrictlyNewer(cookie, cookiebot);
 }
