@@ -3,8 +3,10 @@ import {
   CONSENT_COOKIE_NAME,
   CONSENT_COOKIE_VERSION,
   buildConsentCookie,
+  buildConsentHostOnlyDeletion,
   consentCookieDomain,
   consentCookieSupersedes,
+  countConsentCookies,
   createConsentRecorder,
   newestRecordedConsent,
   parseConsentPayload,
@@ -17,6 +19,11 @@ import {
   writeConsentCookie,
   type ConsentPayload,
 } from "./consent";
+import {
+  stubConsoleReports,
+  stubDomainCookieJar,
+  type JarEntry,
+} from "./cookie-jar.test-helpers";
 
 const payload: ConsentPayload = {
   v: 1,
@@ -196,8 +203,17 @@ describe("parseConsentPayload — the timestamp mirror (T-39)", () => {
   it("walks past an unreadable stamp to a copy that parses", () => {
     // The refusal composes with rule 1: a shadowing host-only copy carrying a
     // junk `t` no longer hides the legitimate shared record behind it.
-    const jar = `${CONSENT_COOKIE_NAME}=${withT("gisteren")}; ${CONSENT_COOKIE_NAME}=${withT("2026-08-13T09:00:00.000Z")}`;
-    stubRawCookieJar(jar);
+    //
+    // ON THE DOMAIN-AWARE JAR SINCE RULE 6, and the substance of the assertion is
+    // unchanged. Reading a duplicate now WRITES (the host-only wipe), which the
+    // read-only jar cannot express — it would return an empty string afterwards
+    // and this would pass or fail for reasons that have nothing to do with `t`.
+    // Rule 1 still does the work here as well: the surviving copy has to parse.
+    stubConsoleReports();
+    stubDomainCookieJar([
+      hostOnlyCopy(withT("gisteren")),
+      sharedCopy(withT("2026-08-13T09:00:00.000Z")),
+    ]);
     expect(readConsentCookie()?.t).toBe("2026-08-13T09:00:00.000Z");
   });
 });
@@ -310,15 +326,51 @@ function stubCookieJar() {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  // unstubAllGlobals does not undo a spy, and a console.error left mocked would
+  // swallow the next file's output as well as this one's.
+  vi.restoreAllMocks();
 });
 
 /**
  * document.cookie exactly as given, duplicates and all. The Map-backed jar above
  * cannot express this — it holds one value per name, and two cookies sharing one
  * name is the entire failure mode below.
+ *
+ * READ-ONLY, and since contract rule 6 that is a limit rather than a
+ * simplification: an assignment replaces the whole property instead of updating
+ * one copy, so a jar holding two copies would come back EMPTY after the repair's
+ * host-only wipe. Any test where the code under test writes — which now includes
+ * every read of a jar with a duplicate in it — belongs on `stubDomainCookieJar`
+ * from `./cookie-jar.test-helpers`.
  */
 function stubRawCookieJar(jar: string) {
   vi.stubGlobal("document", { cookie: jar });
+}
+
+/** A `ld_consent` copy planted by a sibling host — no Domain, so it exists only here. */
+function hostOnlyCopy(value: string): JarEntry {
+  return { name: CONSENT_COOKIE_NAME, value, domain: null };
+}
+
+/** A `ld_consent` copy on the shared parent domain: what this site and the platform write. */
+function sharedCopy(value: string): JarEntry {
+  return { name: CONSENT_COOKIE_NAME, value, domain: ".letsdog.nl" };
+}
+
+/**
+ * A fresh instance of the module, so the once-per-page-session latch starts
+ * unset.
+ *
+ * That latch is module state by design — the report is per page session, not per
+ * read — which means the FIRST duplicate this file produces consumes it for
+ * every later test sharing the static import. Re-importing after
+ * `vi.resetModules()` is how `attribution.test.ts` handles the same latch, and it
+ * beats a test-only reset export: the production module keeps no seam that exists
+ * purely for tests.
+ */
+async function freshConsent() {
+  vi.resetModules();
+  return import("./consent");
 }
 
 // The public half of rule 1. `ld_consent` must be readable from every
@@ -331,18 +383,30 @@ describe("readConsentCookie — the first PARSEABLE ld_consent", () => {
   const granted: ConsentPayload = { v: 1, t: "2026-08-12T10:00:00.000Z", p: true, s: true, m: true };
   const shared = serializeConsentPayload(granted);
 
+  // The three duplicate-carrying cases below moved from `stubRawCookieJar` to the
+  // domain-aware jar when rule 6 landed (T-41). Not a weakening: reading a
+  // duplicate now writes, and the read-only jar answers an assignment by
+  // replacing the entire cookie string, so all three would have gone null for a
+  // reason belonging to the rig. Same inputs, same expectations, a jar that can
+  // hold the two copies apart.
+
   it("ignores a broken host-only copy that sorts ahead of the shared one", () => {
-    stubRawCookieJar(`${CONSENT_COOKIE_NAME}=corrupted; ${CONSENT_COOKIE_NAME}=${shared}; _ga=1`);
+    stubConsoleReports();
+    stubDomainCookieJar([hostOnlyCopy("corrupted"), sharedCopy(shared)]);
     expect(readConsentCookie()).toEqual(granted);
   });
 
   it("still takes the shared copy when it happens to come first", () => {
-    stubRawCookieJar(`_ga=1; ${CONSENT_COOKIE_NAME}=${shared}; ${CONSENT_COOKIE_NAME}=corrupted`);
+    // Two copies on the shared domain: nothing for the host-only wipe to reach,
+    // so rule 1 alone decides and it takes the one that parses.
+    stubConsoleReports();
+    stubDomainCookieJar([sharedCopy(shared), sharedCopy("corrupted")]);
     expect(readConsentCookie()).toEqual(granted);
   });
 
   it("reports no choice when no copy is readable", () => {
-    stubRawCookieJar(`${CONSENT_COOKIE_NAME}=corrupted; ${CONSENT_COOKIE_NAME}=%7Bnope`);
+    stubConsoleReports();
+    stubDomainCookieJar([hostOnlyCopy("corrupted"), sharedCopy("%7Bnope")]);
     expect(readConsentCookie()).toBeNull();
   });
 
@@ -352,6 +416,273 @@ describe("readConsentCookie — the first PARSEABLE ld_consent", () => {
     // name.
     stubRawCookieJar(`_ga=1; old_${CONSENT_COOKIE_NAME}=${shared}`);
     expect(readConsentCookie()).toBeNull();
+  });
+});
+
+// Contract rule 6, the other half of the duplicate problem: MORE THAN ONE COOKIE
+// OF THIS NAME → delete the HOST-ONLY copy, re-read, continue with whatever
+// survives. `cross-host-consent-handover.md`, section "More than one cookie of
+// this name: delete the host-only copy, re-read, continue".
+//
+// WE ARE FIRST WITH IT ON THIS COOKIE. The platform carries the same rule as its
+// loop task T-575 and has not built it yet, so unlike rule 5 on `ld_attribution`
+// there is no mirror to copy from — the contract text is the norm, and the shape
+// is taken from this repo's own `ld_attribution` repair (T-40, PR #83) so the two
+// cookies stay recognisably the same. When the platform builds T-575 the message
+// text here is what it should mirror, not the other way round.
+//
+// WHAT RULE 1 LEAVES OPEN. Taking the first PARSEABLE record defeats a duplicate
+// that is CORRUPT. A duplicate that is perfectly VALID parses fine, arrives first
+// (RFC 6265 §5.4 hands over the more specific copy first), and therefore wins.
+// Any host under `.letsdog.nl` can plant one and `__Host-` is ruled out by the
+// contract, because both hosts must read this cookie by design.
+//
+// AND IT IS WORTH MORE HERE THAN ON `ld_attribution`. Since D-4 a cookie that
+// GRANTS a category is adopted when Cookiebot holds no answer, so a planted grant
+// takes the banner away from someone who was never asked and opens the Meta
+// pixel's load gate. Nothing is visible when it happens.
+//
+// THE REPAIR DECIDES WHICH COPY IS REAL, NEVER WHICH RECORD GOVERNS. Newest wins
+// is untouched, and the last two tests here are what say so.
+describe("more than one ld_consent cookie (contract rule 6)", () => {
+  /** What the visitor really chose, on the shared parent domain: a refusal. */
+  const real: ConsentPayload = {
+    v: 1,
+    t: "2026-08-12T10:00:00.000Z",
+    p: false,
+    s: false,
+    m: false,
+  };
+  /** A sibling host's copy: valid, parseable, first in line, and a grant nobody gave. */
+  const planted: ConsentPayload = {
+    v: 1,
+    t: "2026-08-13T09:00:00.000Z",
+    p: true,
+    s: true,
+    m: true,
+  };
+  const realValue = serializeConsentPayload(real);
+  const plantedValue = serializeConsentPayload(planted);
+
+  /** The hijack as a browser presents it: the host-only copy in front. */
+  const hijacked = (): JarEntry[] => [hostOnlyCopy(plantedValue), sharedCopy(realValue)];
+  /** Two copies no host-only wipe can reach — a genuine second writer. */
+  const bothShared = (): JarEntry[] => [sharedCopy(plantedValue), sharedCopy(realValue)];
+
+  it("counts every copy, parseable or not, and nothing that merely resembles one", () => {
+    // Counting only the parseable ones would miss the case this rule is for, and
+    // counting loosely is worse than not counting: `old_ld_consent` next to one
+    // real record would fake a duplicate and make the repair delete a record that
+    // was alone and correct.
+    expect(countConsentCookies(null)).toBe(0);
+    expect(countConsentCookies(`_ga=1; ${CONSENT_COOKIE_NAME}=${realValue}`)).toBe(1);
+    expect(countConsentCookies(`old_${CONSENT_COOKIE_NAME}=x; ${CONSENT_COOKIE_NAME}_v2=x`)).toBe(0);
+    expect(
+      countConsentCookies(`${CONSENT_COOKIE_NAME}=corrupted; ${CONSENT_COOKIE_NAME}=%7Bnope`),
+    ).toBe(2);
+  });
+
+  it("THE PREMISE: the planted copy is the one a browser hands over first", () => {
+    // Measured, not assumed. If this ordering were wrong the whole rule would be
+    // solving a problem that does not exist, and every test below would pass for
+    // the wrong reason.
+    stubDomainCookieJar(hijacked());
+    expect(document.cookie.startsWith(`${CONSENT_COOKIE_NAME}=${plantedValue}`)).toBe(true);
+    expect(parseConsentPayload(plantedValue)).toEqual(planted);
+    expect(countConsentCookies(document.cookie)).toBe(2);
+  });
+
+  it("deletes the planted copy and continues with the shared record", () => {
+    stubConsoleReports();
+    const { entries } = stubDomainCookieJar(hijacked());
+
+    expect(readConsentCookie()).toEqual(real);
+    // What survived is the SHARED copy specifically, not merely "a copy" —
+    // asserting on the value alone would pass if the repair had deleted the wrong
+    // one and the two records happened to look alike.
+    expect(entries().filter((entry) => entry.name === CONSENT_COOKIE_NAME)).toEqual([
+      sharedCopy(realValue),
+    ]);
+  });
+
+  it("THE CONSENT STAKE: a planted grant is not what the site acts on", () => {
+    // The test that matters most on this cookie, and the reason its contract
+    // adopted rule 6 at all. `consentCookieSupersedes(cookie, null)` is the D-4
+    // branch: with Cookiebot holding no answer, a cookie that ALLOWS a category is
+    // adopted into the CMP — which suppresses the banner and, through
+    // `metaLoadGranted`, opens the Meta pixel's load gate. The visitor here
+    // refused everything on the platform; a sibling host planted a grant.
+    stubConsoleReports();
+    stubDomainCookieJar(hijacked());
+
+    const cookie = readConsentCookie();
+    expect(cookie).toEqual(real);
+    // Without the repair this would be the planted grant and the answer would be
+    // `true`: consent adopted, banner gone, pixel loading, nobody asked.
+    expect(consentCookieSupersedes(cookie!, null)).toBe(false);
+    expect(cookie!.m).toBe(false);
+  });
+
+  it("leaves newest-wins alone: the survivor still loses to a genuinely newer choice", () => {
+    // The repair decides which COPY is real. Which RECORD governs is this
+    // contract's own rule and is not touched — including in the direction that
+    // would have been convenient, where the planted copy carried the newest `t`
+    // of the three and still counts for nothing.
+    stubConsoleReports();
+    stubDomainCookieJar(hijacked());
+
+    const survivor = readConsentCookie();
+    const newerOnThisHost: ConsentPayload = {
+      v: 1,
+      t: "2026-08-12T18:00:00.000Z",
+      p: false,
+      s: true,
+      m: false,
+    };
+    expect(newestRecordedConsent(newerOnThisHost, survivor)).toEqual(newerOnThisHost);
+    expect(consentCookieSupersedes(survivor!, newerOnThisHost)).toBe(false);
+  });
+
+  it("leaves newest-wins alone: the survivor still beats an older choice", () => {
+    stubConsoleReports();
+    stubDomainCookieJar(hijacked());
+
+    const survivor = readConsentCookie();
+    const olderOnThisHost: ConsentPayload = {
+      v: 1,
+      t: "2026-08-01T00:00:00.000Z",
+      p: true,
+      s: true,
+      m: true,
+    };
+    expect(newestRecordedConsent(olderOnThisHost, survivor)).toEqual(real);
+    // And the return leg pushes the survivor into Cookiebot, which is the
+    // withdrawal reaching this host — exactly what it is for.
+    expect(consentCookieSupersedes(survivor!, olderOnThisHost)).toBe(true);
+  });
+
+  it("wipes with NO Domain — the one line that could erase the choice on both hosts", () => {
+    stubConsoleReports();
+    const { writes } = stubDomainCookieJar(hijacked());
+
+    readConsentCookie();
+
+    expect(writes).toEqual([`${CONSENT_COOKIE_NAME}=; Max-Age=0; Path=/`]);
+    expect(writes[0]).not.toContain("Domain");
+    // The same string the builder hands out, rather than a second deletion
+    // spelled out at the call site.
+    expect(buildConsentHostOnlyDeletion()).toBe(writes[0]);
+  });
+
+  it("measures what the Domain-carrying variant would have cost", () => {
+    // Not a hypothetical and not a comment: the same jar, one attribute
+    // different. The visitor's real answer is gone from BOTH hosts and the
+    // planted grant is what remains — the platform then reads a consent nobody
+    // gave, and this host adopts it. That is why the host-only deletion has a
+    // name of its own.
+    const { entries } = stubDomainCookieJar(hijacked());
+
+    document.cookie = `${buildConsentHostOnlyDeletion()}; Domain=.letsdog.nl`;
+
+    expect(entries().filter((entry) => entry.name === CONSENT_COOKIE_NAME)).toEqual([
+      hostOnlyCopy(plantedValue),
+    ]);
+  });
+
+  it("reports at WARNING level when nothing survives the wipe", async () => {
+    const reported = stubConsoleReports();
+    stubDomainCookieJar(hijacked());
+    const consent = await freshConsent();
+
+    consent.readConsentCookie();
+
+    expect(reported.error).not.toHaveBeenCalled();
+    expect(reported.warn).toHaveBeenCalledTimes(1);
+    // Same sentence as the `ld_attribution` report, prefix aside, so one operator
+    // grepping one fixed string finds the same failure on either cookie. The
+    // platform's T-575 should mirror this text rather than invent its own.
+    expect(reported.warn).toHaveBeenCalledWith(
+      `[consent] MEER DAN EEN ${CONSENT_COOKIE_NAME}-cookie`,
+      { cookie: CONSENT_COOKIE_NAME, persists: false },
+    );
+  });
+
+  it("reports at ERROR level when a duplicate survives the wipe", async () => {
+    // A copy the host-only deletion cannot reach sits on the shared domain or on
+    // another path. That is not one subdomain planting something — it is a second
+    // writer on the shared record, which is the shape that needs a human.
+    const reported = stubConsoleReports();
+    stubDomainCookieJar(bothShared());
+    const consent = await freshConsent();
+
+    consent.readConsentCookie();
+
+    expect(reported.warn).not.toHaveBeenCalled();
+    expect(reported.error).toHaveBeenCalledTimes(1);
+    expect(reported.error).toHaveBeenCalledWith(
+      `[consent] MEER DAN EEN ${CONSENT_COOKIE_NAME}-cookie: OOK NA de host-only wisopdracht`,
+      { cookie: CONSENT_COOKIE_NAME, persists: true },
+    );
+  });
+
+  it("reports once per page session, not once per read", async () => {
+    // Every Cookiebot event reads this cookie, and so does every Meta send and
+    // every PostHog consent check. The duplicate here is deliberately one that
+    // PERSISTS, so each read really does meet it again — a jar that repairs itself
+    // on the first read would prove nothing about the latch.
+    const reported = stubConsoleReports();
+    stubDomainCookieJar(bothShared());
+    const consent = await freshConsent();
+
+    consent.readConsentCookie();
+    consent.readConsentCookie();
+    consent.readConsentCookie();
+
+    expect(reported.error).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves single-copy traffic completely alone", () => {
+    const reported = stubConsoleReports();
+    const { writes } = stubDomainCookieJar([sharedCopy(realValue)]);
+
+    expect(readConsentCookie()).toEqual(real);
+    expect(writes).toEqual([]);
+    expect(reported.error).not.toHaveBeenCalled();
+    expect(reported.warn).not.toHaveBeenCalled();
+  });
+
+  it("leaves a host-only copy alone when it is the only one — the localhost case", () => {
+    // THE ACCEPTED PRICE, and the reason the repair is gated on a count. On
+    // localhost and on a *.pages.dev preview this site writes host-only itself
+    // (`consentCookieDomain` returns null there, because a Domain the browser
+    // cannot match makes the write vanish without a word), so an unconditional
+    // wipe would delete its own record on every read and the screen would claim
+    // to have saved a choice that does not exist. The count is what stops it.
+    const reported = stubConsoleReports();
+    expect(consentCookieDomain("localhost")).toBeNull();
+    const { writes, entries } = stubDomainCookieJar([hostOnlyCopy(plantedValue)]);
+
+    expect(readConsentCookie()).toEqual(planted);
+    expect(writes).toEqual([]);
+    expect(entries()).toEqual([hostOnlyCopy(plantedValue)]);
+    expect(reported.error).not.toHaveBeenCalled();
+    expect(reported.warn).not.toHaveBeenCalled();
+  });
+
+  it("never touches ld_attribution, which repairs its own duplicates", () => {
+    // Each read repairs its OWN name and nothing else. A deletion reaching across
+    // would fire outside any count the other reader made, and on `ld_attribution`
+    // a copy deleted without a duplicate present is a first touch nobody gets
+    // back.
+    stubConsoleReports();
+    const attributionCopy: JarEntry = { name: "ld_attribution", value: "whatever", domain: null };
+    const { entries } = stubDomainCookieJar([attributionCopy, ...hijacked()]);
+
+    readConsentCookie();
+
+    expect(entries().filter((entry) => entry.name === "ld_attribution")).toEqual([
+      attributionCopy,
+    ]);
   });
 });
 

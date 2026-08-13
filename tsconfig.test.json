@@ -1,6 +1,6 @@
 {
-  "//": "Type-checks the test surface (*.test.ts + vitest.config.ts), which the root tsconfig.json excludes so `next build` stays green. Vitest runs tests via esbuild and does not use this file; it exists for editor IntelliSense and an optional `tsc -p tsconfig.test.json --noEmit`.",
+  "//": "Type-checks the test surface (*.test.ts + *.test-helpers.ts + vitest.config.ts), which the root tsconfig.json excludes so `next build` stays green — a `vitest` import reaching the production typecheck breaks the build. Vitest runs tests via esbuild and does not use this file; it exists for editor IntelliSense and an optional `tsc -p tsconfig.test.json --noEmit`. The `*.test-helpers.ts` suffix carries rig code shared by two test files: it cannot be named `*.test.ts` (Vitest would collect it and fail on a suite with no tests), so it needs its own glob on both sides of this split.",
   "extends": "./tsconfig.json",
-  "include": ["**/*.test.ts", "vitest.config.ts"],
+  "include": ["**/*.test.ts", "**/*.test-helpers.ts", "vitest.config.ts"],
   "exclude": ["node_modules"]
 }

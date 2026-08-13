@@ -29,6 +29,12 @@ import {
   type AttributionPayload,
 } from "./attribution";
 import { buildConsentCookie, type ConsentPayload } from "./consent";
+import {
+  BROWSER_COOKIE_BYTE_LIMIT,
+  stubConsoleReports,
+  stubDomainCookieJar,
+  type JarEntry,
+} from "./cookie-jar.test-helpers";
 
 /** A consent state as Cookiebot would report it, or as ld_consent records it. */
 const choice = (t: string, s: boolean, m: boolean): ConsentPayload => ({ v: 1, t, p: false, s, m });
@@ -40,21 +46,6 @@ const ALL_GATES = { s: true, m: true };
 const STATS_ONLY = { s: true, m: false };
 const MARKETING_ONLY = { s: false, m: true };
 const NO_GATES = { s: false, m: false };
-
-/**
- * The one browser behaviour this stub HAS to reproduce, or the size limit cannot
- * be tested at all: an assignment whose `name=value` runs past ~4096 bytes is
- * DROPPED, silently. No throw, no return value, no cookie afterwards. A stub
- * that stores everything it is handed makes both the broken and the fixed writer
- * look identical, and green then only proves the rig cannot see the bug.
- *
- * The number is written out here rather than imported from the module under
- * test on purpose. This is a statement about what browsers do, and it has to
- * stay true independently — importing `ATTRIBUTION_MAX_COOKIE_BYTES` would mean
- * raising that constant to 100 000 keeps every test green while production
- * writes cookies that vanish.
- */
-const BROWSER_COOKIE_BYTE_LIMIT = 4096;
 
 // Same jar stub as consent.test.ts: the repo's Vitest runs in the Node
 // environment on purpose, so the cookie writers get a `document` without jsdom.
@@ -119,9 +110,6 @@ function stubRawCookieJar(jar: string) {
   vi.stubGlobal("document", { cookie: jar });
 }
 
-/** One cookie as a browser holds it: a name, a value, and the Domain it was written with. */
-type JarEntry = { name: string; value: string; domain: string | null };
-
 /** A copy planted by a sibling host — no Domain, so it exists only on this host. */
 function hostOnlyCopy(value: string): JarEntry {
   return { name: ATTRIBUTION_COOKIE_NAME, value, domain: null };
@@ -130,86 +118,6 @@ function hostOnlyCopy(value: string): JarEntry {
 /** A copy on the shared parent domain: what this site and the platform both write. */
 function sharedCopy(value: string): JarEntry {
   return { name: ATTRIBUTION_COOKIE_NAME, value, domain: ".letsdog.nl" };
-}
-
-/**
- * A jar that can hold MORE THAN ONE cookie of the same name, and that knows the
- * one thing which tells them apart.
- *
- * Neither existing stub can express contract rule 6. The Map-backed one keys on
- * the name, so it cannot hold two copies at all; the raw one holds any string
- * but cannot be written to. Both would turn green on an implementation that does
- * nothing, which is the failure mode the rule itself is about — nothing errors,
- * the columns just fill with the wrong campaign.
- *
- * So this models the two browser behaviours the rule stands on, and no more:
- *
- *   - WHAT YOU READ NEVER REVEALS A DOMAIN. The getter renders name and value
- *     only, in specificity order — the host-only copy FIRST, per RFC 6265 §5.4.
- *     That ordering is the hijack: the planted copy is the one a reader meets.
- *   - WHAT YOU WRITE DECIDES WHICH COPY YOU TOUCH. An assignment without a
- *     `Domain` attribute reaches the host-only copy and nothing else, so
- *     `Max-Age=0` without a Domain deletes exactly the `domain === null` entry.
- *     Add a Domain and the same assignment hits the shared record instead —
- *     which is the accident that would destroy a real first touch, and is
- *     measured in its own test below rather than left as a warning in prose.
- *
- * The silent over-size drop is carried over from `stubCookieJar`, so a test can
- * move between the two jars without the browser quietly getting more forgiving.
- */
-function stubDomainCookieJar(initial: JarEntry[] = []) {
-  let entries: JarEntry[] = initial.map((entry) => ({ ...entry }));
-  const writes: string[] = [];
-
-  vi.stubGlobal("document", {
-    get cookie() {
-      // Stable sort, so copies within one group keep the order they were planted
-      // in and a test can decide which of two shared copies comes first.
-      return [...entries]
-        .sort((a, b) => Number(a.domain !== null) - Number(b.domain !== null))
-        .map((entry) => `${entry.name}=${entry.value}`)
-        .join("; ");
-    },
-    set cookie(raw: string) {
-      writes.push(raw);
-      const [pair, ...attributes] = raw.split(";");
-      const eq = pair.indexOf("=");
-      if (eq === -1) return;
-      const name = pair.slice(0, eq).trim();
-      const value = pair.slice(eq + 1).trim();
-      const domain =
-        attributes
-          .map((attribute) => /^\s*domain=(.+)$/i.exec(attribute)?.[1].trim())
-          .find((found) => found !== undefined) ?? null;
-      const matches = (entry: JarEntry) => entry.name === name && entry.domain === domain;
-
-      const maxAge = attributes.find((attribute) => /^\s*max-age=/i.test(attribute));
-      if (maxAge && Number(maxAge.split("=")[1]) === 0) {
-        entries = entries.filter((entry) => !matches(entry));
-        return;
-      }
-      if (new TextEncoder().encode(pair).length > BROWSER_COOKIE_BYTE_LIMIT) return;
-
-      const existing = entries.find(matches);
-      if (existing) existing.value = value;
-      else entries.push({ name, value, domain });
-    },
-  });
-
-  return { writes, entries: () => entries };
-}
-
-/**
- * Both console levels at once, silenced and captured. Rule 6 splits its report
- * across the two — error when a duplicate survives the wipe, warning when it
- * does not — so a test that watches only one of them cannot tell "reported at
- * the wrong level" from "reported correctly".
- */
-function stubConsoleReports() {
-  return {
-    error: vi.spyOn(console, "error").mockImplementation(() => {}),
-    warn: vi.spyOn(console, "warn").mockImplementation(() => {}),
-  };
 }
 
 /**
@@ -977,13 +885,16 @@ describe("readAttributionCookie — the first PARSEABLE record", () => {
 // THE REPAIR DECIDES WHICH COPY IS REAL, NEVER WHICH RECORD WINS. First touch is
 // still the conflict rule, still the inverse of `ld_consent`.
 //
-// DELIBERATELY NOT EXTENDED TO `ld_consent`, though the two cookies share a
-// domain and a mechanism. The platform's `packages/core/src/consent.ts` still
-// takes the first MATCH on purpose — the most specific copy is the choice made
-// closest to this host — and `cross-host-consent-handover.md` carries no rule 6.
-// Deleting a copy their reader prefers would leave the two hosts disagreeing
-// about which consent governs: the T-37 failure shape, on the cookie where
-// disagreement is most expensive.
+// EXTENDED TO `ld_consent` ON 2026-08-13 (T-41), which it deliberately was not
+// when this block was written. We stopped and asked rather than mirroring the
+// rule unilaterally: the attribution contract has no authority over the consent
+// one, and at the time `cross-host-consent-handover.md` carried no rule 6 while
+// the platform's reader took the first MATCH on purpose ("the most specific copy
+// is the choice made closest to this host"). The consent contract has since
+// withdrawn that reasoning — domain-specificity says WHERE a cookie was set, not
+// WHEN the choice was made — and adopted the same rule. The repair now lives in
+// `lib/consent.ts` and both cookies delegate to it; the tests for the consent
+// half are in `lib/consent.test.ts`.
 describe("more than one ld_attribution cookie (contract rule 6)", () => {
   const AT = "2026-08-11T09:00:00.000Z";
 
@@ -1168,12 +1079,12 @@ describe("more than one ld_attribution cookie (contract rule 6)", () => {
     expect(reported.warn).not.toHaveBeenCalled();
   });
 
-  it("never touches ld_consent, whose reader deliberately prefers the copy this deletes", () => {
-    // The two cookies share a domain and a mechanism and have opposite conflict
-    // rules. `ld_consent` has no rule 6 on either side: its reader takes the
-    // first MATCH because the most specific copy is the choice made closest to
-    // this host. A repair reaching across would make the hosts disagree about
-    // which consent governs.
+  it("never touches ld_consent, which repairs its own duplicates", () => {
+    // The two cookies share a domain, a mechanism and — since 2026-08-13 — this
+    // rule, and they still have opposite conflict rules. Each read repairs its
+    // OWN name and nothing else: a deletion that reached across would fire
+    // outside any count either reader made, and on `ld_consent` a copy deleted
+    // without a duplicate present is a choice erased on both hosts.
     stubConsoleReports();
     const consentCopy: JarEntry = { name: "ld_consent", value: "whatever", domain: null };
     const { entries } = stubDomainCookieJar([consentCopy, ...hijacked()]);
