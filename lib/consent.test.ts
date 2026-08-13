@@ -440,19 +440,72 @@ describe("consentCookieSupersedes", () => {
     expect(consentCookieSupersedes({ ...newer, v: 2, m: false }, cookiebot)).toBe(false);
   });
 
-  it("does nothing when Cookiebot records no choice at all", () => {
-    // Not merely "nothing to compare with". A withdrawal ALSO leaves Cookiebot
-    // without a response, and at that moment the cookie holds this site's own
-    // all-false record stamped now — so treating null as "older than anything"
-    // would feed our withdrawal back into our own banner and take it away from
-    // the visitor. This branch is why anything that passes the predicate must
-    // have been written by the other host.
-    expect(consentCookieSupersedes({ ...newer, p: false, s: false, m: false }, null)).toBe(false);
-  });
-
   it("does not act on a comparison it could not make", () => {
     expect(consentCookieSupersedes({ ...newer, t: "gisteren", m: false }, cookiebot)).toBe(false);
     expect(consentCookieSupersedes({ ...newer, m: false }, { ...cookiebot, t: "" })).toBe(false);
+  });
+});
+
+// D-4, settled by the owner on 2026-08-13: honour a real choice wherever the
+// visitor made it, and only ask when there is no choice on record. The whole
+// question lives in the null branch, so it gets its own block — the three guards
+// above are unchanged and still cover the case where Cookiebot HAS an answer.
+describe("consentCookieSupersedes — no local answer at all (D-4)", () => {
+  const chosenElsewhere = "2026-08-13T09:00:00.000Z";
+  const granting: ConsentPayload = {
+    v: 1,
+    t: chosenElsewhere,
+    p: false,
+    s: true,
+    m: true,
+  };
+
+  it("adopts a choice that allows something", () => {
+    // The visitor answered on mijn.letsdog.nl and is opening letsdog.nl for the
+    // first time. Since the platform put a consent prompt on its funnel routes
+    // (its D-103) this is the normal path for ad traffic, not an edge case.
+    expect(consentCookieSupersedes(granting, null)).toBe(true);
+  });
+
+  it("adopts on ANY single category, not just marketing", () => {
+    // The clamp is drawn at "allows nothing", not at any particular category —
+    // preferences-only is still a choice the visitor really made.
+    expect(consentCookieSupersedes({ ...granting, s: false, m: false, p: true }, null)).toBe(true);
+    expect(consentCookieSupersedes({ ...granting, p: false, m: false, s: true }, null)).toBe(true);
+    expect(consentCookieSupersedes({ ...granting, p: false, s: false, m: true }, null)).toBe(true);
+  });
+
+  // THE CLAMP. Deleting it is the one edit this block exists to stop.
+  it("refuses an all-false cookie, so the banner is shown", () => {
+    expect(consentCookieSupersedes({ ...granting, p: false, s: false, m: false }, null)).toBe(false);
+  });
+
+  // The same clamp, stated as the failure it prevents rather than as a rule:
+  // `withdraw()` clears hasResponse, so a withdrawal and "never asked here" are
+  // the SAME observable state — and the all-false cookie sitting there was
+  // written by this site itself, moments ago. Adopting it would turn "withdrawn"
+  // into "declined" and take the banner away from someone entitled to see it.
+  it("never re-adopts this site's own withdrawal", () => {
+    stubCookieJar();
+    writeConsentCookie({ ...granting, p: true }, "letsdog.nl");
+    recordConsentWithdrawal("letsdog.nl", "2026-08-13T09:30:00.000Z");
+    const afterWithdrawal = readConsentCookie()!;
+    // fresher than the choice it took back, and Cookiebot now reports nothing —
+    // exactly the shape that would win a newest-wins comparison.
+    expect(afterWithdrawal.t).toBe("2026-08-13T09:30:00.000Z");
+    expect(consentCookieSupersedes(afterWithdrawal, null)).toBe(false);
+  });
+
+  it("still refuses a contract version it does not know", () => {
+    // The version guard is checked first, so it governs this branch too: a v2
+    // payload may carry a category we would silently drop.
+    expect(consentCookieSupersedes({ ...granting, v: 2 }, null)).toBe(false);
+  });
+
+  it("does not need a readable timestamp to adopt", () => {
+    // There is nothing to compare against, so `t` is not part of the decision
+    // here — unlike every branch above it. Pinned so the asymmetry is deliberate.
+    expect(consentCookieSupersedes({ ...granting, t: "gisteren" }, null)).toBe(true);
   });
 });
 
@@ -508,6 +561,62 @@ describe("a choice changed on the platform, end to end", () => {
 
     // 5. and a second pass adopts nothing, whatever the clocks say
     expect(consentCookieSupersedes(fromCookie, echoed)).toBe(false);
+  });
+});
+
+// The same sequence for the visitor D-4 is about: the choice was made on
+// mijn.letsdog.nl and this host has NEVER been answered, so there is no
+// Cookiebot record to be newer than. The read-back trap of step 4 is identical,
+// and it is the reason the cookie's `t` survives a path that never wrote it.
+describe("a choice made on the platform, never answered here, end to end", () => {
+  it("adopts once and still leaves the cookie's own timestamp alone", () => {
+    const chosenOnPlatform = "2026-08-13T08:00:00.000Z";
+    const { writes } = stubCookieJar();
+    const submitCustomConsent = vi.fn();
+
+    // 1. the platform wrote the visitor's grant into the shared cookie
+    writeConsentCookie(
+      { v: 1, t: chosenOnPlatform, p: false, s: true, m: true },
+      "letsdog.nl",
+    );
+    // 2. the visitor lands here for the first time: Cookiebot has no response
+    const fromCookie = readConsentCookie()!;
+    expect(consentCookieSupersedes(fromCookie, null)).toBe(true);
+
+    // 3. Cookiebot is put into that choice and stamps the moment at NOW
+    vi.stubGlobal("window", { Cookiebot: { submitCustomConsent } });
+    expect(submitConsentToCookiebot(fromCookie)).toBe(true);
+    expect(submitCustomConsent).toHaveBeenCalledWith(false, true, true);
+    const echoed: ConsentPayload = { v: 1, t: "2026-08-13T09:45:00.000Z", p: false, s: true, m: true };
+
+    // 4. its consent event reaches the write side, which must stay silent — the
+    //    platform appends a row per newer timestamp, and nobody chose anything
+    //    on this host.
+    writeConsentCookie(echoed, "letsdog.nl");
+    expect(writes).toHaveLength(1);
+    expect(readConsentCookie()?.t).toBe(chosenOnPlatform);
+
+    // 5. and a second pass adopts nothing
+    expect(consentCookieSupersedes(fromCookie, echoed)).toBe(false);
+  });
+
+  it("shows the banner instead when the platform choice refused everything", () => {
+    const { writes } = stubCookieJar();
+    const submitCustomConsent = vi.fn();
+
+    writeConsentCookie(
+      { v: 1, t: "2026-08-13T08:00:00.000Z", p: false, s: false, m: false },
+      "letsdog.nl",
+    );
+    const fromCookie = readConsentCookie()!;
+    expect(consentCookieSupersedes(fromCookie, null)).toBe(false);
+
+    // Nothing is submitted, so Cookiebot keeps no response and renders its
+    // banner. The accepted price of the clamp: this visitor is asked once more
+    // here. Asking is the safe direction; suppressing is not.
+    vi.stubGlobal("window", { Cookiebot: { submitCustomConsent } });
+    expect(submitCustomConsent).not.toHaveBeenCalled();
+    expect(writes).toHaveLength(1);
   });
 });
 

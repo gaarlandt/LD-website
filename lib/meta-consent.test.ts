@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { metaLoadGranted, metaSendGranted } from "./meta-consent";
-import { CONSENT_COOKIE_VERSION, type ConsentPayload } from "./consent";
+import {
+  CONSENT_COOKIE_VERSION,
+  consentCookieSupersedes,
+  type ConsentPayload,
+} from "./consent";
 
 const at = (t: string, m: boolean): ConsentPayload => ({
   v: CONSENT_COOKIE_VERSION,
@@ -51,15 +55,15 @@ describe("metaSendGranted — the refusal direction", () => {
   });
 });
 
-// PINNED ON PURPOSE, AND FLIPPABLE IN ONE LINE. The merge is symmetric, so it
-// changes the grant direction too: a marketing grant recorded on the platform
-// while Cookiebot here has no answer at all now reads as granted, where before
-// it read as refused. That is adjacent to loop decision D-4 (may a platform
-// answer stand in for a local banner answer?), which is the owner's call and not
-// this PR's. The behaviour is asserted here rather than guarded against, so the
-// answer can be applied deliberately: if it is no, require `cookiebot?.m ===
-// true` in metaSendGranted and this describe block inverts.
-describe("metaSendGranted — the grant direction (D-4, owner's call)", () => {
+// PINNED ON PURPOSE, AND NOW SETTLED. The merge is symmetric, so it changes the
+// grant direction too: a marketing grant recorded on the platform while Cookiebot
+// here has no answer at all reads as granted. That was loop decision D-4, and on
+// 2026-08-13 the owner chose to honour it — so this block states live behaviour,
+// not a parked question. It stays asserted in both directions because the
+// alternative reading is still one line away (`cookiebot?.m === true` here, i.e.
+// the same reading as metaLoadGranted), and a change of posture should have to
+// edit a test that says so.
+describe("metaSendGranted — the grant direction (D-4, settled 2026-08-13)", () => {
   it("grants when the platform recorded marketing and Cookiebot is silent", () => {
     expect(metaSendGranted(null, at(LATER, true))).toBe(true);
   });
@@ -90,9 +94,71 @@ describe("metaLoadGranted — the merge may only subtract", () => {
   // Deliberately stricter than metaSendGranted above: the send gate answers true
   // here, the load gate does not. Loading is the commitment that cannot be taken
   // back (fbevents.js cannot be unloaded, and it writes _fbp/_fbc on arrival), so
-  // D-4 does not get to widen it.
+  // D-4 does not get to widen it. Note this is the state BEFORE ConsentSync runs;
+  // what happens after it is the describe block below.
   it("does not fetch on a platform-only grant with no answer here", () => {
     expect(metaLoadGranted(null, at(LATER, true))).toBe(false);
     expect(metaSendGranted(null, at(LATER, true))).toBe(true);
+  });
+});
+
+// THE SECOND-ORDER EFFECT OF D-4, PROVED RATHER THAN ASSUMED.
+//
+// The load gate can only ever SUBTRACT from Cookiebot's answer, so it never opens
+// on the cookie alone — which is why the grant direction of metaSendGranted was
+// inert until now: nothing ever reached Cookiebot without a local answer, the
+// pixel was never fetched, `window.fbq` did not exist, and the send gate had
+// nothing to send. Adopting the cookie (consentCookieSupersedes, above) is what
+// puts Cookiebot into the choice, and THAT is what opens the load gate.
+//
+// So the chain below is the actual behaviour change, and the refusal case is the
+// one that must not move. Both are asserted through the real predicate rather
+// than by hand-writing the post-adoption state.
+describe("D-4 adoption and the Meta gates, in sequence", () => {
+  it("opens the load gate for a marketing consent recorded on the platform", () => {
+    const fromPlatform = at(LATER, true);
+
+    // 1. Cookiebot holds nothing, so the pixel is not fetched yet…
+    expect(metaLoadGranted(null, fromPlatform)).toBe(false);
+
+    // 2. …but the choice allows something, so ConsentSync adopts it…
+    expect(consentCookieSupersedes(fromPlatform, null)).toBe(true);
+
+    // 3. …and Cookiebot, having accepted it, re-stamps at NOW and reports it.
+    const adopted = at("2026-08-12T11:00:00.000Z", true);
+    expect(metaLoadGranted(adopted, fromPlatform)).toBe(true);
+    expect(metaSendGranted(adopted, fromPlatform)).toBe(true);
+  });
+
+  // "Refused marketing" and "refused everything" are different cookies and take
+  // different routes to the same closed gate. Keeping both is the point: the
+  // first is ADOPTED (it is a real choice, and statistics is a real yes) and the
+  // pixel is still never fetched, because adoption carries m:false with it.
+  it("adopts a statistics-only choice without ever opening the pixel", () => {
+    const statsOnly = at(LATER, false); // p:false, s:true, m:false
+
+    expect(consentCookieSupersedes(statsOnly, null)).toBe(true);
+    const adopted = at("2026-08-12T11:00:00.000Z", false);
+    expect(metaLoadGranted(adopted, statsOnly)).toBe(false);
+    expect(metaSendGranted(adopted, statsOnly)).toBe(false);
+  });
+
+  it("keeps the pixel unfetchable when the platform choice refused everything", () => {
+    // The all-false clamp means adoption never happens, so Cookiebot keeps no
+    // response and the load gate stays shut on its own first term.
+    const refusedAll: ConsentPayload = { ...at(LATER, false), p: false, s: false };
+
+    expect(consentCookieSupersedes(refusedAll, null)).toBe(false);
+    expect(metaLoadGranted(null, refusedAll)).toBe(false);
+    expect(metaSendGranted(null, refusedAll)).toBe(false);
+  });
+
+  it("keeps a withdrawal made here from reopening the gate", () => {
+    // The withdrawal round-trip seen from the pixel's side: `withdraw()` leaves
+    // Cookiebot reporting null while ld_consent holds the all-false record this
+    // site just wrote. Adoption is clamped, so the gate cannot be reopened by it.
+    const ourWithdrawal: ConsentPayload = { ...at(LATER, false), p: false, s: false };
+    expect(consentCookieSupersedes(ourWithdrawal, null)).toBe(false);
+    expect(metaLoadGranted(null, ourWithdrawal)).toBe(false);
   });
 });
