@@ -1,15 +1,22 @@
 import posthog from "posthog-js";
 import { toMetaEvent, type MetaEventParams } from "@/lib/meta-events";
-import { readCookiebotConsent } from "@/lib/consent";
+import { readConsentCookie, readCookiebotConsent } from "@/lib/consent";
+import { metaSendGranted } from "@/lib/meta-consent";
 
 // `typeof window.fbq === "function"` is no longer enough on its own to mean
 // "we may send to Meta". fbevents.js cannot be unloaded once it has loaded, so
 // after a withdrawal fbq is still a callable function; Meta holds the events
 // rather than sending them, but a re-grant later in the same page would flush
-// what was queued while consent was withdrawn. Asking Cookiebot directly costs
-// a property read and removes the question.
+// what was queued while consent was withdrawn. Reading the recorded choice costs
+// a property read and a cookie read, and removes the question.
+//
+// BOTH writers of that choice are read, not just Cookiebot. Cookiebot alone can
+// be the older answer — a choice made on mijn.letsdog.nl lands in `ld_consent`
+// first and only reaches Cookiebot once ConsentSync pushes it — and a Meta
+// beacon cannot be un-sent. The merge, its two directions and the open D-4
+// question about the grant direction are in lib/meta-consent.ts.
 function metaConsentGranted(): boolean {
-  return readCookiebotConsent()?.m === true;
+  return metaSendGranted(readCookiebotConsent(), readConsentCookie());
 }
 
 declare global {
