@@ -197,16 +197,29 @@ describe("the ld_attribution contract", () => {
 // side went on believing it had narrowed the record while the un-narrowed one
 // sat exactly where it was. That turns consent erasure into a switch a co-writer
 // can flip: withdraw marketing, and the fbclid stays.
-describe("parseAttributionPayload — the bound on t (contract rule 4)", () => {
+//
+// THE CAP CUTS, IT DOES NOT REFUSE, and that half is a contract matter rather
+// than a preference. The platform slices `t` at the same 64
+// (MAX_TOUCH_MOMENT_LENGTH, packages/core/src/attribution.ts) and KEEPS the
+// record. A record we refused but it kept is a record the two hosts disagree
+// about the EXISTENCE of — and "does a touch already exist" is the only question
+// either side asks of this cookie. Being stricter than the co-writer is a failure
+// mode of its own, so these tests pin the direction and not just the number.
+describe("parseAttributionPayload — the cut on t (contract rule 4)", () => {
   /** What no contracted writer can produce: a real stamp with 5 000 characters glued on. */
+  const oversizedT = `2026-08-11T09:00:00.000Z${"0".repeat(5000)}`;
+  const cutT = oversizedT.slice(0, ATTRIBUTION_MAX_TIMESTAMP_LENGTH);
   const oversized = encodeURIComponent(
-    JSON.stringify({
-      v: 1,
-      t: `2026-08-11T09:00:00.000Z${"0".repeat(5000)}`,
-      utm_source: "facebook",
-      fbclid: "f1",
-    }),
+    JSON.stringify({ v: 1, t: oversizedT, utm_source: "facebook", fbclid: "f1" }),
   );
+
+  /** That same record after the cut — what BOTH hosts' parsers hand back. */
+  const oversizedParsed: AttributionPayload = {
+    v: 1,
+    t: cutT,
+    utm_source: "facebook",
+    fbclid: "f1",
+  };
 
   /** A legitimate record, as either host writes it. */
   const valid: AttributionPayload = {
@@ -220,30 +233,44 @@ describe("parseAttributionPayload — the bound on t (contract rule 4)", () => {
   const record = (t: string) =>
     encodeURIComponent(JSON.stringify({ v: 1, t, utm_source: "facebook" }));
 
-  it("bounds t far below the 200 a campaign parameter gets", () => {
-    // toISOString() is exactly 24 characters, 27 in the extended-year form. The
-    // headroom above that is for a legitimate variant the platform might write,
-    // not for a shape we are guessing at — and tightening it below 27 would start
-    // rejecting real timestamps, which is the expensive direction.
+  it("cuts t at the platform's own bound, far below the 200 a campaign parameter gets", () => {
+    // 64 is MAX_TOUCH_MOMENT_LENGTH in the platform's
+    // packages/core/src/attribution.ts. toISOString() is exactly 24 characters, 27
+    // in the extended-year form; the headroom above that is for a legitimate
+    // variant the platform might write, not for a shape we are guessing at. The
+    // number has to match on both sides — one host cutting at a different length
+    // than the other is how identical records stop being identical.
     expect(ATTRIBUTION_MAX_TIMESTAMP_LENGTH).toBe(64);
     expect(new Date().toISOString()).toHaveLength(24);
     expect(ATTRIBUTION_MAX_TIMESTAMP_LENGTH).toBeLessThan(ATTRIBUTION_MAX_LENGTH);
   });
 
-  it("REJECTS an oversized t instead of truncating it into a plausible wrong moment", () => {
-    // Truncation is right for the seven parameters — both repos cut at 200 by
-    // contract, so a cut value is still one both sides agreed on — and wrong
-    // here. A cut timestamp is a DIFFERENT MOMENT wearing the confidence of a
-    // real one, and the platform builds Meta's fbc from a stored fbclid using `t`
-    // as the click moment. Null, not a shorter string.
-    expect(parseAttributionPayload(oversized)).toBeNull();
+  it("truncates an oversized t to the bound and KEEPS the record", () => {
+    const parsed = parseAttributionPayload(oversized);
+    expect(parsed).toEqual(oversizedParsed);
+    expect(parsed?.t).toHaveLength(ATTRIBUTION_MAX_TIMESTAMP_LENGTH);
+    // And the cut manufactures no plausible wrong moment on the way, which is
+    // what makes cutting affordable here. Only an already-broken value is ever
+    // shortened, and what comes out is unreadable as a date — the platform's
+    // buildFbcFromFbclid answers an unreadable moment with null, so the cost is
+    // the click id's creation_time and not the record.
+    expect(Number.isNaN(new Date(parsed!.t).getTime())).toBe(true);
   });
 
-  it("accepts a t exactly at the bound and rejects the first character past it", () => {
+  it("leaves a t exactly at the bound untouched and cuts the first character past it", () => {
     // The pair is what makes it a bound rather than a coincidence.
     const at = "2".repeat(ATTRIBUTION_MAX_TIMESTAMP_LENGTH);
     expect(parseAttributionPayload(record(at))?.t).toBe(at);
-    expect(parseAttributionPayload(record(`${at}2`))).toBeNull();
+    expect(parseAttributionPayload(record(`${at}2`))?.t).toBe(at);
+  });
+
+  it("still refuses a t that is not a string at all", () => {
+    // The one rejection left on this field, and the platform keeps exactly the
+    // same one: typeof, nothing more. A number or an object is not a moment in
+    // any shape either writer could have meant.
+    for (const t of [0, 1_760_000_000_000, null, {}, ["2026-08-11T09:00:00.000Z"], true]) {
+      expect(parseAttributionPayload(encodeURIComponent(JSON.stringify({ v: 1, t })))).toBeNull();
+    }
   });
 
   it("keeps a real timestamp byte-identical, never normalised into another shape", () => {
@@ -262,11 +289,12 @@ describe("parseAttributionPayload — the bound on t (contract rule 4)", () => {
     }
   });
 
-  it("bounds the length without pinning the format, so a variant the platform writes is never refused", () => {
-    // Deliberately not a regex on toISOString()'s exact output. Refusing a REAL
-    // first touch hands the slot to a later visit for ninety days, silently —
-    // the failure this whole module exists to prevent — so the check is the
-    // property rule 4 is actually about, and nothing more.
+  it("caps the length without pinning the format, so a variant the platform writes is never touched", () => {
+    // Deliberately not a regex on toISOString()'s exact output, and the platform
+    // checks `t` for its type only for the same reason. Refusing a REAL first
+    // touch hands the slot to a later visit for ninety days, silently — the
+    // failure this whole module exists to prevent — so the only property looked
+    // at is the one rule 4 is actually about.
     expect(parseAttributionPayload(record("2026-08-11T09:15:00+02:00"))?.t).toBe(
       "2026-08-11T09:15:00+02:00",
     );
@@ -287,19 +315,33 @@ describe("parseAttributionPayload — the bound on t (contract rule 4)", () => {
     expect(parseAttributionPayload(serializeAttributionPayload(payload))).toEqual(payload);
   });
 
-  // WHY REJECTING IS SAFE AT ALL, and it is rule 1 that makes it so: the reader
-  // takes the first PARSEABLE copy, so a null from the parser means "skip this
-  // copy and keep walking", not "there is no record". Per RFC 6265 §5.4 a
-  // sibling's host-only copy with a deeper Path is handed over FIRST.
-  it("does not let an oversized copy mask the valid shared record behind it", () => {
+  // Rule 1 still decides WHICH copy is read — the first PARSEABLE one, and per
+  // RFC 6265 §5.4 a sibling's host-only copy with a deeper Path is handed over
+  // FIRST. What changed is that an oversized `t` no longer makes a copy
+  // unparseable, so the sibling's copy is the answer here rather than the shared
+  // record behind it. That is the intended outcome, not a hole in rule 1: the
+  // platform walks the same list with the same tolerance and stops at the same
+  // copy, so both hosts read ONE record. Skipping it here would leave us
+  // reporting a different first touch than the platform reports from a byte-
+  // identical jar. Rule 1's real job — a copy that is genuinely unreadable must
+  // not mask the record behind it — is pinned in "the first PARSEABLE record"
+  // below, with a corrupt copy rather than an oversized one.
+  it("reads the same copy the platform would: the oversized one, cut", () => {
     stubRawCookieJar(
       `${ATTRIBUTION_COOKIE_NAME}=${oversized}; ${ATTRIBUTION_COOKIE_NAME}=${shared}; _ga=1`,
     );
-    expect(readAttributionCookie()).toEqual(valid);
+    expect(readAttributionCookie()).toEqual(oversizedParsed);
+    expect(readAttributionCookie()).not.toEqual(valid);
   });
 
-  it("does not let an oversized copy hand the first touch to a later visit", () => {
-    const jar = `${ATTRIBUTION_COOKIE_NAME}=${oversized}; ${ATTRIBUTION_COOKIE_NAME}=${shared}`;
+  it("answers 'a touch exists' from an oversized record, so this visit cannot claim the slot", () => {
+    // THE DIVERGENCE THIS CHANGE CLOSES, and the reason the cut beats a refusal.
+    // The oversized record is the ONLY copy in the jar, so the answer cannot be
+    // borrowed from a second one. The platform keeps this record; refusing it
+    // here would report "no touch yet", write a fresh record straight over a
+    // first touch that really existed, and leave the two hosts crediting two
+    // different campaigns from one cookie — silently, for ninety days.
+    const jar = `${ATTRIBUTION_COOKIE_NAME}=${oversized}`;
     stubRawCookieJar(jar);
 
     expect(recordFirstTouch({ utm_source: "google", gclid: "g2" }, ALL_GATES, "letsdog.nl")).toBe(
@@ -309,48 +351,24 @@ describe("parseAttributionPayload — the bound on t (contract rule 4)", () => {
     expect(document.cookie).toBe(jar);
   });
 
-  it("never emits a narrowing rewrite the browser would drop silently", () => {
-    // The failure end to end. Before the bound this read the oversized record,
-    // narrowed it, and handed document.cookie a ~5 KB string — past the ~4096-byte
-    // per-cookie limit, so the write vanished with no error at all and the fbclid
-    // stayed on the record under a gate that had just closed.
-    //
-    // The honest outcome now is not "it narrowed correctly" but "it declined to
-    // act on a record it does not trust". A co-writer's cookie was never ours to
-    // rewrite; what changed is that this side no longer reports a success it did
-    // not have.
+  it("narrows an oversized record into a cookie the browser will actually keep", () => {
+    // The failure end to end, and why the cap cuts instead of refusing. Before
+    // the cut this read the oversized record, narrowed it, and handed
+    // document.cookie a ~5 KB string — past the ~4096-byte per-cookie limit, so
+    // the write vanished with no error at all and the fbclid stayed on the record
+    // under a gate that had just closed. Refusing the record would "fix" the
+    // silent drop by never writing at all, which leaves that same fbclid exactly
+    // where it was; cutting fixes it by making the erasure land.
     const { writes } = stubCookieJar();
     document.cookie = `${ATTRIBUTION_COOKIE_NAME}=${oversized}`;
     const before = writes.length;
 
     narrowStoredToConsent(STATS_ONLY, "letsdog.nl");
 
-    expect(writes.slice(before)).toEqual([]);
-  });
-
-  it("lets the next real ad click replace a record whose moment is a fiction", () => {
-    // The cost of rejecting, and why it is the right cost to pay. Neither
-    // contracted writer can produce a 5 KB `t` — both stamp
-    // new Date().toISOString() — so such a record came from a co-writer or from
-    // corruption, and on the shared cookie a fresh correct record simply replaces
-    // it rather than losing the slot to it for ninety days.
-    stubCookieJar();
-    document.cookie = `${ATTRIBUTION_COOKIE_NAME}=${oversized}`;
-
-    expect(
-      recordFirstTouch(
-        { utm_source: "google", gclid: "g2" },
-        ALL_GATES,
-        "letsdog.nl",
-        "2026-08-12T10:00:00.000Z",
-      ),
-    ).toBe(true);
-    expect(readAttributionCookie()).toEqual({
-      v: 1,
-      t: "2026-08-12T10:00:00.000Z",
-      utm_source: "google",
-      gclid: "g2",
-    });
+    const emitted = writes.slice(before);
+    expect(emitted).toHaveLength(1);
+    expect(emitted[0].length).toBeLessThan(4096);
+    expect(readAttributionCookie()).toEqual({ v: 1, t: cutT, utm_source: "facebook" });
   });
 });
 
