@@ -399,16 +399,144 @@ export function buildAttributionCookie(
 }
 
 /**
+ * The deletion that carries NO Domain, and leaving that attribute off is the
+ * entire function — contract rule 6, and the platform's
+ * `buildAttributionHostOnlyDeletion` to the byte.
+ *
+ * An assignment without a Domain can only reach the HOST-ONLY copy on the host
+ * where it happens; the shared `.letsdog.nl` record is guaranteed to survive it.
+ * That is exactly the instrument the duplicate repair needs, because
+ * `document.cookie` never reveals the Domain of what you READ — deleting the
+ * host-only copy and looking again is the only way to learn which copy you were
+ * holding.
+ *
+ * IT HAS ITS OWN NAME SO THE DANGEROUS VARIANT CANNOT BE PICKED BY ACCIDENT.
+ * Add a Domain to this string and the same line wipes the SHARED record off both
+ * hosts — a first touch nobody gets back, on the one cookie where neither host
+ * can tell afterwards that anything was lost.
+ */
+export function buildAttributionHostOnlyDeletion(): string {
+  return `${ATTRIBUTION_COOKIE_NAME}=; Max-Age=0; Path=/`;
+}
+
+/**
  * The cookie strings that delete the record.
  *
  * Two of them: a cookie can only be deleted with the same Domain it was written
  * with, and the host-only attempt covers a preview host where there is none.
  * Same reasoning as the `_fbp`/`_fbc` clearing in meta-pixel.tsx.
+ *
+ * The host-only string is REUSED rather than restated, mirroring the platform.
+ * Two spellings of one deletion is one spelling that can drift, and the drift
+ * that matters is silent: a deletion the browser does not recognise as matching
+ * leaves the record exactly where it was.
  */
 export function buildAttributionDeletion(hostname: string): string[] {
   const domain = attributionCookieDomain(hostname);
-  const base = `${ATTRIBUTION_COOKIE_NAME}=; Max-Age=0; Path=/`;
+  const base = buildAttributionHostOnlyDeletion();
   return domain ? [base, `${base}; Domain=${domain}`] : [base];
+}
+
+/**
+ * How many copies of this cookie does this header carry — contract rule 6, and
+ * the platform's `countAttributionCookies`.
+ *
+ * ALL of them, parseable or not. The question is deliberately not "is there a
+ * valid record" (`readAttributionCookie` answers that) but "did MORE THAN ONE
+ * assignment with this name arrive", because that count is the only hint
+ * `document.cookie` gives. The Domain attribute is not among the things it
+ * hands back, which is precisely why the repair below is a host-only delete and
+ * a re-read rather than a comparison on domain.
+ *
+ * Exact name match on the FIRST `=`, the same discipline as
+ * `readFirstParseableCookie`: the value is URL-encoded JSON and may carry an `=`
+ * of its own, and a cookie called `old_ld_attribution` must never be counted as
+ * one of ours — a miscount here fabricates a duplicate and makes the repair
+ * delete a record that was alone and correct.
+ */
+export function countAttributionCookies(cookieHeader: string | null | undefined): number {
+  if (!cookieHeader) return 0;
+  let found = 0;
+  for (const part of cookieHeader.split(";")) {
+    const separator = part.indexOf("=");
+    if (separator === -1) continue;
+    if (part.slice(0, separator).trim() !== ATTRIBUTION_COOKIE_NAME) continue;
+    found += 1;
+  }
+  return found;
+}
+
+/**
+ * Reported once per page session, mirroring the platform's latch.
+ *
+ * Every read runs the repair — including one per CTA click — and the second
+ * read of a duplicate that is still there is the same incident, not a new one.
+ * Without the latch a single planted copy would fill the console for as long as
+ * the visitor keeps clicking, which is how a real signal becomes noise nobody
+ * reads.
+ */
+let reportedDuplicate = false;
+
+/**
+ * MORE THAN ONE COOKIE OF THIS NAME: delete the HOST-ONLY copy, re-read,
+ * continue with whatever survives — contract rule 6, mirrored from the
+ * platform's `readStoredTouch` (T-564, commit 45a47cc,
+ * apps/app/src/lib/attribution.web.ts).
+ *
+ * THIS IS NOT THE GAP RULE 1 ALREADY COVERS, and the difference is the whole
+ * reason it exists. `readFirstParseableCookie` takes the first PARSEABLE record
+ * instead of the first match, so a CORRUPT host-only copy can no longer mask the
+ * shared one. A perfectly VALID host-only copy still can: it parses, RFC 6265
+ * §5.4 hands the more specific copy over FIRST, and it therefore wins. Any host
+ * under `.letsdog.nl` can plant one — a `__Host-` prefix is not available as a
+ * defence, because both hosts must read this cookie by design — and there is
+ * nothing at all to see when it happens: no error, full columns, and the wrong
+ * campaign holding the first-touch slot for ninety days.
+ *
+ * WHY DELETE-AND-RE-READ AND NOT A COMPARISON ON DOMAIN. `document.cookie`
+ * yields names and values and nothing else; the Domain of what you read is not
+ * derivable from it. Wiping the host-only copy and seeing what is left is the
+ * only way to learn which copy you were holding. Anyone who replaces this with a
+ * Domain-based check is building something that cannot work.
+ *
+ * FIRST TOUCH IS STILL THE CONFLICT RULE, and still the inverse of `ld_consent`.
+ * The repair decides which COPY is real, never which RECORD wins: what survives
+ * it is the existing touch, and the capture path leaves that alone.
+ *
+ * THE ACCEPTED PRICE, mirrored from the platform along with the rule. On
+ * localhost and on a *.pages.dev preview this site writes host-only itself
+ * (`attributionCookieDomain` returns null there, because a Domain the browser
+ * cannot match makes the write vanish), so a repair firing there would delete
+ * our own record. It cannot fire there: the shared parent domain does not exist
+ * on those hosts, so there is no second writer and never a second copy.
+ */
+function repairDuplicateAttributionCookies(): void {
+  if (countAttributionCookies(document.cookie) <= 1) return;
+
+  // NEVER with a Domain — that variant destroys the shared record on both hosts.
+  // The string comes from a function whose only job is leaving the attribute off.
+  document.cookie = buildAttributionHostOnlyDeletion();
+
+  if (reportedDuplicate) return;
+  reportedDuplicate = true;
+
+  // Counted AFTER the deletion, because that answers a different question. A
+  // copy that survives a host-only wipe sits on the shared domain or on another
+  // path, and neither can be a planted host-only copy — it is a genuine second
+  // writer, which is a bigger thing than a hijack attempt by one subdomain.
+  const persists = countAttributionCookies(document.cookie) > 1;
+  const detail = { cookie: ATTRIBUTION_COOKIE_NAME, persists };
+  // The platform's message text, byte for byte, so one operator grepping one
+  // fixed string finds the same failure on both hosts — and the platform's
+  // error/warning split. `console` rather than an error service for the same
+  // reason as `writeAttributionCookie` below: this repo has no error sink, and
+  // adding one is a decision of its own rather than something to smuggle in
+  // under a cookie fix.
+  const message = `[attributie] MEER DAN EEN ${ATTRIBUTION_COOKIE_NAME}-cookie${
+    persists ? ": OOK NA de host-only wisopdracht" : ""
+  }`;
+  if (persists) console.error(message, detail);
+  else console.warn(message, detail);
 }
 
 /**
@@ -425,9 +553,21 @@ export function buildAttributionDeletion(hostname: string): string[] {
  * Shared with `readConsentCookie` rather than copied, for the same reason
  * `attributionCookieDomain` delegates: the two cookies must not drift apart on a
  * rule the platform implements once on its side.
+ *
+ * AND RULE 6 RUNS HERE, WHICH IS WHAT PUTS IT ON EVERY READ PATH AT ONCE. The
+ * contract asks for the repair on both paths — the capture, and the read that
+ * supplies the campaign claiming the sale — because a planted copy answers "does
+ * a touch already exist" just as convincingly as it hands over a campaign. This
+ * module has one read seam and three callers through it (`recordFirstTouch`,
+ * `narrowStoredToConsent`, and components/analytics/cta-tracker.tsx, which is
+ * this site's analogue of the platform's read at checkout), so placing the
+ * repair here covers all three and leaves no fourth caller to remember.
  */
 export function readAttributionCookie(): AttributionPayload | null {
   if (typeof document === "undefined") return null;
+  repairDuplicateAttributionCookies();
+  // Read AFTER the repair: `document.cookie` is a different string once the
+  // host-only copy is gone, and reading the old one would defeat the point.
   return readFirstParseableCookie(
     document.cookie,
     ATTRIBUTION_COOKIE_NAME,

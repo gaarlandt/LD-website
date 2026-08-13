@@ -13,7 +13,9 @@ import {
   attributionCookieDomain,
   buildAttributionCookie,
   buildAttributionDeletion,
+  buildAttributionHostOnlyDeletion,
   consentedParams,
+  countAttributionCookies,
   createAttributionRecorder,
   effectiveConsent,
   hasAnyParam,
@@ -107,9 +109,123 @@ function stubConsoleError() {
  * document.cookie exactly as given, duplicates and all. The Map-backed jar holds
  * one value per name, and two cookies sharing one name is the whole failure mode
  * in `readAttributionCookie` below.
+ *
+ * READ-ONLY, and that is now a limit rather than a simplification: an assignment
+ * replaces the whole property instead of updating one copy. Any test where the
+ * code under test WRITES — which since contract rule 6 includes every read of a
+ * jar holding two copies — belongs on `stubDomainCookieJar` below.
  */
 function stubRawCookieJar(jar: string) {
   vi.stubGlobal("document", { cookie: jar });
+}
+
+/** One cookie as a browser holds it: a name, a value, and the Domain it was written with. */
+type JarEntry = { name: string; value: string; domain: string | null };
+
+/** A copy planted by a sibling host — no Domain, so it exists only on this host. */
+function hostOnlyCopy(value: string): JarEntry {
+  return { name: ATTRIBUTION_COOKIE_NAME, value, domain: null };
+}
+
+/** A copy on the shared parent domain: what this site and the platform both write. */
+function sharedCopy(value: string): JarEntry {
+  return { name: ATTRIBUTION_COOKIE_NAME, value, domain: ".letsdog.nl" };
+}
+
+/**
+ * A jar that can hold MORE THAN ONE cookie of the same name, and that knows the
+ * one thing which tells them apart.
+ *
+ * Neither existing stub can express contract rule 6. The Map-backed one keys on
+ * the name, so it cannot hold two copies at all; the raw one holds any string
+ * but cannot be written to. Both would turn green on an implementation that does
+ * nothing, which is the failure mode the rule itself is about — nothing errors,
+ * the columns just fill with the wrong campaign.
+ *
+ * So this models the two browser behaviours the rule stands on, and no more:
+ *
+ *   - WHAT YOU READ NEVER REVEALS A DOMAIN. The getter renders name and value
+ *     only, in specificity order — the host-only copy FIRST, per RFC 6265 §5.4.
+ *     That ordering is the hijack: the planted copy is the one a reader meets.
+ *   - WHAT YOU WRITE DECIDES WHICH COPY YOU TOUCH. An assignment without a
+ *     `Domain` attribute reaches the host-only copy and nothing else, so
+ *     `Max-Age=0` without a Domain deletes exactly the `domain === null` entry.
+ *     Add a Domain and the same assignment hits the shared record instead —
+ *     which is the accident that would destroy a real first touch, and is
+ *     measured in its own test below rather than left as a warning in prose.
+ *
+ * The silent over-size drop is carried over from `stubCookieJar`, so a test can
+ * move between the two jars without the browser quietly getting more forgiving.
+ */
+function stubDomainCookieJar(initial: JarEntry[] = []) {
+  let entries: JarEntry[] = initial.map((entry) => ({ ...entry }));
+  const writes: string[] = [];
+
+  vi.stubGlobal("document", {
+    get cookie() {
+      // Stable sort, so copies within one group keep the order they were planted
+      // in and a test can decide which of two shared copies comes first.
+      return [...entries]
+        .sort((a, b) => Number(a.domain !== null) - Number(b.domain !== null))
+        .map((entry) => `${entry.name}=${entry.value}`)
+        .join("; ");
+    },
+    set cookie(raw: string) {
+      writes.push(raw);
+      const [pair, ...attributes] = raw.split(";");
+      const eq = pair.indexOf("=");
+      if (eq === -1) return;
+      const name = pair.slice(0, eq).trim();
+      const value = pair.slice(eq + 1).trim();
+      const domain =
+        attributes
+          .map((attribute) => /^\s*domain=(.+)$/i.exec(attribute)?.[1].trim())
+          .find((found) => found !== undefined) ?? null;
+      const matches = (entry: JarEntry) => entry.name === name && entry.domain === domain;
+
+      const maxAge = attributes.find((attribute) => /^\s*max-age=/i.test(attribute));
+      if (maxAge && Number(maxAge.split("=")[1]) === 0) {
+        entries = entries.filter((entry) => !matches(entry));
+        return;
+      }
+      if (new TextEncoder().encode(pair).length > BROWSER_COOKIE_BYTE_LIMIT) return;
+
+      const existing = entries.find(matches);
+      if (existing) existing.value = value;
+      else entries.push({ name, value, domain });
+    },
+  });
+
+  return { writes, entries: () => entries };
+}
+
+/**
+ * Both console levels at once, silenced and captured. Rule 6 splits its report
+ * across the two — error when a duplicate survives the wipe, warning when it
+ * does not — so a test that watches only one of them cannot tell "reported at
+ * the wrong level" from "reported correctly".
+ */
+function stubConsoleReports() {
+  return {
+    error: vi.spyOn(console, "error").mockImplementation(() => {}),
+    warn: vi.spyOn(console, "warn").mockImplementation(() => {}),
+  };
+}
+
+/**
+ * A fresh instance of the module, so the once-per-page-session latch starts
+ * unset.
+ *
+ * That latch is module state by design — the report is per page session, not per
+ * read — which means the FIRST duplicate this file produces consumes it for
+ * every later test sharing the static import. Re-importing after
+ * `vi.resetModules()` is how the platform's own suite handles the same latch,
+ * and it beats a test-only reset export: the production module keeps no seam
+ * that exists purely for tests.
+ */
+async function freshAttribution() {
+  vi.resetModules();
+  return import("./attribution");
 }
 
 afterEach(() => {
@@ -362,21 +478,33 @@ describe("parseAttributionPayload — the cut on t (contract rule 4)", () => {
     expect(parseAttributionPayload(serializeAttributionPayload(payload))).toEqual(payload);
   });
 
-  // Rule 1 still decides WHICH copy is read — the first PARSEABLE one, and per
-  // RFC 6265 §5.4 a sibling's host-only copy with a deeper Path is handed over
-  // FIRST. What changed is that an oversized `t` no longer makes a copy
-  // unparseable, so the sibling's copy is the answer here rather than the shared
-  // record behind it. That is the intended outcome, not a hole in rule 1: the
-  // platform walks the same list with the same tolerance and stops at the same
-  // copy, so both hosts read ONE record. Skipping it here would leave us
-  // reporting a different first touch than the platform reports from a byte-
-  // identical jar. Rule 1's real job — a copy that is genuinely unreadable must
-  // not mask the record behind it — is pinned in "the first PARSEABLE record"
-  // below, with a corrupt copy rather than an oversized one.
-  it("reads the same copy the platform would: the oversized one, cut", () => {
-    stubRawCookieJar(
-      `${ATTRIBUTION_COOKIE_NAME}=${oversized}; ${ATTRIBUTION_COOKIE_NAME}=${shared}; _ga=1`,
-    );
+  // WHAT RULE 4 STILL OWNS AFTER RULE 6, and the split below is the honest
+  // shape of it. An oversized `t` no longer makes a copy unparseable, so a
+  // sibling's copy carrying one is a copy that PARSES — and a parseable
+  // duplicate is exactly what contract rule 6 now removes before rule 1 gets to
+  // walk anything. In a two-copy jar the answer is therefore the shared record,
+  // not the oversized copy in front of it; the platform's reader takes the same
+  // two steps in the same order, so the hosts still land on one record. What
+  // rule 4 has to keep proving is the second test: a copy with an oversized `t`
+  // is CUT AND KEPT rather than refused, so it still answers "a touch exists"
+  // when it is the only copy there is.
+  it("lets rule 6 decide the two-copy case, and lands where the platform lands", () => {
+    const reported = stubConsoleReports();
+    stubDomainCookieJar([hostOnlyCopy(oversized), sharedCopy(shared)]);
+
+    expect(readAttributionCookie()).toEqual(valid);
+    expect(readAttributionCookie()).not.toEqual(oversizedParsed);
+    // The planted copy went, so nothing survived the wipe: a warning, never an
+    // error. The level is the difference between "a subdomain planted one" and
+    // "there is a second writer on the shared record".
+    expect(reported.error).not.toHaveBeenCalled();
+  });
+
+  it("keeps an oversized record when it is the only copy: cut, never refused", () => {
+    // The divergence rule 4 closes, with no second copy to borrow an answer
+    // from. Refusing this record would report "no touch yet" where the platform
+    // reports a touch, and the two hosts would credit two different campaigns.
+    stubRawCookieJar(`${ATTRIBUTION_COOKIE_NAME}=${oversized}; _ga=1`);
     expect(readAttributionCookie()).toEqual(oversizedParsed);
     expect(readAttributionCookie()).not.toEqual(valid);
   });
@@ -757,6 +885,14 @@ describe("the two consent gates", () => {
 // platform, a parked or expired one — can set its own host-only copy. Per RFC
 // 6265 §5.4 document.cookie arrives sorted longest-Path first, so a copy with a
 // deeper Path is handed over BEFORE the legitimate Domain=.letsdog.nl one.
+//
+// SINCE RULE 6 THE TWO RULES RUN IN ORDER, and that order decides what is left
+// for rule 1 to do. The repair deletes the HOST-ONLY copy first, so the
+// duplicates rule 1 still has to walk are the ones that survive it: a second
+// copy on the shared domain, or one writer at two paths. Both shapes are below.
+// The canonical one — a corrupt host-only copy next to the shared record — is
+// kept because it is the common case in the wild, but note that the two rules
+// now answer it together, so it no longer discriminates rule 1 on its own.
 describe("readAttributionCookie — the first PARSEABLE record", () => {
   const stored: AttributionPayload = {
     v: 1,
@@ -767,21 +903,33 @@ describe("readAttributionCookie — the first PARSEABLE record", () => {
   const shared = serializeAttributionPayload(stored);
 
   it("walks past a broken host-only copy to the shared record", () => {
-    stubRawCookieJar(
-      `${ATTRIBUTION_COOKIE_NAME}=corrupted; ${ATTRIBUTION_COOKIE_NAME}=${shared}; _ga=1`,
-    );
+    stubConsoleReports();
+    stubDomainCookieJar([hostOnlyCopy("corrupted"), sharedCopy(shared)]);
+    expect(readAttributionCookie()).toEqual(stored);
+  });
+
+  it("walks past a broken copy the host-only wipe cannot reach", () => {
+    // Rule 1 alone, with rule 6 unable to help: both copies carry
+    // `Domain=.letsdog.nl`, so the deletion removes nothing and a first-MATCH
+    // read would answer "no touch yet" on a record that is sitting right there.
+    stubConsoleReports();
+    stubDomainCookieJar([sharedCopy("corrupted"), sharedCopy(shared)]);
     expect(readAttributionCookie()).toEqual(stored);
   });
 
   it("still takes the shared record when it comes first", () => {
-    stubRawCookieJar(
-      `_ga=1; ${ATTRIBUTION_COOKIE_NAME}=${shared}; ${ATTRIBUTION_COOKIE_NAME}=corrupted`,
-    );
+    stubConsoleReports();
+    stubDomainCookieJar([
+      { name: "_ga", value: "1", domain: null },
+      sharedCopy(shared),
+      sharedCopy("corrupted"),
+    ]);
     expect(readAttributionCookie()).toEqual(stored);
   });
 
   it("reports no record when no copy is readable", () => {
-    stubRawCookieJar(`${ATTRIBUTION_COOKIE_NAME}=corrupted; ${ATTRIBUTION_COOKIE_NAME}=%7Bnope`);
+    stubConsoleReports();
+    stubDomainCookieJar([sharedCopy("corrupted"), sharedCopy("%7Bnope")]);
     expect(readAttributionCookie()).toBeNull();
   });
 
@@ -797,14 +945,242 @@ describe("readAttributionCookie — the first PARSEABLE record", () => {
   // answers no, and the slot is spent on the current visit for ninety days —
   // nothing errors, the columns fill, and the credit is on the wrong campaign.
   it("does not let a shadowing copy hand the first touch to a later visit", () => {
-    const jar = `${ATTRIBUTION_COOKIE_NAME}=corrupted; ${ATTRIBUTION_COOKIE_NAME}=${shared}`;
-    stubRawCookieJar(jar);
+    stubConsoleReports();
+    const { writes } = stubDomainCookieJar([hostOnlyCopy("corrupted"), sharedCopy(shared)]);
 
     expect(recordFirstTouch({ utm_source: "google", gclid: "g2" }, ALL_GATES, "letsdog.nl")).toBe(
       false,
     );
-    // A write would have replaced the stubbed property outright.
-    expect(document.cookie).toBe(jar);
+    // Nothing was stored: the only assignment is rule 6's deletion, and the
+    // record still standing is the one that was already there.
+    for (const write of writes) expect(write).toContain("Max-Age=0");
+    expect(readAttributionCookie()).toEqual(stored);
+  });
+});
+
+// Contract rule 6, the other half of the duplicate problem: MORE THAN ONE COOKIE
+// OF THIS NAME → delete the HOST-ONLY copy, re-read, continue with whatever
+// survives.
+//
+// Mirrored from the platform's implementation (T-564, commit 45a47cc,
+// `readStoredTouch` in apps/app/src/lib/attribution.web.ts), not re-derived from
+// the contract text — the same T-37 lesson the rule-5 block above records.
+//
+// WHAT RULE 1 LEAVES OPEN. Taking the first PARSEABLE record defeats a duplicate
+// that is CORRUPT. A duplicate that is perfectly VALID parses fine, arrives
+// first (RFC 6265 §5.4 hands over the more specific copy first), and therefore
+// wins. Any host under `.letsdog.nl` can plant one and `__Host-` is ruled out by
+// the contract, because both hosts must read this cookie by design. The visible
+// result is no error at all: the columns fill with the wrong campaign and the
+// first-touch slot is spent for ninety days.
+//
+// THE REPAIR DECIDES WHICH COPY IS REAL, NEVER WHICH RECORD WINS. First touch is
+// still the conflict rule, still the inverse of `ld_consent`.
+//
+// DELIBERATELY NOT EXTENDED TO `ld_consent`, though the two cookies share a
+// domain and a mechanism. The platform's `packages/core/src/consent.ts` still
+// takes the first MATCH on purpose — the most specific copy is the choice made
+// closest to this host — and `cross-host-consent-handover.md` carries no rule 6.
+// Deleting a copy their reader prefers would leave the two hosts disagreeing
+// about which consent governs: the T-37 failure shape, on the cookie where
+// disagreement is most expensive.
+describe("more than one ld_attribution cookie (contract rule 6)", () => {
+  const AT = "2026-08-11T09:00:00.000Z";
+
+  /** What a real click left behind, on the shared parent domain. */
+  const real: AttributionPayload = { v: 1, t: AT, utm_source: "facebook", utm_campaign: "zomer" };
+  /** A sibling host's copy: valid, parseable, first in line, and a lie. */
+  const planted: AttributionPayload = {
+    v: 1,
+    t: "2026-08-12T09:00:00.000Z",
+    utm_source: "gekaapt",
+    utm_campaign: "gekaapt",
+  };
+  const realValue = serializeAttributionPayload(real);
+  const plantedValue = serializeAttributionPayload(planted);
+
+  /** The hijack as a browser presents it: the host-only copy in front. */
+  const hijacked = (): JarEntry[] => [hostOnlyCopy(plantedValue), sharedCopy(realValue)];
+  /** Two copies no host-only wipe can reach — a genuine second writer. */
+  const bothShared = (): JarEntry[] => [sharedCopy(plantedValue), sharedCopy(realValue)];
+
+  it("counts every copy, parseable or not, and nothing that merely resembles one", () => {
+    // Counting only the parseable ones would miss the case this rule is for, and
+    // counting loosely is worse than not counting: `old_ld_attribution` next to
+    // one real record would fake a duplicate and make the repair delete a record
+    // that was alone and correct.
+    expect(countAttributionCookies(null)).toBe(0);
+    expect(countAttributionCookies(`_ga=1; ${ATTRIBUTION_COOKIE_NAME}=${realValue}`)).toBe(1);
+    expect(
+      countAttributionCookies(`old_${ATTRIBUTION_COOKIE_NAME}=x; ${ATTRIBUTION_COOKIE_NAME}_v2=x`),
+    ).toBe(0);
+    expect(
+      countAttributionCookies(
+        `${ATTRIBUTION_COOKIE_NAME}=corrupted; ${ATTRIBUTION_COOKIE_NAME}=%7Bnope`,
+      ),
+    ).toBe(2);
+  });
+
+  it("THE PREMISE: the planted copy is the one a browser hands over first", () => {
+    // Measured, not assumed. If this ordering were wrong the whole rule would be
+    // solving a problem that does not exist, and every test below would pass for
+    // the wrong reason.
+    stubDomainCookieJar(hijacked());
+    expect(document.cookie.startsWith(`${ATTRIBUTION_COOKIE_NAME}=${plantedValue}`)).toBe(true);
+    expect(parseAttributionPayload(plantedValue)).toEqual(planted);
+    expect(countAttributionCookies(document.cookie)).toBe(2);
+  });
+
+  it("deletes the planted copy and continues with the shared record", () => {
+    stubConsoleReports();
+    const { entries } = stubDomainCookieJar(hijacked());
+
+    expect(readAttributionCookie()).toEqual(real);
+    // What survived is the SHARED copy specifically, not merely "a copy" —
+    // asserting on the value alone would pass if the repair had deleted the
+    // wrong one and the two records happened to look alike.
+    expect(entries().filter((entry) => entry.name === ATTRIBUTION_COOKIE_NAME)).toEqual([
+      sharedCopy(realValue),
+    ]);
+  });
+
+  it("does not let a planted copy spend the first-touch slot", () => {
+    // The capture path asks one question — does a touch already exist — and a
+    // planted copy answers it just as convincingly as a real one. Nothing
+    // visible goes wrong either way: the slot is taken, the columns fill, and
+    // the sale is credited to the hijacker's campaign for ninety days.
+    stubConsoleReports();
+    const { writes } = stubDomainCookieJar(hijacked());
+
+    expect(recordFirstTouch({ utm_source: "google", gclid: "g2" }, ALL_GATES, "letsdog.nl")).toBe(
+      false,
+    );
+    // FIRST TOUCH IS STILL THE CONFLICT RULE: what survived the repair is the
+    // existing touch, and it is not overwritten by this visit either.
+    expect(readAttributionCookie()).toEqual(real);
+    for (const write of writes) expect(write).toContain("Max-Age=0");
+  });
+
+  it("hands the CTA read the real campaign, not the planted one", () => {
+    // components/analytics/cta-tracker.tsx:49 calls readAttributionCookie() per
+    // click — this site's analogue of the platform's read at checkout, the read
+    // that supplies the campaign claiming the sale. It comes through the same
+    // seam as the capture, which is what puts the repair on every read path at
+    // once instead of on a list of call sites somebody has to keep complete.
+    stubConsoleReports();
+    stubDomainCookieJar(hijacked());
+
+    expect(readAttributionCookie()?.utm_campaign).toBe("zomer");
+    // And on the next click, with nothing left to repair.
+    expect(readAttributionCookie()?.utm_campaign).toBe("zomer");
+  });
+
+  it("wipes with NO Domain — the one line that could destroy a real first touch", () => {
+    stubConsoleReports();
+    const { writes } = stubDomainCookieJar(hijacked());
+
+    readAttributionCookie();
+
+    expect(writes).toEqual([`${ATTRIBUTION_COOKIE_NAME}=; Max-Age=0; Path=/`]);
+    expect(writes[0]).not.toContain("Domain");
+    // The same string the builder hands out, and the erasure path reuses it
+    // rather than spelling a second deletion of its own.
+    expect(buildAttributionHostOnlyDeletion()).toBe(writes[0]);
+    expect(buildAttributionDeletion("letsdog.nl")[0]).toBe(buildAttributionHostOnlyDeletion());
+  });
+
+  it("measures what the Domain-carrying variant would have cost", () => {
+    // Not a hypothetical and not a comment: the same jar, one attribute
+    // different. The shared record is gone from BOTH hosts and the planted copy
+    // is what remains — a first touch nobody gets back, in exchange for the
+    // hijacker's. This is why the host-only deletion has a name of its own.
+    const { entries } = stubDomainCookieJar(hijacked());
+
+    document.cookie = `${buildAttributionHostOnlyDeletion()}; Domain=.letsdog.nl`;
+
+    expect(entries().filter((entry) => entry.name === ATTRIBUTION_COOKIE_NAME)).toEqual([
+      hostOnlyCopy(plantedValue),
+    ]);
+  });
+
+  it("reports at WARNING level when nothing survives the wipe", async () => {
+    const reported = stubConsoleReports();
+    stubDomainCookieJar(hijacked());
+    const attribution = await freshAttribution();
+
+    attribution.readAttributionCookie();
+
+    expect(reported.error).not.toHaveBeenCalled();
+    expect(reported.warn).toHaveBeenCalledTimes(1);
+    // The platform's message text, byte for byte, so one operator grepping one
+    // fixed string finds the same failure on both hosts.
+    expect(reported.warn).toHaveBeenCalledWith(
+      `[attributie] MEER DAN EEN ${ATTRIBUTION_COOKIE_NAME}-cookie`,
+      { cookie: ATTRIBUTION_COOKIE_NAME, persists: false },
+    );
+  });
+
+  it("reports at ERROR level when a duplicate survives the wipe", async () => {
+    // A copy the host-only deletion cannot reach sits on the shared domain or on
+    // another path. That is not one subdomain planting something — it is a
+    // second writer on the shared record, which is the shape that needs a human.
+    const reported = stubConsoleReports();
+    stubDomainCookieJar(bothShared());
+    const attribution = await freshAttribution();
+
+    attribution.readAttributionCookie();
+
+    expect(reported.warn).not.toHaveBeenCalled();
+    expect(reported.error).toHaveBeenCalledTimes(1);
+    expect(reported.error).toHaveBeenCalledWith(
+      `[attributie] MEER DAN EEN ${ATTRIBUTION_COOKIE_NAME}-cookie: OOK NA de host-only wisopdracht`,
+      { cookie: ATTRIBUTION_COOKIE_NAME, persists: true },
+    );
+  });
+
+  it("reports once per page session, not once per read", async () => {
+    // Every CTA click reads this cookie. The duplicate here is deliberately one
+    // that PERSISTS, so each read really does meet it again — a jar that repairs
+    // itself on the first read would prove nothing about the latch.
+    const reported = stubConsoleReports();
+    stubDomainCookieJar(bothShared());
+    const attribution = await freshAttribution();
+
+    attribution.readAttributionCookie();
+    attribution.readAttributionCookie();
+    attribution.readAttributionCookie();
+
+    expect(reported.error).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves single-copy traffic completely alone", () => {
+    // THE ACCEPTED PRICE, and the reason the repair is gated on a count. On
+    // localhost and on a *.pages.dev preview this site writes host-only itself,
+    // so a wipe on every read would delete its own record. It cannot happen: the
+    // shared parent domain does not exist on those hosts, so there is never a
+    // second writer and the count never reaches two.
+    const reported = stubConsoleReports();
+    const { writes } = stubDomainCookieJar([hostOnlyCopy(realValue)]);
+
+    expect(readAttributionCookie()).toEqual(real);
+    expect(writes).toEqual([]);
+    expect(reported.error).not.toHaveBeenCalled();
+    expect(reported.warn).not.toHaveBeenCalled();
+  });
+
+  it("never touches ld_consent, whose reader deliberately prefers the copy this deletes", () => {
+    // The two cookies share a domain and a mechanism and have opposite conflict
+    // rules. `ld_consent` has no rule 6 on either side: its reader takes the
+    // first MATCH because the most specific copy is the choice made closest to
+    // this host. A repair reaching across would make the hosts disagree about
+    // which consent governs.
+    stubConsoleReports();
+    const consentCopy: JarEntry = { name: "ld_consent", value: "whatever", domain: null };
+    const { entries } = stubDomainCookieJar([consentCopy, ...hijacked()]);
+
+    readAttributionCookie();
+
+    expect(entries().filter((entry) => entry.name === "ld_consent")).toEqual([consentCopy]);
   });
 });
 
