@@ -58,6 +58,31 @@ export const ATTRIBUTION_COOKIE_VERSION = 1;
 export const ATTRIBUTION_MAX_LENGTH = 200;
 
 /**
+ * The truncation limit on `t` — contract rule 4, and the only field in the
+ * record that nothing else caps.
+ *
+ * Every parameter is cut at `ATTRIBUTION_MAX_LENGTH`, but `t` used to pass
+ * through at whatever length it arrived, and this cookie is script-writable by
+ * ANY host on `.letsdog.nl` — that is the contract's own mechanism, not a
+ * hypothetical. An oversized `t` was therefore enough to push the narrowing
+ * rewrite in `narrowStoredToConsent` past the browser's ~4096-byte per-cookie
+ * limit, where a Set-Cookie is dropped SILENTLY: this side believes it narrowed
+ * the record, the un-narrowed one survives, and the consent erasure path becomes
+ * something a co-writer can switch off at will.
+ *
+ * 64 rather than the 200 the parameters get, because this field has a known
+ * shape: `new Date().toISOString()` is exactly 24 characters, and 27 in the
+ * extended-year form. The headroom is for a legitimate variant the platform might
+ * write — an offset instead of `Z`, more sub-second digits — and deliberately not
+ * for a shape we would have to guess at.
+ *
+ * IT IS THE PLATFORM'S NUMBER TOO — `MAX_TOUCH_MOMENT_LENGTH` in its
+ * packages/core/src/attribution.ts — and the platform CUTS at it rather than
+ * refusing the record. So does the parser below, which is where the reason lives.
+ */
+export const ATTRIBUTION_MAX_TIMESTAMP_LENGTH = 64;
+
+/**
  * 90 days — the usual campaign attribution window, and longer than any of the
  * ad platforms' own click windows (Meta's default is 7 days).
  *
@@ -201,6 +226,10 @@ export function serializeAttributionPayload(payload: AttributionPayload): string
  * this whole module exists to prevent. Unknown fields are dropped on read but
  * left untouched in the cookie, because nothing here ever rewrites a record it
  * did not fully understand.
+ *
+ * AND TOLERANT OF `t` IN THE SAME DIRECTION, for the same reason: the only
+ * question asked of it is whether it is a string, and an over-long one is CUT
+ * rather than refused. The argument sits at the cut itself, below.
  */
 export function parseAttributionPayload(raw: string): AttributionPayload | null {
   let parsed: unknown;
@@ -213,7 +242,37 @@ export function parseAttributionPayload(raw: string): AttributionPayload | null 
   const record = parsed as Record<string, unknown>;
   if (typeof record.v !== "number" || typeof record.t !== "string") return null;
 
-  const payload: AttributionPayload = { v: record.v, t: record.t };
+  // `t` is CUT here, never refused, and this line is where that is decided.
+  //
+  // BEING STRICTER THAN THE CO-WRITER IS A FAILURE MODE OF ITS OWN. The platform
+  // keeps a record with an oversized `t`, cutting it at the same 64
+  // (`MAX_TOUCH_MOMENT_LENGTH` in its packages/core/src/attribution.ts), so a
+  // record we threw away is a record the two hosts disagree about the EXISTENCE
+  // of. Ours would answer "no touch yet" to `recordFirstTouch` and overwrite a
+  // first touch that really was there — the single failure this whole module
+  // exists to prevent, and the one direction every rule in this file leans away
+  // from. A bound both sides share, applied two different ways, is not a shared
+  // bound at all.
+  //
+  // Cutting costs a real record nothing. At 64 a legitimate stamp is never
+  // touched (24 characters canonical, 27 in the extended-year form), so only an
+  // already-broken value is ever shortened, and a shortened broken value is not a
+  // plausible wrong moment: it parses as Invalid Date. The platform's
+  // `buildFbcFromFbclid` answers that with `null`, so an unreadable moment costs
+  // the click id's `creation_time` and not the record.
+  //
+  // Note what is NOT checked, and note it is the same reasoning: `t` is asked for
+  // its type and nothing else, matching the platform exactly. A regex pinned to
+  // `toISOString()`'s output would refuse the next legitimate variant the platform
+  // writes — an offset instead of `Z`, more sub-second digits — and refusing is
+  // the expensive direction. Nor is it normalised: `toIsoTimestamp` from
+  // lib/consent.ts canonicalises an untrusted value for WRITING, while this is
+  // bytes the other repo already chose, on the one field both contracts say is
+  // never restamped.
+  const payload: AttributionPayload = {
+    v: record.v,
+    t: record.t.slice(0, ATTRIBUTION_MAX_TIMESTAMP_LENGTH),
+  };
   for (const name of ATTRIBUTION_URL_PARAMS) {
     const value = cleanValue(record[name]);
     if (value !== undefined) payload[name] = value;

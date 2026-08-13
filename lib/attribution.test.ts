@@ -3,6 +3,7 @@ import {
   ATTRIBUTION_COOKIE_NAME,
   ATTRIBUTION_COOKIE_VERSION,
   ATTRIBUTION_MAX_LENGTH,
+  ATTRIBUTION_MAX_TIMESTAMP_LENGTH,
   ATTRIBUTION_URL_PARAMS,
   MARKETING_PARAMS,
   STATISTICS_PARAMS,
@@ -183,6 +184,191 @@ describe("the ld_attribution contract", () => {
       JSON.stringify({ v: 1, t: "2026-08-11T09:00:00.000Z", utm_campaign: "x".repeat(500) }),
     );
     expect(parseAttributionPayload(raw)?.utm_campaign).toHaveLength(200);
+  });
+});
+
+// Contract rule 4, and the failure it names is silent in both directions.
+// ld_attribution has to be readable from every *.letsdog.nl host, so it carries
+// no `__Host-` prefix and ANY sibling host can script-write it. All seven
+// campaign parameters are capped at 200 on the way in AND on the way back out;
+// `t` was capped nowhere. An oversized `t` therefore pushed the narrowing
+// rewrite in narrowStoredToConsent past the browser's ~4096-byte per-cookie
+// limit — and a browser drops an oversized Set-Cookie WITHOUT A WORD, so this
+// side went on believing it had narrowed the record while the un-narrowed one
+// sat exactly where it was. That turns consent erasure into a switch a co-writer
+// can flip: withdraw marketing, and the fbclid stays.
+//
+// THE CAP CUTS, IT DOES NOT REFUSE, and that half is a contract matter rather
+// than a preference. The platform slices `t` at the same 64
+// (MAX_TOUCH_MOMENT_LENGTH, packages/core/src/attribution.ts) and KEEPS the
+// record. A record we refused but it kept is a record the two hosts disagree
+// about the EXISTENCE of — and "does a touch already exist" is the only question
+// either side asks of this cookie. Being stricter than the co-writer is a failure
+// mode of its own, so these tests pin the direction and not just the number.
+describe("parseAttributionPayload — the cut on t (contract rule 4)", () => {
+  /** What no contracted writer can produce: a real stamp with 5 000 characters glued on. */
+  const oversizedT = `2026-08-11T09:00:00.000Z${"0".repeat(5000)}`;
+  const cutT = oversizedT.slice(0, ATTRIBUTION_MAX_TIMESTAMP_LENGTH);
+  const oversized = encodeURIComponent(
+    JSON.stringify({ v: 1, t: oversizedT, utm_source: "facebook", fbclid: "f1" }),
+  );
+
+  /** That same record after the cut — what BOTH hosts' parsers hand back. */
+  const oversizedParsed: AttributionPayload = {
+    v: 1,
+    t: cutT,
+    utm_source: "facebook",
+    fbclid: "f1",
+  };
+
+  /** A legitimate record, as either host writes it. */
+  const valid: AttributionPayload = {
+    v: 1,
+    t: "2026-08-11T09:00:00.000Z",
+    utm_source: "facebook",
+    utm_campaign: "zomer",
+  };
+  const shared = serializeAttributionPayload(valid);
+
+  const record = (t: string) =>
+    encodeURIComponent(JSON.stringify({ v: 1, t, utm_source: "facebook" }));
+
+  it("cuts t at the platform's own bound, far below the 200 a campaign parameter gets", () => {
+    // 64 is MAX_TOUCH_MOMENT_LENGTH in the platform's
+    // packages/core/src/attribution.ts. toISOString() is exactly 24 characters, 27
+    // in the extended-year form; the headroom above that is for a legitimate
+    // variant the platform might write, not for a shape we are guessing at. The
+    // number has to match on both sides — one host cutting at a different length
+    // than the other is how identical records stop being identical.
+    expect(ATTRIBUTION_MAX_TIMESTAMP_LENGTH).toBe(64);
+    expect(new Date().toISOString()).toHaveLength(24);
+    expect(ATTRIBUTION_MAX_TIMESTAMP_LENGTH).toBeLessThan(ATTRIBUTION_MAX_LENGTH);
+  });
+
+  it("truncates an oversized t to the bound and KEEPS the record", () => {
+    const parsed = parseAttributionPayload(oversized);
+    expect(parsed).toEqual(oversizedParsed);
+    expect(parsed?.t).toHaveLength(ATTRIBUTION_MAX_TIMESTAMP_LENGTH);
+    // And the cut manufactures no plausible wrong moment on the way, which is
+    // what makes cutting affordable here. Only an already-broken value is ever
+    // shortened, and what comes out is unreadable as a date — the platform's
+    // buildFbcFromFbclid answers an unreadable moment with null, so the cost is
+    // the click id's creation_time and not the record.
+    expect(Number.isNaN(new Date(parsed!.t).getTime())).toBe(true);
+  });
+
+  it("leaves a t exactly at the bound untouched and cuts the first character past it", () => {
+    // The pair is what makes it a bound rather than a coincidence.
+    const at = "2".repeat(ATTRIBUTION_MAX_TIMESTAMP_LENGTH);
+    expect(parseAttributionPayload(record(at))?.t).toBe(at);
+    expect(parseAttributionPayload(record(`${at}2`))?.t).toBe(at);
+  });
+
+  it("still refuses a t that is not a string at all", () => {
+    // The one rejection left on this field, and the platform keeps exactly the
+    // same one: typeof, nothing more. A number or an object is not a moment in
+    // any shape either writer could have meant.
+    for (const t of [0, 1_760_000_000_000, null, {}, ["2026-08-11T09:00:00.000Z"], true]) {
+      expect(parseAttributionPayload(encodeURIComponent(JSON.stringify({ v: 1, t })))).toBeNull();
+    }
+  });
+
+  it("keeps a real timestamp byte-identical, never normalised into another shape", () => {
+    // `t` is the one field both contracts say is never restamped, so a value the
+    // other repo wrote has to survive unchanged or not at all. This is also why
+    // toIsoTimestamp() from lib/consent.ts is deliberately NOT reused here: it
+    // canonicalises (…T09:15:00Z becomes …T09:15:00.000Z), which is exactly right
+    // when writing Cookiebot's consentUTC and exactly wrong when reading bytes
+    // the platform chose.
+    for (const t of [
+      "2026-08-11T09:15:00.000Z", // what toISOString() produces
+      "2026-08-11T09:15:00Z", // valid ISO 8601 with Z, no sub-second part
+      "+275760-09-13T00:00:00.000Z", // the 27-character extended-year form
+    ]) {
+      expect(parseAttributionPayload(record(t))?.t).toBe(t);
+    }
+  });
+
+  it("caps the length without pinning the format, so a variant the platform writes is never touched", () => {
+    // Deliberately not a regex on toISOString()'s exact output, and the platform
+    // checks `t` for its type only for the same reason. Refusing a REAL first
+    // touch hands the slot to a later visit for ninety days, silently — the
+    // failure this whole module exists to prevent — so the only property looked
+    // at is the one rule 4 is actually about.
+    expect(parseAttributionPayload(record("2026-08-11T09:15:00+02:00"))?.t).toBe(
+      "2026-08-11T09:15:00+02:00",
+    );
+  });
+
+  it("still round-trips a full legitimate record unchanged", () => {
+    const payload: AttributionPayload = {
+      v: ATTRIBUTION_COOKIE_VERSION,
+      t: "2026-08-11T09:15:00.000Z",
+      utm_source: "facebook",
+      utm_medium: "paid_social",
+      utm_campaign: "zomer",
+      utm_term: "adset_a",
+      utm_content: "video_1",
+      gclid: "g123",
+      fbclid: "IwAR0abc",
+    };
+    expect(parseAttributionPayload(serializeAttributionPayload(payload))).toEqual(payload);
+  });
+
+  // Rule 1 still decides WHICH copy is read — the first PARSEABLE one, and per
+  // RFC 6265 §5.4 a sibling's host-only copy with a deeper Path is handed over
+  // FIRST. What changed is that an oversized `t` no longer makes a copy
+  // unparseable, so the sibling's copy is the answer here rather than the shared
+  // record behind it. That is the intended outcome, not a hole in rule 1: the
+  // platform walks the same list with the same tolerance and stops at the same
+  // copy, so both hosts read ONE record. Skipping it here would leave us
+  // reporting a different first touch than the platform reports from a byte-
+  // identical jar. Rule 1's real job — a copy that is genuinely unreadable must
+  // not mask the record behind it — is pinned in "the first PARSEABLE record"
+  // below, with a corrupt copy rather than an oversized one.
+  it("reads the same copy the platform would: the oversized one, cut", () => {
+    stubRawCookieJar(
+      `${ATTRIBUTION_COOKIE_NAME}=${oversized}; ${ATTRIBUTION_COOKIE_NAME}=${shared}; _ga=1`,
+    );
+    expect(readAttributionCookie()).toEqual(oversizedParsed);
+    expect(readAttributionCookie()).not.toEqual(valid);
+  });
+
+  it("answers 'a touch exists' from an oversized record, so this visit cannot claim the slot", () => {
+    // THE DIVERGENCE THIS CHANGE CLOSES, and the reason the cut beats a refusal.
+    // The oversized record is the ONLY copy in the jar, so the answer cannot be
+    // borrowed from a second one. The platform keeps this record; refusing it
+    // here would report "no touch yet", write a fresh record straight over a
+    // first touch that really existed, and leave the two hosts crediting two
+    // different campaigns from one cookie — silently, for ninety days.
+    const jar = `${ATTRIBUTION_COOKIE_NAME}=${oversized}`;
+    stubRawCookieJar(jar);
+
+    expect(recordFirstTouch({ utm_source: "google", gclid: "g2" }, ALL_GATES, "letsdog.nl")).toBe(
+      false,
+    );
+    // A write would have replaced the stubbed property outright.
+    expect(document.cookie).toBe(jar);
+  });
+
+  it("narrows an oversized record into a cookie the browser will actually keep", () => {
+    // The failure end to end, and why the cap cuts instead of refusing. Before
+    // the cut this read the oversized record, narrowed it, and handed
+    // document.cookie a ~5 KB string — past the ~4096-byte per-cookie limit, so
+    // the write vanished with no error at all and the fbclid stayed on the record
+    // under a gate that had just closed. Refusing the record would "fix" the
+    // silent drop by never writing at all, which leaves that same fbclid exactly
+    // where it was; cutting fixes it by making the erasure land.
+    const { writes } = stubCookieJar();
+    document.cookie = `${ATTRIBUTION_COOKIE_NAME}=${oversized}`;
+    const before = writes.length;
+
+    narrowStoredToConsent(STATS_ONLY, "letsdog.nl");
+
+    const emitted = writes.slice(before);
+    expect(emitted).toHaveLength(1);
+    expect(emitted[0].length).toBeLessThan(4096);
+    expect(readAttributionCookie()).toEqual({ v: 1, t: cutT, utm_source: "facebook" });
   });
 });
 
