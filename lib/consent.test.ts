@@ -26,6 +26,15 @@ const payload: ConsentPayload = {
   m: false,
 };
 
+/**
+ * A wire value that is well-formed in every respect EXCEPT possibly `t`, so a
+ * refusal is always attributable to the timestamp and never to the rest of the
+ * record. Shared by the parser tests and the writer tests below, which is the
+ * point: both ends are measured against one definition of "a valid payload".
+ */
+const withT = (t: string) =>
+  encodeURIComponent(JSON.stringify({ v: 1, t, p: false, s: true, m: false }));
+
 // These assertions are the contract with the platform (KTD0 in the D-93 plan),
 // not a style preference. The platform's reader falls back to "everything
 // refused" on any mismatch, which fails silently — so the shape is pinned here
@@ -91,6 +100,105 @@ describe("parseConsentPayload", () => {
       JSON.stringify({ v: 99, t: "2026-08-08T00:00:00.000Z", p: true, s: true, m: true }),
     );
     expect(parseConsentPayload(future)?.v).toBe(99);
+  });
+});
+
+// T-39. `t` used to pass through at any length, and this cookie is script-
+// writable by BOTH hosts on the shared parent domain by contract — so an
+// oversized `t` was enough to push a writeConsentCookie rewrite past the
+// browser's ~4096-byte limit, where the assignment is dropped SILENTLY and the
+// old state survives. On ld_consent that means a consent choice does not land.
+//
+// The repair is not the one lib/attribution.ts got. There the same hole is fixed
+// by truncating at 64 and never refusing (its rule 4: the expensive direction is
+// discarding a touch the other side kept). Here the platform REFUSES a `t` that
+// is not an ISO instant with Z, and a failure makes the whole record unreadable
+// on its side — which it treats as "everything refused". These tests pin the
+// refusal, so nobody later "harmonises" the two cookies onto one verb.
+describe("parseConsentPayload — the timestamp mirror (T-39)", () => {
+  it("refuses an oversized t instead of carrying it", () => {
+    // The T-39 payload: perfectly well-formed in every other respect, so the
+    // only possible reason to refuse it is `t`. 5000 characters is already past
+    // the whole-cookie limit on its own.
+    const oversized = "2026-08-13T09:00:00.000Z".padEnd(5000, "0");
+    expect(oversized).toHaveLength(5000);
+    expect(parseConsentPayload(withT(oversized))).toBeNull();
+    // and the same record with a sane stamp still reads, so the refusal is
+    // attributable to the field and not to the shape of the test
+    expect(parseConsentPayload(withT("2026-08-13T09:00:00.000Z"))).not.toBeNull();
+  });
+
+  it("still accepts what our own writers actually produce", () => {
+    // Every `t` this site writes comes from Date.prototype.toISOString() — via
+    // toIsoTimestamp, its now() fallback, or recordConsentWithdrawal's default.
+    // If this ever fails we are refusing our own cookie.
+    const real = new Date().toISOString();
+    expect(parseConsentPayload(withT(real))?.t).toBe(real);
+    // and the no-milliseconds variant the platform's regex also allows
+    expect(parseConsentPayload(withT("2026-08-13T09:00:00Z"))?.t).toBe("2026-08-13T09:00:00Z");
+  });
+
+  it("refuses the boundary shapes that make R8 undecidable", () => {
+    // A stamp without a zone cannot answer "is this newer than what I recorded",
+    // which is the platform's stated reason for the check.
+    expect(parseConsentPayload(withT("2026-08-13T09:00:00.000"))).toBeNull(); // no Z
+    expect(parseConsentPayload(withT("2026-08-13T09:00:00+02:00"))).toBeNull(); // offset, not Z
+    expect(parseConsentPayload(withT("2026-08-13T09:00:00.0000Z"))).toBeNull(); // 4 sub-second digits
+    expect(parseConsentPayload(withT(""))).toBeNull(); // empty
+  });
+
+  it("refuses a well-formed instant that cannot exist", () => {
+    // THE REASON Date.parse IS PART OF THE MIRROR AND NOT A FLOURISH. Hour 25
+    // satisfies the regex — \d{2} does not know what an hour is — and would
+    // reach isStrictlyNewer as a NaN, which answers "not newer" for every
+    // comparison it is ever in, silently.
+    const impossible = "2026-08-13T25:00:00.000Z";
+    expect(Number.isNaN(Date.parse(impossible))).toBe(true);
+    expect(parseConsentPayload(withT(impossible))).toBeNull();
+  });
+
+  // THE CROSS-REPO PIN. The literal below is the platform's own
+  // ISO_INSTANT_WITH_Z, from packages/core/src/consent.ts — the mirror reader
+  // this contract names. The corpus discriminates every part of it, so editing
+  // the parser's copy without editing the platform's is a test failure rather
+  // than a tidy-up that silently splits the two readers apart.
+  it("agrees with the platform's regex, character for character", () => {
+    const PLATFORM_ISO_INSTANT_WITH_Z = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
+    const corpus = [
+      "2026-08-13T09:00:00.000Z",
+      "2026-08-13T09:00:00.00Z",
+      "2026-08-13T09:00:00.0Z",
+      "2026-08-13T09:00:00Z",
+      "2026-08-13T09:00:00.0000Z",
+      "2026-08-13T09:00:00",
+      "2026-08-13T09:00:00.000",
+      "2026-08-13T09:00:00+02:00",
+      "2026-08-13T09:00:00z",
+      "2026-08-13 09:00:00Z",
+      "026-08-13T09:00:00Z",
+      // toISOString()'s extended-year form, which lib/attribution.ts documents at
+      // 27 characters and treats as legitimate. The platform refuses it, so we
+      // refuse it too — the divergence is the platform's to resolve, not ours.
+      "+011476-08-15T05:20:00.000Z",
+      " 2026-08-13T09:00:00.000Z",
+      "2026-08-13T09:00:00.000Z ",
+      "",
+    ];
+    for (const t of corpus) {
+      const accepted = parseConsentPayload(withT(t)) !== null;
+      // Date.parse is the mirror's second half; every entry here is a real
+      // instant or not, and the two checks together decide.
+      const expected = PLATFORM_ISO_INSTANT_WITH_Z.test(t) && !Number.isNaN(Date.parse(t));
+      expect({ t, accepted }).toEqual({ t, accepted: expected });
+    }
+  });
+
+  it("walks past an unreadable stamp to a copy that parses", () => {
+    // The refusal composes with rule 1: a shadowing host-only copy carrying a
+    // junk `t` no longer hides the legitimate shared record behind it.
+    const jar = `${CONSENT_COOKIE_NAME}=${withT("gisteren")}; ${CONSENT_COOKIE_NAME}=${withT("2026-08-13T09:00:00.000Z")}`;
+    stubRawCookieJar(jar);
+    expect(readConsentCookie()?.t).toBe("2026-08-13T09:00:00.000Z");
   });
 });
 
@@ -668,5 +776,63 @@ describe("toIsoTimestamp", () => {
     expect(toIsoTimestamp("nonsense")).toBeNull();
     expect(toIsoTimestamp(new Date("nope"))).toBeNull();
     expect(toIsoTimestamp(true)).toBeNull();
+  });
+
+  // The other half of T-39, and the half that keeps the parser's refusal safe.
+  // Number.isNaN only rejects a Date outside the representable range; everything
+  // inside it used to be serialised, and toISOString() switches to an
+  // expanded-year form outside years 0000-9999. So these values were a `t` this
+  // site could WRITE and neither reader could read — ours or the platform's.
+  it("returns null for a moment outside the contract's range", () => {
+    // in extended-year territory but a perfectly valid Date, so the old
+    // Number.isNaN guard passed it straight through
+    expect(toIsoTimestamp(3e14)).toBeNull(); // -> +011476-08-15T05:20:00.000Z
+    expect(toIsoTimestamp(Date.UTC(10000, 0, 1))).toBeNull(); // -> +010000-01-01T…
+    expect(toIsoTimestamp(8.64e15)).toBeNull(); // the MAXIMUM valid Date
+    expect(toIsoTimestamp(new Date(8.64e15))).toBeNull(); // same, arriving as a Date
+    expect(toIsoTimestamp(-62167219201000)).toBeNull(); // year -1, negative form
+    // and the boundary still holds on the good side
+    expect(toIsoTimestamp(Date.UTC(9999, 11, 31))).toBe("9999-12-31T00:00:00.000Z");
+  });
+
+  // THE INVARIANT, pinned as a property rather than as two lists of examples:
+  // this site can only write a moment its own parser accepts. Writer and reader
+  // share one definition of the shape (ISO_INSTANT_WITH_Z), so they cannot drift
+  // apart the way two separate checks would — and the drift is what would make
+  // us read our own cookie as "no choice".
+  it("never produces a moment parseConsentPayload would refuse", () => {
+    const candidates: unknown[] = [
+      new Date(),
+      new Date("2026-08-08T06:35:12.618Z"),
+      1786170912618,
+      0,
+      "2026-08-13T09:00:00Z",
+      "2026-08-13T09:00:00+02:00", // an offset in, canonical Z out
+      "August 13, 2026",
+      3e14,
+      8.64e15,
+      Date.UTC(10000, 0, 1),
+      -62167219201000,
+      "+275760-09-13T00:00:00.000Z",
+      "nonsense",
+      NaN,
+      null,
+      undefined,
+      true,
+    ];
+    let produced = 0;
+    for (const value of candidates) {
+      const t = toIsoTimestamp(value);
+      if (t === null) continue;
+      produced++;
+      const label = `${String(value)} -> ${t}`;
+      expect({ label, readBack: parseConsentPayload(withT(t))?.t }).toEqual({
+        label,
+        readBack: t,
+      });
+    }
+    // the corpus must actually exercise the non-null branch, or this asserts
+    // nothing at all
+    expect(produced).toBeGreaterThan(0);
   });
 });

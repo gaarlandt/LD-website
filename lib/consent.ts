@@ -103,6 +103,53 @@ export function serializeConsentPayload(payload: ConsentPayload): string {
 }
 
 /**
+ * THE PLATFORM'S OWN TIMESTAMP CHECK, copied byte for byte from the mirror
+ * reader this contract names — `ISO_INSTANT_WITH_Z` in the platform repo's
+ * packages/core/src/consent.ts. Not a shape we chose, and not ours to tidy: an
+ * ISO 8601 instant with Z, and nothing else. The platform's comment gives the
+ * reason — a stamp without a zone makes "is this cookie newer than what I
+ * already recorded" (R8) undecidable, which is a breach of the contract rather
+ * than a detail.
+ *
+ * WHY THIS REFUSES WHERE `lib/attribution.ts` TRUNCATES. Both cookies had the
+ * same unbounded-`t` hole, and they get opposite verbs on purpose — copying the
+ * attribution fix over here would be the wrong repair:
+ *
+ * - `ld_attribution` asks "does a touch exist". A record the other side keeps
+ *   but we discard costs a first touch that can never be recovered, so its rule
+ *   4 cuts `t` at 64 and never refuses the record.
+ * - `ld_consent` asks "which choice governs". Half-reading a choice is the
+ *   expensive direction: a truncated `t` is a lie about WHEN, and R8 is decided
+ *   on exactly that field. So both contracts say an unreadable consent degrades
+ *   to a refusal, and the platform implements that literally — a failing `t`
+ *   makes the WHOLE record unreadable there, which it treats as "everything
+ *   refused". `return null` is how this parser already spells that.
+ *
+ * Mirroring it is what stops the two readers from disagreeing about the same
+ * bytes, which is the failure this file's header calls silent because it looks
+ * exactly like working code.
+ *
+ * THE LENGTH BOUND FALLS OUT OF THE SHAPE, and is what T-39 was actually about.
+ * A matching `t` is at most 24 characters, so an oversized one can no longer
+ * push a `writeConsentCookie` rewrite past the browser's ~4096-byte per-cookie
+ * limit. This cookie lives on the shared parent domain and is script-writable by
+ * both hosts BY CONTRACT, so an oversized `t` is that contract's own mechanism
+ * rather than a hypothetical — and a Set-Cookie over the limit is dropped
+ * SILENTLY, leaving the old state in place. On this cookie that means a consent
+ * choice does not land: worse than the attribution equivalent, where the same
+ * hole only costs measurement quality.
+ *
+ * `Date.parse` is part of the mirror, not a belt-and-braces extra. The regex
+ * happily accepts a well-formed impossible instant — `2026-08-13T25:00:00.000Z`
+ * matches it — and such a value would reach `isStrictlyNewer` as a NaN, which
+ * silently answers "not newer" for every comparison it is ever in.
+ *
+ * Editing this regex is a cross-repo act: change it here and in the platform's
+ * reader in the same week, or not at all.
+ */
+const ISO_INSTANT_WITH_Z = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
+
+/**
  * The inverse. Returns null for anything that is not a well-formed payload —
  * a half-read or hand-edited cookie must degrade to "no choice", never to a
  * partially-trusted one.
@@ -117,6 +164,7 @@ export function parseConsentPayload(raw: string): ConsentPayload | null {
   if (typeof parsed !== "object" || parsed === null) return null;
   const c = parsed as Record<string, unknown>;
   if (typeof c.v !== "number" || typeof c.t !== "string") return null;
+  if (!ISO_INSTANT_WITH_Z.test(c.t) || Number.isNaN(Date.parse(c.t))) return null;
   if (typeof c.p !== "boolean" || typeof c.s !== "boolean" || typeof c.m !== "boolean") {
     return null;
   }
@@ -198,13 +246,42 @@ export function readFirstParseableCookie<T>(
  * Cookiebot's consentUTC is a Date on the live banner, but it is third-party
  * state we don't own, so accept the shapes it could reasonably take and reject
  * the rest rather than writing "Invalid Date" into the contract.
+ *
+ * THE INVARIANT: THIS SITE CAN ONLY WRITE A MOMENT ITS OWN PARSER ACCEPTS.
+ * The last line is what guarantees it, and it reuses `ISO_INSTANT_WITH_Z` rather
+ * than restating the rule — writer and reader share ONE definition of the shape
+ * by construction. Two separate checks would be two things to keep in step, and
+ * the one that drifts is the one nobody notices: the site would write a `t` it
+ * then refuses to read back, and `readConsentCookie` would report "no choice"
+ * for a visitor who did choose.
+ *
+ * WHY `Number.isNaN` WAS NOT ALREADY ENOUGH, which is what made this necessary
+ * rather than defensive. It only rejects a Date outside the representable range;
+ * everything inside it is "valid" and gets serialised. But `toISOString()` only
+ * produces the contract's 24-character form for years 0000-9999 and switches to
+ * an expanded-year form outside it — measured: `3e14` yields
+ * `+011476-08-15T05:20:00.000Z`, and `8.64e15`, the MAXIMUM valid Date, yields
+ * `+275760-09-13T00:00:00.000Z`. Both are refused by the parser below and by the
+ * platform's reader, so both were a `t` we could write and nobody could read.
+ * The input is `Cookiebot.consentUTC` — third-party state, declared
+ * `Date | number | string | null` — which is precisely why the guard belongs on
+ * our side of the wire and not on the platform's.
+ *
+ * Deliberately NOT a numeric year bound. The contract fixes a wire format, not a
+ * range, so the format is the thing to check.
+ *
+ * A null here is not a dead end: `readCookiebotConsent` already falls back to
+ * `new Date().toISOString()` for "Cookiebot handed us something unusable", and
+ * out-of-contract-range is simply one more way to be unusable.
  */
 export function toIsoTimestamp(value: unknown): string | null {
   if (value === null || value === undefined || typeof value === "boolean") return null;
   const date =
     value instanceof Date ? value : new Date(value as string | number);
   const time = date.getTime();
-  return Number.isNaN(time) ? null : date.toISOString();
+  if (Number.isNaN(time)) return null;
+  const iso = date.toISOString();
+  return ISO_INSTANT_WITH_Z.test(iso) ? iso : null;
 }
 
 /**
