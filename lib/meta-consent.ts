@@ -28,12 +28,16 @@ import { newestRecordedConsent, type ConsentPayload } from "@/lib/consent";
  * The refusal direction is unambiguous: a refusal recorded after Cookiebot's
  * grant suppresses the send, and suppressing is always safe.
  *
- * THE GRANT DIRECTION IS A QUESTION FOR THE OWNER, NOT FOR THIS FILE. Because
- * the merge is symmetric, a marketing grant recorded on the platform while
- * Cookiebot here has no answer at all also reads as granted. Whether a platform
- * answer may stand in for a local banner answer is loop decision D-4 — a legal
- * call. It is pinned in both directions in lib/meta-consent.test.ts, so if the
- * answer is no, the change is one line here: require `cookiebot?.m === true` as
+ * THE GRANT DIRECTION WAS THE OWNER'S CALL, AND IT IS NOW MADE. Because the merge
+ * is symmetric, a marketing grant recorded on the platform while Cookiebot here
+ * has no answer at all also reads as granted. Whether a platform answer may stand
+ * in for a local banner answer was loop decision D-4; on 2026-08-13 the owner
+ * chose that it may. Until then this direction was INERT rather than merely
+ * untested — `consentCookieSupersedes` refused to sync without a local answer, so
+ * Cookiebot never opened `metaLoadGranted`, `fbevents.js` was never fetched, and
+ * a granted send had no `window.fbq` to send through. The adoption rule is what
+ * gives this branch effect; the sequence is walked in lib/meta-consent.test.ts.
+ * The alternative reading is still one line — require `cookiebot?.m === true` as
  * well, i.e. the same reading as `metaLoadGranted` below.
  */
 export function metaSendGranted(
