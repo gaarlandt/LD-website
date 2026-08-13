@@ -242,6 +242,186 @@ export function readFirstParseableCookie<T>(
   return null;
 }
 
+// =============================================================================
+// CONTRACT RULE 6: MORE THAN ONE COOKIE OF THIS NAME
+// =============================================================================
+// Delete the HOST-ONLY copy, read again, continue with whatever survives. BOTH
+// handover cookies carry this rule now — `cross-host-attribution-handover.md`
+// has had it since 2026-08-12, `cross-host-consent-handover.md` since
+// 2026-08-13 — and the two contracts call it the same mechanism in as many
+// words. So the machinery lives here once, in the module that already holds the
+// cookie-string plumbing both cookies share (`readFirstParseableCookie`,
+// `consentCookieDomain`), and `lib/attribution.ts` delegates to it. Two spellings
+// of one rule is one spelling that can drift, and this drift is silent: a repair
+// that stops matching leaves the planted copy exactly where it was.
+//
+// WHAT THE RULE DOES NOT DECIDE: which RECORD wins. That stays each contract's
+// own and the two are opposites — newest choice on `ld_consent`, first touch on
+// `ld_attribution`. The repair only decides which COPY is real.
+
+/**
+ * How many copies of `name` does this header carry — contract rule 6, and the
+ * platform's `countAttributionCookies` generalised to a name.
+ *
+ * ALL of them, parseable or not. The question is deliberately not "is there a
+ * valid record" (`readFirstParseableCookie` answers that) but "did MORE THAN ONE
+ * assignment with this name arrive", because that count is the only hint
+ * `document.cookie` gives. The Domain attribute is not among the things it hands
+ * back, which is precisely why the repair below is a host-only delete and a
+ * re-read rather than a comparison on domain.
+ *
+ * Exact name match on the FIRST `=`, the same discipline as
+ * `readFirstParseableCookie`: the value is URL-encoded JSON and may carry an `=`
+ * of its own, and a cookie called `old_ld_consent` must never be counted as one
+ * of ours — a miscount here fabricates a duplicate and makes the repair delete a
+ * record that was alone and correct.
+ */
+export function countCookiesNamed(
+  cookieHeader: string | null | undefined,
+  name: string,
+): number {
+  if (!cookieHeader) return 0;
+  let found = 0;
+  for (const part of cookieHeader.split(";")) {
+    const separator = part.indexOf("=");
+    if (separator === -1) continue;
+    if (part.slice(0, separator).trim() !== name) continue;
+    found += 1;
+  }
+  return found;
+}
+
+/**
+ * The deletion that carries NO Domain, and leaving that attribute off is the
+ * entire function — contract rule 6 on both cookies.
+ *
+ * An assignment without a Domain can only reach the HOST-ONLY copy on the host
+ * where it happens; the shared `.letsdog.nl` record is guaranteed to survive it.
+ * That is exactly the instrument the duplicate repair needs, because
+ * `document.cookie` never reveals the Domain of what you READ — deleting the
+ * host-only copy and looking again is the only way to learn which copy you were
+ * holding.
+ *
+ * IT HAS ITS OWN NAME SO THE DANGEROUS VARIANT CANNOT BE PICKED BY ACCIDENT.
+ * Add a Domain to this string and the same line wipes the SHARED record off both
+ * hosts. On `ld_attribution` that is a first touch nobody gets back; on
+ * `ld_consent` it is the visitor's answer erased on both hosts at once, which
+ * reads on the platform as "everything refused" and here as "never asked".
+ */
+export function buildHostOnlyDeletion(name: string): string {
+  return `${name}=; Max-Age=0; Path=/`;
+}
+
+/**
+ * The repair itself, as a closure over its own once-per-page-session latch.
+ *
+ * WHY DELETE-AND-RE-READ AND NOT A COMPARISON ON DOMAIN. `document.cookie`
+ * yields names and values and nothing else; the Domain of what you read is not
+ * derivable from it. Wiping the host-only copy and seeing what is left is the
+ * only way to learn which copy you were holding. Anyone who replaces this with a
+ * Domain-based check is building something that cannot work.
+ *
+ * IT FIRES ONLY ON A REAL DUPLICATE, and that condition is load-bearing rather
+ * than an optimisation. Both cookies are written HOST-ONLY on localhost and on
+ * *.pages.dev previews (`consentCookieDomain` returns null there, because a
+ * Domain the browser cannot match makes the write vanish without a word). In
+ * those environments the host-only copy is the only copy and the legitimate one,
+ * so an unconditional wipe would delete our own record on every read. With one
+ * copy nothing fires and local development keeps working unchanged.
+ *
+ * WHY A FACTORY AND NOT A PLAIN FUNCTION TAKING A NAME. The report is latched
+ * once per PAGE SESSION, and each cookie needs a latch of its own: they are read
+ * by different callers at different rates (every CTA click reads
+ * `ld_attribution`, every consent event reads `ld_consent`), and one shared flag
+ * would let the first duplicate silence the report for the other cookie
+ * entirely. A closure gives each caller its own latch without a module-level
+ * variable per cookie and without a reset seam that only tests would use.
+ *
+ * `logPrefix` is the only thing that differs between the two, and the sentence
+ * around it is shared ON PURPOSE: one operator grepping one fixed string finds
+ * the same failure on either cookie and on either host. `console` rather than an
+ * error service because this repo has no error sink at all — adding one is a
+ * decision of its own, not something to smuggle in under a cookie fix.
+ */
+export function createDuplicateCookieRepair(name: string, logPrefix: string): () => void {
+  let reported = false;
+  return () => {
+    if (countCookiesNamed(document.cookie, name) <= 1) return;
+
+    // NEVER with a Domain — that variant destroys the shared record on both
+    // hosts. The string comes from a function whose only job is leaving the
+    // attribute off.
+    document.cookie = buildHostOnlyDeletion(name);
+
+    if (reported) return;
+    reported = true;
+
+    // Counted AFTER the deletion, because that answers a different question. A
+    // copy that survives a host-only wipe sits on the shared domain or on
+    // another path, and neither can be a planted host-only copy — it is a
+    // genuine second writer, which is a bigger thing than a hijack attempt by
+    // one subdomain.
+    const persists = countCookiesNamed(document.cookie, name) > 1;
+    const detail = { cookie: name, persists };
+    const message = `[${logPrefix}] MEER DAN EEN ${name}-cookie${
+      persists ? ": OOK NA de host-only wisopdracht" : ""
+    }`;
+    if (persists) console.error(message, detail);
+    else console.warn(message, detail);
+  };
+}
+
+/** How many `ld_consent` cookies this header carries — contract rule 6. */
+export function countConsentCookies(cookieHeader: string | null | undefined): number {
+  return countCookiesNamed(cookieHeader, CONSENT_COOKIE_NAME);
+}
+
+/** The Domain-less deletion that can only reach a host-only `ld_consent`. */
+export function buildConsentHostOnlyDeletion(): string {
+  return buildHostOnlyDeletion(CONSENT_COOKIE_NAME);
+}
+
+/**
+ * MORE THAN ONE `ld_consent`: delete the HOST-ONLY copy, re-read, continue with
+ * whatever survives — `cross-host-consent-handover.md`, section "More than one
+ * cookie of this name". We are FIRST with it: the platform carries the same rule
+ * as its loop task T-575 and has not built it yet, so this side is the reference
+ * rather than the mirror.
+ *
+ * THIS IS NOT THE GAP RULE 1 ALREADY COVERS, and the difference is the whole
+ * reason it exists. `readFirstParseableCookie` takes the first PARSEABLE record
+ * instead of the first match, so a CORRUPT host-only copy can no longer mask the
+ * shared one. A perfectly VALID host-only copy still can: it parses, RFC 6265
+ * §5.4 hands the more specific copy over FIRST, and it therefore wins. Any host
+ * under `.letsdog.nl` can plant one — a `__Host-` prefix is ruled out because
+ * both hosts must read this cookie by design.
+ *
+ * WHAT A PLANTED COPY IS WORTH HERE, which is more than on `ld_attribution` and
+ * more than it was a week ago. A cookie that GRANTS a category is acted on: since
+ * D-4 the return leg adopts a granting cookie when Cookiebot holds no answer, so
+ * a planted grant takes the banner away from a visitor who was never asked AND
+ * opens the Meta pixel's load gate. There is nothing to see when it happens — no
+ * error, a quiet page, a pixel that loads as if consent had been given.
+ *
+ * THE READER MAY NOT PREFER A COPY BY POSITION, and that is the part of the
+ * contract that changed. The platform's reader took the first match with the
+ * reasoning "the browser puts the most specific one first, and that is the choice
+ * made closest to this host". The contract withdrew it on 2026-08-13:
+ * domain-specificity says WHERE a cookie was set, not WHEN the choice was made,
+ * so picking by position hands an older answer to a visitor who has since changed
+ * their mind — on the one cookie whose entire purpose is carrying the freshest
+ * answer.
+ *
+ * NEWEST WINS IS STILL THE CONFLICT RULE. The repair decides which COPY is real,
+ * never which RECORD governs: what survives it goes on to `newestRecordedConsent`
+ * and `consentCookieSupersedes` exactly as before, and loses to a genuinely newer
+ * choice.
+ */
+const repairDuplicateConsentCookies = createDuplicateCookieRepair(
+  CONSENT_COOKIE_NAME,
+  "consent",
+);
+
 /**
  * Cookiebot's consentUTC is a Date on the live banner, but it is third-party
  * state we don't own, so accept the shapes it could reasonably take and reject
@@ -365,9 +545,22 @@ export function onCookiebotConsent(
  * The first PARSEABLE `ld_consent`, not the first one by that name — see
  * `readFirstParseableCookie` for the shadowing copy that distinction defends
  * against.
+ *
+ * AND RULE 6 RUNS HERE, WHICH IS WHAT PUTS IT ON EVERY READ PATH AT ONCE. The
+ * contract asks a repo to cover its raw-value read as well as its parsing read,
+ * because the platform has both and only one of them feeds its checkout. This
+ * side has exactly ONE: nothing here hands a raw `ld_consent` value to a server —
+ * the checkout lives on the platform — so every consumer comes through this
+ * function (`consent-sync.tsx`, `meta-pixel.tsx`, `posthog-provider.tsx`,
+ * `lib/analytics.ts`, `lib/attribution.ts`, and this module's own two writers).
+ * Placing the repair here covers all of them and leaves no second path to
+ * remember; add a raw-value reader later and it needs the repair too.
  */
 export function readConsentCookie(): ConsentPayload | null {
   if (typeof document === "undefined") return null;
+  repairDuplicateConsentCookies();
+  // Read AFTER the repair: `document.cookie` is a different string once the
+  // host-only copy is gone, and reading the old one would defeat the point.
   return readFirstParseableCookie(document.cookie, CONSENT_COOKIE_NAME, parseConsentPayload);
 }
 

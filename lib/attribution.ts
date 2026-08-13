@@ -37,8 +37,11 @@
 // boolean silently picks a side for the visitor.
 
 import {
+  buildHostOnlyDeletion,
   consentCookieDomain,
   consentCookieSupersedes,
+  countCookiesNamed,
+  createDuplicateCookieRepair,
   readConsentCookie,
   readFirstParseableCookie,
   type ConsentPayload,
@@ -414,9 +417,16 @@ export function buildAttributionCookie(
  * Add a Domain to this string and the same line wipes the SHARED record off both
  * hosts — a first touch nobody gets back, on the one cookie where neither host
  * can tell afterwards that anything was lost.
+ *
+ * The string is BUILT IN `lib/consent.ts` now that `ld_consent` carries the same
+ * rule (its contract adopted it 2026-08-13), for the same reason
+ * `attributionCookieDomain` delegates: one spelling of a deletion the browser has
+ * to recognise, so the two cookies cannot drift apart. This name stays because
+ * callers and tests use it, and because a deletion that must never grow a Domain
+ * is worth a name at the point of use.
  */
 export function buildAttributionHostOnlyDeletion(): string {
-  return `${ATTRIBUTION_COOKIE_NAME}=; Max-Age=0; Path=/`;
+  return buildHostOnlyDeletion(ATTRIBUTION_COOKIE_NAME);
 }
 
 /**
@@ -453,29 +463,13 @@ export function buildAttributionDeletion(hostname: string): string[] {
  * of its own, and a cookie called `old_ld_attribution` must never be counted as
  * one of ours — a miscount here fabricates a duplicate and makes the repair
  * delete a record that was alone and correct.
+ *
+ * Counted by `lib/consent.ts` now that `ld_consent` carries the same rule; this
+ * name stays because the platform's mirror carries it and the tests pin it.
  */
 export function countAttributionCookies(cookieHeader: string | null | undefined): number {
-  if (!cookieHeader) return 0;
-  let found = 0;
-  for (const part of cookieHeader.split(";")) {
-    const separator = part.indexOf("=");
-    if (separator === -1) continue;
-    if (part.slice(0, separator).trim() !== ATTRIBUTION_COOKIE_NAME) continue;
-    found += 1;
-  }
-  return found;
+  return countCookiesNamed(cookieHeader, ATTRIBUTION_COOKIE_NAME);
 }
-
-/**
- * Reported once per page session, mirroring the platform's latch.
- *
- * Every read runs the repair — including one per CTA click — and the second
- * read of a duplicate that is still there is the same incident, not a new one.
- * Without the latch a single planted copy would fill the console for as long as
- * the visitor keeps clicking, which is how a real signal becomes noise nobody
- * reads.
- */
-let reportedDuplicate = false;
 
 /**
  * MORE THAN ONE COOKIE OF THIS NAME: delete the HOST-ONLY copy, re-read,
@@ -501,7 +495,9 @@ let reportedDuplicate = false;
  *
  * FIRST TOUCH IS STILL THE CONFLICT RULE, and still the inverse of `ld_consent`.
  * The repair decides which COPY is real, never which RECORD wins: what survives
- * it is the existing touch, and the capture path leaves that alone.
+ * it is the existing touch, and the capture path leaves that alone. The two
+ * cookies now share the repair and keep their opposite conflict rules — that is
+ * exactly the split the mechanism was designed around.
  *
  * THE ACCEPTED PRICE, mirrored from the platform along with the rule. On
  * localhost and on a *.pages.dev preview this site writes host-only itself
@@ -509,35 +505,19 @@ let reportedDuplicate = false;
  * cannot match makes the write vanish), so a repair firing there would delete
  * our own record. It cannot fire there: the shared parent domain does not exist
  * on those hosts, so there is no second writer and never a second copy.
+ *
+ * THE BODY MOVED TO `lib/consent.ts` on 2026-08-13, when that contract adopted
+ * the same rule (its section "More than one cookie of this name"). The factory
+ * there holds the once-per-page-session latch — every read runs the repair,
+ * including one per CTA click, and the second read of a duplicate that is still
+ * there is the same incident, not a new one. The message text, the error/warning
+ * split and the `[attributie]` prefix are unchanged, byte for byte, because the
+ * platform's mirror greps for them.
  */
-function repairDuplicateAttributionCookies(): void {
-  if (countAttributionCookies(document.cookie) <= 1) return;
-
-  // NEVER with a Domain — that variant destroys the shared record on both hosts.
-  // The string comes from a function whose only job is leaving the attribute off.
-  document.cookie = buildAttributionHostOnlyDeletion();
-
-  if (reportedDuplicate) return;
-  reportedDuplicate = true;
-
-  // Counted AFTER the deletion, because that answers a different question. A
-  // copy that survives a host-only wipe sits on the shared domain or on another
-  // path, and neither can be a planted host-only copy — it is a genuine second
-  // writer, which is a bigger thing than a hijack attempt by one subdomain.
-  const persists = countAttributionCookies(document.cookie) > 1;
-  const detail = { cookie: ATTRIBUTION_COOKIE_NAME, persists };
-  // The platform's message text, byte for byte, so one operator grepping one
-  // fixed string finds the same failure on both hosts — and the platform's
-  // error/warning split. `console` rather than an error service for the same
-  // reason as `writeAttributionCookie` below: this repo has no error sink, and
-  // adding one is a decision of its own rather than something to smuggle in
-  // under a cookie fix.
-  const message = `[attributie] MEER DAN EEN ${ATTRIBUTION_COOKIE_NAME}-cookie${
-    persists ? ": OOK NA de host-only wisopdracht" : ""
-  }`;
-  if (persists) console.error(message, detail);
-  else console.warn(message, detail);
-}
+const repairDuplicateAttributionCookies = createDuplicateCookieRepair(
+  ATTRIBUTION_COOKIE_NAME,
+  "attributie",
+);
 
 /**
  * The stored record as it currently stands, or null.
