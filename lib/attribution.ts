@@ -58,6 +58,27 @@ export const ATTRIBUTION_COOKIE_VERSION = 1;
 export const ATTRIBUTION_MAX_LENGTH = 200;
 
 /**
+ * The upper bound on `t` — contract rule 4, and the only field in the record
+ * that nothing else caps.
+ *
+ * Every parameter is truncated at `ATTRIBUTION_MAX_LENGTH`, but `t` used to pass
+ * through at whatever length it arrived, and this cookie is script-writable by
+ * ANY host on `.letsdog.nl` — that is the contract's own mechanism, not a
+ * hypothetical. An oversized `t` was therefore enough to push the narrowing
+ * rewrite in `narrowStoredToConsent` past the browser's ~4096-byte per-cookie
+ * limit, where a Set-Cookie is dropped SILENTLY: this side believes it narrowed
+ * the record, the un-narrowed one survives, and the consent erasure path becomes
+ * something a co-writer can switch off at will.
+ *
+ * 64 rather than the 200 the parameters get, because this field has a known
+ * shape: `new Date().toISOString()` is exactly 24 characters, and 27 in the
+ * extended-year form. The headroom is for a legitimate variant the platform might
+ * write — an offset instead of `Z`, more sub-second digits — and deliberately not
+ * for a shape we would have to guess at.
+ */
+export const ATTRIBUTION_MAX_TIMESTAMP_LENGTH = 64;
+
+/**
  * 90 days — the usual campaign attribution window, and longer than any of the
  * ad platforms' own click windows (Meta's default is 7 days).
  *
@@ -131,6 +152,54 @@ function cleanValue(raw: unknown): string | undefined {
 }
 
 /**
+ * Is this a `t` worth trusting? REJECTED, NEVER TRUNCATED — and since this file
+ * truncates everything else, here is the argument for the difference.
+ *
+ * The seven parameters are truncated because truncation is what the contract asks
+ * for on them: both repos cut at 200 to match the CHECK on the platform's
+ * columns, so a cut value is still a value both sides agreed on. `t` has no such
+ * agreement, and a cut timestamp is not a shorter timestamp — it is a DIFFERENT
+ * MOMENT, presented with exactly the confidence of a real one.
+ * `2026-08-11T09:00:00.000Z` cut at 21 characters reads as three seconds earlier,
+ * and a co-writer who picks the prefix picks the moment. That field is
+ * load-bearing on the other side: the platform builds Meta's `fbc` from a stored
+ * `fbclid` using `t` as the click moment, and both hosts' first-touch comparisons
+ * read it. A corrupt timestamp must not be laundered into a confident one — it
+ * has to stop being a record.
+ *
+ * REJECTING IS ONLY SAFE BECAUSE RULE 1 LANDED FIRST. `readAttributionCookie`
+ * takes the first PARSEABLE copy, so a null from this parser means "skip this
+ * copy and keep walking", not "there is no record". A co-writer's oversized copy
+ * therefore cannot mask the legitimate shared one — the same protection rule 1
+ * was built for, reaching the one field it did not cover. Before that walk
+ * existed this would have been the wrong call.
+ *
+ * A LENGTH BOUND, NOT A FORMAT CHECK, and the asymmetry is deliberate. Rejecting
+ * a REAL first touch is the expensive direction: the slot is handed to a later
+ * visit for ninety days, silently, which is the failure this whole module exists
+ * to prevent. A regex pinned to `toISOString()`'s exact output would do precisely
+ * that to any legitimate variant the platform ever writes. Length is the property
+ * rule 4 is about, and no real ISO 8601 instant comes anywhere near this bound.
+ *
+ * NOT `toIsoTimestamp` from lib/consent.ts, though it is the neighbouring helper.
+ * That one converts an untrusted value of unknown TYPE (Cookiebot's `consentUTC`
+ * — Date, number or string) into a canonical stamp for WRITING, and normalising
+ * is the whole point of it. Here the value is a string another repo already
+ * wrote, and it has to survive unchanged or not at all: normalising
+ * `2026-08-11T09:00:00Z` into `…00.000Z` would rewrite bytes the other side
+ * chose, on the one field both contracts say is never restamped.
+ *
+ * The cost, stated rather than hidden: a record whose only defect is an over-long
+ * `t` counts as no touch, so the current visit may claim the slot. Neither
+ * contracted writer can produce one — both stamp `new Date().toISOString()` — so
+ * such a record came from a co-writer or from corruption, and a fresh correct
+ * record beats one whose moment is a fiction.
+ */
+function isBoundedTimestamp(value: unknown): value is string {
+  return typeof value === "string" && value.length <= ATTRIBUTION_MAX_TIMESTAMP_LENGTH;
+}
+
+/**
  * The seven parameters as they appear in a URL query string, cleaned.
  *
  * Reading a URL is not storage and needs no consent — the gate applies to
@@ -201,6 +270,12 @@ export function serializeAttributionPayload(payload: AttributionPayload): string
  * this whole module exists to prevent. Unknown fields are dropped on read but
  * left untouched in the cookie, because nothing here ever rewrites a record it
  * did not fully understand.
+ *
+ * AND DELIBERATELY INTOLERANT OF AN UNBOUNDED `t`, which is not the same kind of
+ * tolerance at all. An unknown version is a record this repo does not recognise;
+ * an oversized `t` is a record no contracted writer could have produced. See
+ * `isBoundedTimestamp` for why that one is rejected rather than trimmed into
+ * shape like every other field here.
  */
 export function parseAttributionPayload(raw: string): AttributionPayload | null {
   let parsed: unknown;
@@ -211,7 +286,7 @@ export function parseAttributionPayload(raw: string): AttributionPayload | null 
   }
   if (typeof parsed !== "object" || parsed === null) return null;
   const record = parsed as Record<string, unknown>;
-  if (typeof record.v !== "number" || typeof record.t !== "string") return null;
+  if (typeof record.v !== "number" || !isBoundedTimestamp(record.t)) return null;
 
   const payload: AttributionPayload = { v: record.v, t: record.t };
   for (const name of ATTRIBUTION_URL_PARAMS) {
