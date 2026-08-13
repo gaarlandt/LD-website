@@ -2,12 +2,14 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import {
   ATTRIBUTION_COOKIE_NAME,
   ATTRIBUTION_COOKIE_VERSION,
+  ATTRIBUTION_MAX_COOKIE_BYTES,
   ATTRIBUTION_MAX_LENGTH,
   ATTRIBUTION_MAX_TIMESTAMP_LENGTH,
   ATTRIBUTION_URL_PARAMS,
   MARKETING_PARAMS,
   STATISTICS_PARAMS,
   applyConsentToStored,
+  attributionByteLength,
   attributionCookieDomain,
   buildAttributionCookie,
   buildAttributionDeletion,
@@ -37,9 +39,27 @@ const STATS_ONLY = { s: true, m: false };
 const MARKETING_ONLY = { s: false, m: true };
 const NO_GATES = { s: false, m: false };
 
+/**
+ * The one browser behaviour this stub HAS to reproduce, or the size limit cannot
+ * be tested at all: an assignment whose `name=value` runs past ~4096 bytes is
+ * DROPPED, silently. No throw, no return value, no cookie afterwards. A stub
+ * that stores everything it is handed makes both the broken and the fixed writer
+ * look identical, and green then only proves the rig cannot see the bug.
+ *
+ * The number is written out here rather than imported from the module under
+ * test on purpose. This is a statement about what browsers do, and it has to
+ * stay true independently — importing `ATTRIBUTION_MAX_COOKIE_BYTES` would mean
+ * raising that constant to 100 000 keeps every test green while production
+ * writes cookies that vanish.
+ */
+const BROWSER_COOKIE_BYTE_LIMIT = 4096;
+
 // Same jar stub as consent.test.ts: the repo's Vitest runs in the Node
 // environment on purpose, so the cookie writers get a `document` without jsdom.
-// Reads return every stored pair; a Max-Age=0 write deletes rather than stores.
+// Reads return every stored pair; a Max-Age=0 write deletes rather than stores;
+// an over-sized write is accepted by the setter and kept by nothing, exactly as
+// a browser does it. `writes` records what the code ATTEMPTED, the jar records
+// what survived — telling those two apart is the whole point here.
 function stubCookieJar() {
   const jar = new Map<string, string>();
   const writes: string[] = [];
@@ -52,11 +72,35 @@ function stubCookieJar() {
       const pair = raw.split(";")[0];
       const eq = pair.indexOf("=");
       const name = pair.slice(0, eq).trim();
-      if (/Max-Age=0\b/.test(raw)) jar.delete(name);
-      else jar.set(name, pair.slice(eq + 1));
+      if (/Max-Age=0\b/.test(raw)) {
+        jar.delete(name);
+        return;
+      }
+      if (new TextEncoder().encode(pair).length > BROWSER_COOKIE_BYTE_LIMIT) return;
+      jar.set(name, pair.slice(eq + 1));
     },
   });
   return { writes };
+}
+
+/**
+ * `buildAttributionCookie`'s assignment, or a failure if it refused to build
+ * one. Keeps the assertions about the cookie's SHAPE readable now that the
+ * builder returns an outcome instead of a bare string.
+ */
+function builtCookie(payload: AttributionPayload, hostname: string): string {
+  const built = buildAttributionCookie(payload, hostname);
+  if (!built.fits) throw new Error(`expected an assignment that fits, got ${built.bytes} bytes`);
+  return built.cookie;
+}
+
+/**
+ * console.error is the only error sink this repo has, so a report is asserted
+ * through it. Silenced as well as captured: a deliberate report should not print
+ * noise into a green run.
+ */
+function stubConsoleError() {
+  return vi.spyOn(console, "error").mockImplementation(() => {});
 }
 
 /**
@@ -70,6 +114,9 @@ function stubRawCookieJar(jar: string) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  // unstubAllGlobals does not undo a spy, and a console.error left mocked would
+  // swallow the next file's output as well as this one's.
+  vi.restoreAllMocks();
 });
 
 // These assertions are the contract with the platform, not a style preference.
@@ -138,12 +185,12 @@ describe("the ld_attribution contract", () => {
     expect(attributionCookieDomain("feat-x.website-letsdog.pages.dev")).toBeNull();
 
     const payload: AttributionPayload = { v: 1, t: "2026-08-11T09:15:00.000Z", gclid: "abc" };
-    expect(buildAttributionCookie(payload, "letsdog.nl")).toContain("Domain=.letsdog.nl");
-    expect(buildAttributionCookie(payload, "localhost")).not.toContain("Domain=");
+    expect(builtCookie(payload, "letsdog.nl")).toContain("Domain=.letsdog.nl");
+    expect(builtCookie(payload, "localhost")).not.toContain("Domain=");
   });
 
   it("carries the contract's cookie attributes", () => {
-    const cookie = buildAttributionCookie(
+    const cookie = builtCookie(
       { v: 1, t: "2026-08-11T09:15:00.000Z", gclid: "abc" },
       "letsdog.nl",
     );
@@ -157,7 +204,7 @@ describe("the ld_attribution contract", () => {
     // Pinned by magnitude, not just by shape: `Max-Age=\d+` also passes for 1.
     // The window is a decision (Meta's own click window is 7 days), so shortening
     // it should mean editing this line on purpose.
-    const cookie = buildAttributionCookie(
+    const cookie = builtCookie(
       { v: 1, t: "2026-08-11T09:15:00.000Z", gclid: "abc" },
       "letsdog.nl",
     );
@@ -354,13 +401,48 @@ describe("parseAttributionPayload — the cut on t (contract rule 4)", () => {
   it("narrows an oversized record into a cookie the browser will actually keep", () => {
     // The failure end to end, and why the cap cuts instead of refusing. Before
     // the cut this read the oversized record, narrowed it, and handed
-    // document.cookie a ~5 KB string — past the ~4096-byte per-cookie limit, so
+    // document.cookie a ~9 KB string — past the ~4096-byte per-cookie limit, so
     // the write vanished with no error at all and the fbclid stayed on the record
     // under a gate that had just closed. Refusing the record would "fix" the
     // silent drop by never writing at all, which leaves that same fbclid exactly
     // where it was; cutting fixes it by making the erasure land.
+    //
+    // THE PLANT IS A DIFFERENT FIXTURE FROM THE ONE THE PARSER TESTS ABOVE USE,
+    // and the difference is the point. The jar stub now drops an over-sized
+    // assignment exactly as a browser does, and the ~5 KB percent-encoded record
+    // those tests hand the READER is not a record any browser would have STORED
+    // — planting it here would leave an empty jar and prove nothing. There is
+    // one shape that is genuinely reachable, and the contract names it: the
+    // parser deliberately accepts UNENCODED JSON, so a sibling host on
+    // `.letsdog.nl` can store a record that fits comfortably as raw bytes and
+    // only crosses the limit once our own serializer percent-encodes it. Filling
+    // `t` with a multibyte character is what opens that gap — three bytes stored,
+    // nine bytes written back.
     const { writes } = stubCookieJar();
-    document.cookie = `${ATTRIBUTION_COOKIE_NAME}=${oversized}`;
+    const plantedT = `2026-08-11T09:00:00.000Z${"€".repeat(1000)}`;
+    const plantedCut = plantedT.slice(0, ATTRIBUTION_MAX_TIMESTAMP_LENGTH);
+    const planted = `${ATTRIBUTION_COOKIE_NAME}=${JSON.stringify({
+      v: 1,
+      t: plantedT,
+      utm_source: "facebook",
+      fbclid: "f1",
+    })}`;
+
+    // Premise one: a browser would have kept this, so the jar really holds it.
+    expect(attributionByteLength(planted)).toBeLessThan(4096);
+    // Premise two: rewriting it WITHOUT the cut on `t` is the ~9 KB assignment
+    // that used to disappear — the failure this rule-4 cut exists to remove.
+    expect(
+      attributionByteLength(
+        `${ATTRIBUTION_COOKIE_NAME}=${serializeAttributionPayload({
+          v: 1,
+          t: plantedT,
+          utm_source: "facebook",
+        })}`,
+      ),
+    ).toBeGreaterThan(4096);
+
+    document.cookie = planted;
     const before = writes.length;
 
     narrowStoredToConsent(STATS_ONLY, "letsdog.nl");
@@ -368,7 +450,228 @@ describe("parseAttributionPayload — the cut on t (contract rule 4)", () => {
     const emitted = writes.slice(before);
     expect(emitted).toHaveLength(1);
     expect(emitted[0].length).toBeLessThan(4096);
-    expect(readAttributionCookie()).toEqual({ v: 1, t: cutT, utm_source: "facebook" });
+    expect(readAttributionCookie()).toEqual({ v: 1, t: plantedCut, utm_source: "facebook" });
+  });
+});
+
+// Contract rule 5, sitting directly on top of rule 4 above: A WRITE THAT WOULD
+// NOT FIT IS NOT PERFORMED AT ALL. Rule 4 bounded the one field nothing else
+// bounded; this bounds the finished assignment, because capping every field
+// still leaves a record that is too big once they are added together and
+// percent-encoded.
+//
+// Mirrored from the platform's implementation (T-564, commit 45a47cc:
+// packages/core/src/attribution.ts + apps/app/src/lib/attribution.web.ts), not
+// re-derived from the contract text. That is the explicit lesson of T-37, where
+// this repo built "refuse" against the platform's "truncate": both suites were
+// green, both implementations were internally consistent, and only laying the
+// two sources side by side showed that the hosts had stopped agreeing about
+// which records exist. Two of the three rules below are STRICTER than the
+// contract's literal wording, and both deviations are the platform's:
+//
+//   1. `ld_attribution=` is measured along with the value, because a browser
+//      spends its 4096 bytes on name and value together.
+//   2. On the narrowing pass, "write nothing" is replaced by DELETE.
+//   3. The refusal is reported, because a silent non-action is no better than
+//      the silent failure it replaced.
+describe("the size limit on a written record (contract rule 5)", () => {
+  const AT = "2026-08-11T09:00:00.000Z";
+
+  /** The finished `ld_attribution=<value>` assignment for this record, in UTF-8 bytes. */
+  const assignmentBytes = (payload: AttributionPayload) =>
+    attributionByteLength(`${ATTRIBUTION_COOKIE_NAME}=${serializeAttributionPayload(payload)}`);
+
+  /**
+   * A record whose finished assignment weighs EXACTLY `bytes`, so the boundary
+   * can be pinned from both sides instead of approached from one.
+   *
+   * The filler is `x`: `encodeURIComponent` leaves it alone and UTF-8 stores it
+   * in one byte, so one more character is one more byte and nothing else moves.
+   */
+  function recordOfExactly(bytes: number): AttributionPayload & { utm_campaign: string } {
+    const envelope = { v: ATTRIBUTION_COOKIE_VERSION, t: AT, utm_campaign: "" };
+    return { ...envelope, utm_campaign: "x".repeat(bytes - assignmentBytes(envelope)) };
+  }
+
+  it("pins the limit and the unit: 4096, counted in bytes and not in characters", () => {
+    // Both halves matter. The number is the platform's
+    // ATTRIBUTION_MAX_COOKIE_BYTES, and one host measuring in characters while
+    // the other measures in bytes is two hosts disagreeing about what may be
+    // written — which shows up as an empty column, never as an error.
+    expect(ATTRIBUTION_MAX_COOKIE_BYTES).toBe(4096);
+    expect(attributionByteLength("x")).toBe(1);
+    expect("€").toHaveLength(1);
+    expect(attributionByteLength("€")).toBe(3);
+    expect(attributionByteLength(encodeURIComponent("€"))).toBe(9);
+  });
+
+  it("keeps an assignment of exactly the limit and refuses the first byte past it", () => {
+    const atLimit = recordOfExactly(ATTRIBUTION_MAX_COOKIE_BYTES);
+    const overLimit = recordOfExactly(ATTRIBUTION_MAX_COOKIE_BYTES + 1);
+    expect(assignmentBytes(atLimit)).toBe(4096);
+    expect(assignmentBytes(overLimit)).toBe(4097);
+
+    const fits = buildAttributionCookie(atLimit, "letsdog.nl");
+    expect(fits.fits).toBe(true);
+    expect(fits.bytes).toBe(4096);
+    expect(fits.cookie).toContain("Domain=.letsdog.nl");
+
+    const refused = buildAttributionCookie(overLimit, "letsdog.nl");
+    expect(refused.fits).toBe(false);
+    // No assignment comes out at all — not a shortened one. A record with a
+    // field quietly removed looks healthy and still holds the slot for ninety
+    // days; absence is the state the next click can repair.
+    expect(refused.cookie).toBeNull();
+    expect(refused).toEqual({ fits: false, cookie: null, bytes: 4097, limit: 4096 });
+  });
+
+  it("counts `ld_attribution=` too, so a value of exactly 4096 bytes is refused", () => {
+    // The first of the two deliberate deviations, and the reason for it is the
+    // very failure rule 5 exists to stop: a browser weighs name and value
+    // together (Chrome sums `name.size() + value.size()`), so a writer measuring
+    // the value alone calls this record a fit and the browser drops it anyway.
+    // 15 bytes stricter than the contract's wording, and that is the safe side.
+    const prefix = `${ATTRIBUTION_COOKIE_NAME}=`;
+    expect(attributionByteLength(prefix)).toBe(15);
+
+    const valueAtLimit = recordOfExactly(ATTRIBUTION_MAX_COOKIE_BYTES + 15);
+    expect(attributionByteLength(serializeAttributionPayload(valueAtLimit))).toBe(4096);
+    expect(buildAttributionCookie(valueAtLimit, "letsdog.nl").fits).toBe(false);
+  });
+
+  it("stores a record that lands exactly on the limit", () => {
+    // The under side of the boundary, driven through the real writer: the write
+    // happens, and the jar — which drops an over-sized assignment exactly as a
+    // browser does — keeps it.
+    const { writes } = stubCookieJar();
+    const atLimit = recordOfExactly(ATTRIBUTION_MAX_COOKIE_BYTES);
+
+    expect(recordFirstTouch({ utm_campaign: atLimit.utm_campaign }, ALL_GATES, "letsdog.nl", AT))
+      .toBe(true);
+    expect(writes).toHaveLength(1);
+    expect(attributionByteLength(writes[0].split(";")[0])).toBe(4096);
+    expect(readAttributionCookie()?.t).toBe(AT);
+  });
+
+  it("writes nothing, reports it, and returns false one byte over", () => {
+    // What this replaces: the assignment used to go out, the browser used to
+    // throw it away without a word, and recordFirstTouch used to answer `true` —
+    // the caller was told a touch had been recorded that existed nowhere.
+    const { writes } = stubCookieJar();
+    const reported = stubConsoleError();
+    const overLimit = recordOfExactly(ATTRIBUTION_MAX_COOKIE_BYTES + 1);
+
+    expect(recordFirstTouch({ utm_campaign: overLimit.utm_campaign }, ALL_GATES, "letsdog.nl", AT))
+      .toBe(false);
+    expect(writes).toHaveLength(0);
+    expect(readAttributionCookie()).toBeNull();
+
+    // Reporting is part of the rule: without it the fix only swaps a silent
+    // failure for a silent non-action. The text is the platform's, so one
+    // operator grepping one fixed string finds this on both hosts.
+    expect(reported).toHaveBeenCalledTimes(1);
+    expect(reported).toHaveBeenCalledWith(
+      "[attributie] RECORD TE GROOT VOOR EEN COOKIE: niets geschreven",
+      { cookie: ATTRIBUTION_COOKIE_NAME, bytes: 4097, limit: 4096 },
+    );
+  });
+
+  it("refuses a record that a String.length check would wave straight through", () => {
+    // THE BUG THIS RULE IS FOR, and it needs no co-writer — a plain URL is
+    // enough. Every one of the seven fields passes the per-field cap of 200
+    // CHARACTERS, and the whole record is a fraction of 4096 characters. But
+    // `encodeURIComponent(JSON.stringify(...))` turns each three-byte `€` into
+    // nine bytes, so the assignment lands at several times the limit. Measured
+    // in the unit the browser uses, this record was never writable.
+    const { writes } = stubCookieJar();
+    const reported = stubConsoleError();
+    const accented = "€".repeat(250);
+    const params = readAttributionParams(
+      `?${ATTRIBUTION_URL_PARAMS.map((n) => `${n}=${encodeURIComponent(accented)}`).join("&")}`,
+    );
+
+    // The premises, measured rather than assumed. Every field survived the
+    // per-field cap at its full 200 characters...
+    for (const name of ATTRIBUTION_URL_PARAMS) {
+      expect(params[name]).toHaveLength(ATTRIBUTION_MAX_LENGTH);
+    }
+    const payload: AttributionPayload = { v: ATTRIBUTION_COOKIE_VERSION, t: AT, ...params };
+    // ...the record is short when counted in characters, which is exactly why a
+    // `String.length` guard passes it...
+    expect(JSON.stringify(payload).length).toBeLessThan(ATTRIBUTION_MAX_COOKIE_BYTES);
+    // ...and it is three times over the limit when counted in bytes.
+    expect(assignmentBytes(payload)).toBeGreaterThan(ATTRIBUTION_MAX_COOKIE_BYTES * 3);
+
+    expect(recordFirstTouch(params, ALL_GATES, "letsdog.nl", AT)).toBe(false);
+    expect(writes).toHaveLength(0);
+    expect(readAttributionCookie()).toBeNull();
+    expect(reported).toHaveBeenCalledTimes(1);
+  });
+
+  it("DELETES on the narrowing pass rather than leaving the un-narrowed record standing", () => {
+    // The second deliberate deviation, and the one place where rule 5's "write
+    // nothing" is the wrong answer. On the capture path a refusal costs an empty
+    // slot the next click can fill. Here it would leave the OLD record in place,
+    // carrying exactly the click id the visitor has just withdrawn — a consent
+    // failure, and a switch a co-writer can throw at will.
+    //
+    // Reachable because the parser deliberately accepts UNENCODED JSON: a
+    // sibling host on `.letsdog.nl` can plant a record that fits comfortably as
+    // raw bytes and only crosses the limit once our own serializer
+    // percent-encodes it. That is precisely what is planted here.
+    const { writes } = stubCookieJar();
+    const reported = stubConsoleError();
+    const accented = "€".repeat(ATTRIBUTION_MAX_LENGTH);
+    const planted = `${ATTRIBUTION_COOKIE_NAME}=${JSON.stringify({
+      v: ATTRIBUTION_COOKIE_VERSION,
+      t: AT,
+      utm_source: accented,
+      utm_campaign: accented,
+      utm_term: accented,
+      fbclid: accented,
+    })}`;
+
+    // Premise one: the plant itself is under the limit, so a real browser keeps
+    // it — otherwise this test would be proving nothing about narrowing.
+    expect(attributionByteLength(planted)).toBeLessThan(ATTRIBUTION_MAX_COOKIE_BYTES);
+    // Premise two: the NARROWED record is over it, once we re-encode.
+    expect(
+      assignmentBytes({
+        v: ATTRIBUTION_COOKIE_VERSION,
+        t: AT,
+        utm_source: accented,
+        utm_campaign: accented,
+        utm_term: accented,
+      }),
+    ).toBeGreaterThan(ATTRIBUTION_MAX_COOKIE_BYTES);
+
+    document.cookie = planted;
+    expect(readAttributionCookie()?.fbclid).toBe(accented);
+    const before = writes.length;
+
+    narrowStoredToConsent(STATS_ONLY, "letsdog.nl");
+
+    // Gone, not narrowed-and-silently-unchanged. Leaving it would keep the
+    // withdrawn fbclid on the shared domain for the rest of the ninety days.
+    expect(readAttributionCookie()).toBeNull();
+    expect(reported).toHaveBeenCalledTimes(1);
+    // Only deletions went out — no attempt to assign the over-sized record.
+    for (const write of writes.slice(before)) expect(write).toContain("Max-Age=0");
+  });
+
+  it("still narrows normally when the narrowed record fits", () => {
+    // The guard must not become "never narrow". An ordinary withdrawal still has
+    // to reach the record, or rule 5 would have quietly disabled rule 4's fix.
+    const { writes } = stubCookieJar();
+    const reported = stubConsoleError();
+    recordFirstTouch({ utm_source: "facebook", fbclid: "f1" }, ALL_GATES, "letsdog.nl", AT);
+    const before = writes.length;
+
+    narrowStoredToConsent(STATS_ONLY, "letsdog.nl");
+
+    expect(writes.slice(before)).toHaveLength(1);
+    expect(readAttributionCookie()).toEqual({ v: 1, t: AT, utm_source: "facebook" });
+    expect(reported).not.toHaveBeenCalled();
   });
 });
 

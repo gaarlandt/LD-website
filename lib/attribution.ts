@@ -79,6 +79,11 @@ export const ATTRIBUTION_MAX_LENGTH = 200;
  * IT IS THE PLATFORM'S NUMBER TOO — `MAX_TOUCH_MOMENT_LENGTH` in its
  * packages/core/src/attribution.ts — and the platform CUTS at it rather than
  * refusing the record. So does the parser below, which is where the reason lives.
+ *
+ * This cap covers only the ONE field nothing else bounded. The size of the
+ * finished assignment is a separate rule with a separate guard —
+ * `ATTRIBUTION_MAX_COOKIE_BYTES` below — because capping every field still
+ * leaves a record that is too big once they are added up and percent-encoded.
  */
 export const ATTRIBUTION_MAX_TIMESTAMP_LENGTH = 64;
 
@@ -295,6 +300,62 @@ export function attributionCookieDomain(hostname: string): string | null {
 }
 
 /**
+ * The size a record may reach before the browser stops keeping it — contract
+ * rule 5, and the platform's `ATTRIBUTION_MAX_COOKIE_BYTES` to the byte.
+ *
+ * WHY A SECOND LIMIT ON TOP OF THE PER-FIELD ONE. `ATTRIBUTION_MAX_LENGTH` caps
+ * each field at 200 CHARACTERS, and characters are not what a browser weighs.
+ * `encodeURIComponent(JSON.stringify(...))` turns one three-byte character into
+ * nine (`€` becomes `%E2%82%AC`), so seven fields that each pass the per-field
+ * cap add up to roughly 12 kB against a ~4096-byte limit. That record passes
+ * every local check we had and the browser then drops the write SILENTLY —
+ * `document.cookie = <too big>` throws nothing, returns nothing, and leaves no
+ * cookie behind. It is reachable from a plain URL, not just from a co-writer.
+ *
+ * WHY `ld_attribution=` IS MEASURED ALONG WITH THE VALUE, which is deliberately
+ * STRICTER than the contract's wording ("the complete cookie value"). A browser
+ * spends its 4096 bytes on the name and the value TOGETHER — Chrome literally
+ * sums `name.size() + value.size()` — so a writer that measures only the value
+ * calls a 4090-byte record "fits" and the browser discards it anyway, which is
+ * precisely the hole rule 5 exists to close. The 15 bytes of difference are only
+ * reachable with about 4 kB of campaign values, and erring in this direction
+ * costs at most a record the platform would have written and we refuse. Erring
+ * the other way is the silent failure this whole contract is built against.
+ * The platform made the same call first (its T-564); this mirrors it.
+ *
+ * The ATTRIBUTES are deliberately outside the measurement. Browsers bound name
+ * and value together and give attributes their own, far looser budget, and ours
+ * are short fixed strings either way.
+ */
+export const ATTRIBUTION_MAX_COOKIE_BYTES = 4096;
+
+/**
+ * The length of a string in UTF-8 BYTES, which is the only number a browser
+ * cares about here.
+ *
+ * `String.length` counts UTF-16 code units, and for everything outside ASCII
+ * that is a different number from the one the browser weighs — a check written
+ * against it passes on exactly the records this limit exists to stop.
+ */
+export function attributionByteLength(value: string): number {
+  return new TextEncoder().encode(value).length;
+}
+
+/**
+ * What building a cookie produces: either an assignment that fits, or an
+ * explicit refusal carrying the measurement that caused it.
+ *
+ * DELIBERATELY NOT A BARE STRING ANY MORE. A builder that always hands back
+ * something assignable makes the size limit an optional extra check a caller can
+ * forget, and forgetting it is invisible: the over-limit assignment throws
+ * nothing, so every line of the calling code looks like it worked. With the
+ * union there is no way to reach the assignment without reading `fits` first.
+ */
+export type AttributionCookieResult =
+  | { fits: true; cookie: string; bytes: number }
+  | { fits: false; cookie: null; bytes: number; limit: number };
+
+/**
  * The document.cookie string. Script-readable by contract — the platform reads
  * it in the client.
  *
@@ -303,18 +364,38 @@ export function attributionCookieDomain(hostname: string): string | null {
  * browser refuses a Secure cookie and the capture would vanish with no error at
  * all — which reads as "the feature is broken" to whoever is trying to verify
  * it, and is the fastest way to have somebody "fix" code that was correct.
+ *
+ * OVER THE LIMIT, NOTHING COMES OUT — not a shortened record. Dropping fields to
+ * make one fit was the considered alternative and it loses on the argument that
+ * runs through this whole module: a record with `utm_term` quietly removed looks
+ * perfectly healthy, nobody can tell afterwards that anything was taken out, and
+ * it still holds the first-touch slot for ninety days. Absence is a state the
+ * next click can repair; a plausible wrong answer is not.
  */
-export function buildAttributionCookie(payload: AttributionPayload, hostname: string): string {
+export function buildAttributionCookie(
+  payload: AttributionPayload,
+  hostname: string,
+): AttributionCookieResult {
+  const nameAndValue = `${ATTRIBUTION_COOKIE_NAME}=${serializeAttributionPayload(payload)}`;
+  const bytes = attributionByteLength(nameAndValue);
+  if (bytes > ATTRIBUTION_MAX_COOKIE_BYTES) {
+    return { fits: false, cookie: null, bytes, limit: ATTRIBUTION_MAX_COOKIE_BYTES };
+  }
+
   const domain = attributionCookieDomain(hostname);
   const secure = typeof location === "undefined" || location.protocol === "https:";
-  return [
-    `${ATTRIBUTION_COOKIE_NAME}=${serializeAttributionPayload(payload)}`,
-    "Path=/",
-    "SameSite=Lax",
-    ...(secure ? ["Secure"] : []),
-    `Max-Age=${ATTRIBUTION_COOKIE_MAX_AGE_SECONDS}`,
-    ...(domain ? [`Domain=${domain}`] : []),
-  ].join("; ");
+  return {
+    fits: true,
+    bytes,
+    cookie: [
+      nameAndValue,
+      "Path=/",
+      "SameSite=Lax",
+      ...(secure ? ["Secure"] : []),
+      `Max-Age=${ATTRIBUTION_COOKIE_MAX_AGE_SECONDS}`,
+      ...(domain ? [`Domain=${domain}`] : []),
+    ].join("; "),
+  };
 }
 
 /**
@@ -355,6 +436,47 @@ export function readAttributionCookie(): AttributionPayload | null {
 }
 
 /**
+ * The one place in this module that assigns a record to `document.cookie`.
+ * `false` means NOTHING IS STORED, and that it has been reported.
+ *
+ * WHY THE REPORT IS PART OF THE RULE AND NOT A NICETY. Refusing an over-sized
+ * write only swaps a silent error for a silent non-action unless somebody can
+ * see it happen — which is the same objection that killed "drop a field to make
+ * it fit". So the two halves ship together: an outcome the caller can tell apart
+ * from success, and a line an operator can find.
+ *
+ * `console.error` rather than an error service, because this repo has no error
+ * sink at all — no Sentry, and adding one is a decision of its own, not
+ * something to smuggle in under a cookie fix. The honest limitation, stated
+ * rather than hidden: this reaches a browser console and nothing else, so it is
+ * findable when someone is looking and invisible when nobody is. It is
+ * deliberately NOT routed through `trackEvent` — GA4 is consent-gated and denied
+ * by default, so that sink would fall silent exactly when this fires, and an
+ * analytics event is not an error report in the first place.
+ *
+ * The message text is the platform's, byte for byte
+ * (apps/app/src/lib/attribution.web.ts), so one operator grepping one fixed
+ * string finds the same failure on both hosts. Error and not warning: this does
+ * not say something is odd about one visitor, it says a record on the shared
+ * domain has grown past what can be written — either a campaign with absurd
+ * values or a co-writer trying to jam the erasure path shut, and both belong in
+ * front of somebody's eyes.
+ */
+function writeAttributionCookie(payload: AttributionPayload, hostname: string): boolean {
+  const built = buildAttributionCookie(payload, hostname);
+  if (!built.fits) {
+    console.error("[attributie] RECORD TE GROOT VOOR EEN COOKIE: niets geschreven", {
+      cookie: ATTRIBUTION_COOKIE_NAME,
+      bytes: built.bytes,
+      limit: built.limit,
+    });
+    return false;
+  }
+  document.cookie = built.cookie;
+  return true;
+}
+
+/**
  * Store this visit as the first touch — unless one is already recorded.
  *
  * Returns whether anything was written, so a caller can tell "declined, a touch
@@ -369,6 +491,15 @@ export function readAttributionCookie(): AttributionPayload | null {
  * an ad click from someone who refused both gates, must leave the slot open —
  * writing `{v,t}` with no campaign in it would consume the first touch and make
  * the NEXT real ad click look like a returning visitor.
+ *
+ * A FOURTH WAY TO GET `false`, ADDED WITH CONTRACT RULE 5: the record does not
+ * fit in a cookie. It stays a boolean rather than growing a reason code because
+ * the meaning documented above — "was anything written" — is exactly the
+ * question a too-large record also answers, and because the platform's writer
+ * returns the same boolean. What changed is that the answer is now TRUE. Before
+ * this, an over-sized record was assigned, dropped by the browser without a
+ * word, and reported back as a success; the caller was told a touch had been
+ * recorded that did not exist anywhere.
  */
 export function recordFirstTouch(
   params: AttributionParams,
@@ -382,11 +513,7 @@ export function recordFirstTouch(
   const allowed = consentedParams(params, consent);
   if (!hasAnyParam(allowed)) return false;
 
-  document.cookie = buildAttributionCookie(
-    { v: ATTRIBUTION_COOKIE_VERSION, t: at, ...allowed },
-    hostname,
-  );
-  return true;
+  return writeAttributionCookie({ v: ATTRIBUTION_COOKIE_VERSION, t: at, ...allowed }, hostname);
 }
 
 /**
@@ -451,7 +578,19 @@ export function narrowStoredToConsent(consent: ConsentGates, hostname: string): 
   // Silent when nothing changed: this runs on every consent event, and a cookie
   // rewritten per pageview is churn the platform would have to learn to ignore.
   if (isSameAttribution(stored, narrowed)) return;
-  document.cookie = buildAttributionCookie(narrowed, hostname);
+
+  // THE ONE PLACE WHERE "WRITE NOTHING" IS THE WRONG ANSWER (contract rule 5
+  // read next to rule 4). Rule 5 says an over-sized record is not written, and
+  // on the capture path that is the whole of it — the slot simply stays open.
+  // Here it is not: stopping would leave the UN-NARROWED record standing,
+  // carrying precisely the click id the visitor has just withdrawn. That is a
+  // consent failure on its own, and worse, it is a switch: this parser
+  // deliberately accepts UNENCODED JSON, so a co-writer on `.letsdog.nl` can
+  // plant a 3 kB record that only crosses the limit once our serializer
+  // percent-encodes it, and thereby disable our erasure path entirely. Deleting
+  // is always permitted, always fits, and leaves the first-touch slot open for
+  // the next real click. The platform's narrowing pass ends on the same line.
+  if (!writeAttributionCookie(narrowed, hostname)) deleteAttributionCookie(hostname);
 }
 
 /**
