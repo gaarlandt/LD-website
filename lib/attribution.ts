@@ -46,6 +46,7 @@ import {
   readFirstParseableCookie,
   type ConsentPayload,
 } from "./consent";
+import { reportRuleBreach } from "./error-sink";
 
 export const ATTRIBUTION_COOKIE_NAME = "ld_attribution";
 export const ATTRIBUTION_COOKIE_VERSION = 1;
@@ -565,14 +566,19 @@ export function readAttributionCookie(): AttributionPayload | null {
  * it fit". So the two halves ship together: an outcome the caller can tell apart
  * from success, and a line an operator can find.
  *
- * `console.error` rather than an error service, because this repo has no error
- * sink at all — no Sentry, and adding one is a decision of its own, not
- * something to smuggle in under a cookie fix. The honest limitation, stated
- * rather than hidden: this reaches a browser console and nothing else, so it is
- * findable when someone is looking and invisible when nobody is. It is
- * deliberately NOT routed through `trackEvent` — GA4 is consent-gated and denied
- * by default, so that sink would fall silent exactly when this fires, and an
- * analytics event is not an error report in the first place.
+ * IT NOW GOES TO A REAL SINK AS WELL, and the console line stays. Until
+ * 2026-08-15 this comment said `console.error` rather than an error service
+ * "because this repo has no error sink at all" — that decision was taken on its
+ * own terms as D-6 and built as T-44, so the report is now also sent to Sentry
+ * (`reportRuleBreach`, tagged `runtime: browser`). The console line is not
+ * redundant: the DSN lives only in the Cloudflare dashboard, so on localhost and
+ * on any deploy made before that variable is set, the console is still the whole
+ * of it — and it is the message the platform's mirror greps for, byte for byte.
+ * Still deliberately NOT routed through `trackEvent`: GA4 is consent-gated and
+ * denied by default, so that sink would fall silent exactly when this fires, and
+ * an analytics event is not an error report in the first place. What travels is
+ * the MEASUREMENT that caused the refusal — the byte count and the limit — not
+ * merely that something broke.
  *
  * The message text is the platform's, byte for byte
  * (apps/app/src/lib/attribution.web.ts), so one operator grepping one fixed
@@ -586,6 +592,11 @@ function writeAttributionCookie(payload: AttributionPayload, hostname: string): 
   const built = buildAttributionCookie(payload, hostname);
   if (!built.fits) {
     console.error("[attributie] RECORD TE GROOT VOOR EEN COOKIE: niets geschreven", {
+      cookie: ATTRIBUTION_COOKIE_NAME,
+      bytes: built.bytes,
+      limit: built.limit,
+    });
+    reportRuleBreach("handover_cookie.record_too_large", {
       cookie: ATTRIBUTION_COOKIE_NAME,
       bytes: built.bytes,
       limit: built.limit,
