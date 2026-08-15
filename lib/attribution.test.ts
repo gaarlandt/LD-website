@@ -28,6 +28,7 @@ import {
   serializeAttributionPayload,
   type AttributionPayload,
 } from "./attribution";
+import { resetErrorSinkForTests } from "./error-sink";
 import { buildConsentCookie, type ConsentPayload } from "./consent";
 import {
   BROWSER_COOKIE_BYTE_LIMIT,
@@ -138,9 +139,12 @@ async function freshAttribution() {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
   // unstubAllGlobals does not undo a spy, and a console.error left mocked would
   // swallow the next file's output as well as this one's.
   vi.restoreAllMocks();
+  // The error sink's per-page ceiling is module state; a file is one "page".
+  resetErrorSinkForTests();
 });
 
 // These assertions are the contract with the platform, not a style preference.
@@ -1428,5 +1432,95 @@ describe("createAttributionRecorder — absence of an answer", () => {
     record(GRANT_ALL);
 
     expect(readAttributionCookie()?.utm_source).toBe("facebook");
+  });
+});
+
+// =============================================================================
+// THE SAME BREACH, NOW ALSO IN A REAL SINK (T-44, executing loop decision D-6)
+// =============================================================================
+// Contract rule 5 says reporting is part of the rule and not a nicety, and until
+// 2026-08-15 the report reached a browser console and nothing else — findable
+// when someone was looking, invisible when nobody was. This is the other half.
+// The console line is unchanged and still asserted above: it is the platform's
+// text byte for byte, and it is the whole of the report wherever the DSN is
+// unset.
+describe("the too-large record reaches the error sink", () => {
+  const SINK_DSN = "https://abc123def456@o4511218925699072.ingest.de.sentry.io/4511300000000000";
+
+  const AT_SINK = "2026-08-11T09:00:00.000Z";
+
+  /**
+   * A `utm_campaign` big enough that the finished assignment is exactly one byte
+   * over the limit, and recognisable so a test can prove it did NOT travel. The
+   * arithmetic is the same as the boundary block above; it is restated rather
+   * than shared because that helper is scoped to its own describe and this block
+   * needs only the one value.
+   */
+  function oversizedCampaign(): string {
+    const marker = "campagnewaarde";
+    const envelope = { v: ATTRIBUTION_COOKIE_VERSION, t: AT_SINK, utm_campaign: "" };
+    const base = attributionByteLength(
+      `${ATTRIBUTION_COOKIE_NAME}=${serializeAttributionPayload(envelope)}`,
+    );
+    return marker + "x".repeat(ATTRIBUTION_MAX_COOKIE_BYTES + 1 - base - marker.length);
+  }
+
+  function captureSink() {
+    const events: Record<string, unknown>[] = [];
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", SINK_DSN);
+    vi.stubGlobal("window", { location: { hostname: "letsdog.nl" } });
+    vi.stubGlobal("fetch", (_url: unknown, init: { body?: unknown }) => {
+      events.push(JSON.parse(String(init?.body).split("\n").filter(Boolean)[2]));
+      return Promise.resolve(new Response("", { status: 200 }));
+    });
+    return events;
+  }
+
+  it("sends the rule that broke and the measurement that caused it", () => {
+    stubCookieJar();
+    stubConsoleError();
+    const events = captureSink();
+    recordFirstTouch({ utm_campaign: oversizedCampaign() }, ALL_GATES, "letsdog.nl", AT_SINK);
+
+    expect(events).toHaveLength(1);
+    expect(events[0].tags).toEqual({
+      runtime: "browser",
+      rule: "handover_cookie.record_too_large",
+    });
+    // WHICH rule broke and WHAT was measured — the platform's build condition.
+    // "the cookie was not written" on its own would be the tidy failure path
+    // their 2026-08-13 lesson is about.
+    expect(events[0].extra).toEqual({
+      cookie: ATTRIBUTION_COOKIE_NAME,
+      bytes: 4097,
+      limit: 4096,
+    });
+  });
+
+  it("carries no campaign values — the record itself never travels", () => {
+    // A `utm_campaign` is not a consent category, but it is the visitor's
+    // inbound URL and it has no business in an error report. The allowlist in
+    // lib/error-report.ts drops it without this call site having to think about
+    // it, which is the whole design: measurements, never payloads.
+    stubCookieJar();
+    stubConsoleError();
+    const events = captureSink();
+    recordFirstTouch({ utm_campaign: oversizedCampaign() }, ALL_GATES, "letsdog.nl", AT_SINK);
+
+    expect(JSON.stringify(events[0])).not.toContain("campagnewaarde");
+  });
+
+  it("sends nothing when no DSN is configured, and still writes the console line", () => {
+    stubCookieJar();
+    const reported = stubConsoleError();
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "");
+    vi.stubGlobal("window", { location: { hostname: "letsdog.nl" } });
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    expect(
+      recordFirstTouch({ utm_campaign: oversizedCampaign() }, ALL_GATES, "letsdog.nl", AT_SINK),
+    ).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(reported).toHaveBeenCalledTimes(1);
   });
 });

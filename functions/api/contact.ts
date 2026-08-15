@@ -15,17 +15,46 @@
 // POSTMARK_SERVER_TOKEN is set (Preview scope). See
 // docs/plans/2026-05-31-002-feat-contact-page-redesign-plan.md.
 
+import {
+  buildSentryEnvelope,
+  buildSentryEvent,
+  newEventId,
+  parseSentryDsn,
+  SENTRY_ENVELOPE_CONTENT_TYPE,
+  type Measurements,
+  type ReportRule,
+} from "../../lib/error-report";
+
 interface Env {
   POSTMARK_SERVER_TOKEN?: string;
   CONTACT_TO?: string;
   CONTACT_FROM?: string;
   CREATORS_TO?: string;
   TURNSTILE_SECRET_KEY?: string;
+  /**
+   * The error sink's DSN (T-44 / D-6). ONE variable serves both runtimes: a
+   * Pages environment variable is handed to Functions in `env` as well as being
+   * inlined into the client bundle by `next build`, so the browser SDK and this
+   * Function address the same Sentry project and are told apart by the `runtime`
+   * tag rather than by a second project. `NEXT_PUBLIC_` because that is what
+   * makes the build inline it for the browser half; a DSN is public by design
+   * (it ships in the client bundle either way), so this is not a secret being
+   * mishandled — but it still lives only in the Cloudflare dashboard, never in
+   * the repo. Unset is a supported state and means: report nothing, break
+   * nothing.
+   */
+  NEXT_PUBLIC_SENTRY_DSN?: string;
 }
 
 interface PagesContext {
   request: Request;
   env: Env;
+  /**
+   * Cloudflare's own "keep this alive after I have responded" hook. Optional
+   * because the tests build a bare `{ request, env }` context and because the
+   * reporter must work either way — see `createReporter`.
+   */
+  waitUntil?: (promise: Promise<unknown>) => void;
 }
 
 const MAX = { name: 100, email: 200, message: 5000 };
@@ -95,10 +124,114 @@ export function isPreviewOrLocalHost(hostname: string): boolean {
   return hostname.endsWith(".pages.dev") && hostname !== PROD_PAGES_ALIAS;
 }
 
+// =============================================================================
+// THE ERROR SINK (T-44, executing loop decision D-6)
+// =============================================================================
+// WHY THERE IS NO SDK HERE. This file has deliberately zero dependencies —
+// web-standard Request/Response/fetch only — because that is what keeps the
+// Cloudflare build a plain `next build` with no native step. A Sentry SDK would
+// end that. So this half is a small POST to Sentry's envelope endpoint, and the
+// only thing it imports is `lib/error-report.ts`: a pure module with no npm
+// packages, no Node APIs and no DOM access, shared with the browser half so the
+// rule ids, the fixed messages and above all the REDACTION have exactly one
+// spelling. Two spellings of one rule is one spelling that can drift, and this
+// repo has learned that lesson on two cookies already.
+//
+// EACH OF THE EIGHT FAILURE PATHS BELOW REPORTS ITS OWN RULE ID, and that is the
+// point rather than a flourish. These are the strongest justification for having
+// a sink at all (D-6): every one of them is a lost lead or a dead form, and
+// until now every one of them landed in a live Cloudflare log stream that nobody
+// watches. Each report carries WHAT WAS MEASURED — the status, the error code,
+// the exception text, the host — so the reason travels instead of being
+// collapsed into "the form failed".
+//
+// AND IT CANNOT BREAK THE FORM. That is the hard constraint, and it is enforced
+// three ways: the whole reporter sits in a try/catch, an unset or malformed DSN
+// makes it a no-op that never even builds an event, and the POST is never
+// awaited — see `createReporter`.
+
+/**
+ * How long the sink's own POST may take before it is abandoned.
+ *
+ * Short on purpose. Nothing waits for this request, but on the Workers runtime
+ * an un-awaited fetch handed to `waitUntil` still holds the invocation open, and
+ * an error reporter is the last thing that should be extending a Worker's life
+ * while an upstream of ours is already misbehaving.
+ */
+const SENTRY_TIMEOUT_MS = 2000;
+
+type ReportFn = (rule: ReportRule, measured?: Measurements) => void;
+
+/**
+ * A reporter bound to this request, or a no-op.
+ *
+ * FIRE AND FORGET, AND WHY IT IS `waitUntil` WHEN IT CAN BE. An un-awaited
+ * promise is enough to keep the reporter off the response's critical path, but
+ * on Cloudflare an invocation can be torn down as soon as the Response is
+ * returned, which would cancel the POST in flight — a reporter that usually
+ * reports is worse than one that never does, because you would trust it.
+ * `context.waitUntil` is Cloudflare's own way to say "finish this after I have
+ * answered", so it is used when present. It is optional on the type, so a
+ * context without it (the unit tests, an older runtime) degrades to a plain
+ * un-awaited promise rather than a TypeError inside a failure path.
+ *
+ * THE REJECTION IS SWALLOWED AT THE SOURCE. `.then(ok, fail)` rather than a
+ * trailing `.catch` so the promise handed to `waitUntil` can never reject: an
+ * unhandled rejection there is an error the sink itself caused, reported by
+ * nobody.
+ *
+ * `hostname` rides on EVERY report without a call site having to add it. It is
+ * the one measurement that is the same for all eight paths and the first thing
+ * anyone triaging asks — production, the Pages alias, or a branch preview.
+ */
+function createReporter(context: PagesContext, hostname: string): ReportFn {
+  const dsn = parseSentryDsn(context.env.NEXT_PUBLIC_SENTRY_DSN);
+  if (!dsn) return () => {};
+
+  // The SAME classification the Turnstile posture uses, deliberately: this file
+  // treats `website-letsdog.pages.dev` as production because it serves real
+  // traffic, and a report from there must not be filed under "preview" when the
+  // gate that produced it was enforced. (lib/prod-hosts.ts takes the opposite
+  // stance for ANALYTICS tagging; both are right for their own question.)
+  const environment = isPreviewOrLocalHost(hostname) ? "preview" : "production";
+
+  return (rule, measured = {}) => {
+    try {
+      const event = buildSentryEvent({
+        rule,
+        runtime: "pages-function",
+        environment,
+        eventId: newEventId(),
+        timestampMs: Date.now(),
+        measured: { hostname, ...measured },
+      });
+      const sending = fetch(dsn.envelopeUrl, {
+        method: "POST",
+        headers: { "Content-Type": SENTRY_ENVELOPE_CONTENT_TYPE },
+        body: buildSentryEnvelope(event, dsn, new Date().toISOString()),
+        signal: AbortSignal.timeout(SENTRY_TIMEOUT_MS),
+      }).then(
+        () => undefined,
+        () => undefined,
+      );
+      if (typeof context.waitUntil === "function") context.waitUntil(sending);
+    } catch {
+      // Every caller is already on a failure path and has already logged. A
+      // second exception here would turn an explained failure into an
+      // unexplained one, which is the exact inversion this sink exists to stop.
+    }
+  };
+}
+
 // Verify a Turnstile token against Cloudflare's siteverify endpoint. Returns
 // false on any failure (network, timeout, non-2xx, success:false) so the caller
 // fails closed — a missing or invalid token never sends mail.
-async function verifyTurnstile(token: string, secret: string, ip: string): Promise<boolean> {
+async function verifyTurnstile(
+  token: string,
+  secret: string,
+  ip: string,
+  report: ReportFn,
+): Promise<boolean> {
   const body = new URLSearchParams();
   body.set("secret", secret);
   body.set("response", token);
@@ -114,6 +247,7 @@ async function verifyTurnstile(token: string, secret: string, ip: string): Promi
     });
     if (!res.ok) {
       console.error("[contact] turnstile siteverify non-2xx", res.status);
+      report("contact.turnstile_siteverify_non_2xx", { status: res.status });
       return false;
     }
     const data = (await res.json()) as { success?: boolean };
@@ -123,6 +257,7 @@ async function verifyTurnstile(token: string, secret: string, ip: string): Promi
     // normal success:false (bad-token) rejection does NOT reach here, so this log
     // marks an actual siteverify infrastructure problem, not bot traffic.
     console.error("[contact] turnstile siteverify failed", String(err));
+    report("contact.turnstile_siteverify_failed", { cause: String(err) });
     return false;
   }
 }
@@ -199,14 +334,18 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
   // of silently disabling the gate.
   const turnstileToken = typeof data.turnstileToken === "string" ? data.turnstileToken : "";
   const hostname = new URL(request.url).hostname;
+  // Bound to this request and to this host, so no call site below has to
+  // remember either. A no-op when NEXT_PUBLIC_SENTRY_DSN is unset.
+  const report = createReporter(context, hostname);
   const turnstileSecret =
     env.TURNSTILE_SECRET_KEY || (isPreviewOrLocalHost(hostname) ? TURNSTILE_TEST_SECRET : "");
   if (!turnstileSecret) {
     console.error("[contact] turnstile secret missing on enforced host", hostname);
+    report("contact.turnstile_secret_missing");
     return json({ ok: false, error: "server_not_configured" }, 500);
   }
   const ip = request.headers.get("CF-Connecting-IP") || "";
-  if (!(await verifyTurnstile(turnstileToken, turnstileSecret, ip))) {
+  if (!(await verifyTurnstile(turnstileToken, turnstileSecret, ip, report))) {
     return json({ ok: false, error: "captcha" }, 400);
   }
 
@@ -215,6 +354,7 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
     // Misconfiguration — surface clearly so an unset Preview/Prod secret is
     // obvious during verification rather than failing silently.
     console.error("[contact] postmark token missing");
+    report("contact.postmark_token_missing");
     return json({ ok: false, error: "server_not_configured" }, 500);
   }
 
@@ -368,12 +508,14 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
     });
   } catch (err) {
     console.error("[contact] postmark batch fetch failed", String(err));
+    report("contact.postmark_batch_fetch_failed", { cause: String(err) });
     return json({ ok: false, error: "send_failed" }, 502);
   }
 
   // A non-2xx means Postmark rejected the whole batch (auth/payload) — nothing sent.
   if (!postmarkRes.ok) {
     console.error("[contact] postmark batch non-2xx", postmarkRes.status);
+    report("contact.postmark_batch_non_2xx", { status: postmarkRes.status });
     return json({ ok: false, error: "send_failed" }, 502);
   }
 
@@ -394,6 +536,16 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
         results?.[0]?.ErrorCode,
         results?.[0]?.Message,
       );
+      // The numeric ErrorCode travels; Postmark's `Message` does NOT. That text
+      // is upstream free-form and routinely quotes the address it could not
+      // deliver to — which is the submitter's e-mail address, the one piece of
+      // this request that must never reach the sink. The code is what you
+      // triage on anyway ("406 inactive recipient" is a different incident from
+      // "300 invalid email request"), and the full line is in the console log
+      // next to it.
+      report("contact.postmark_support_not_accepted", {
+        errorCode: typeof results?.[0]?.ErrorCode === "number" ? results[0].ErrorCode : -1,
+      });
     }
   } catch (err) {
     // Either a malformed/non-JSON 200 body, or AbortSignal.timeout firing during
@@ -401,6 +553,7 @@ export async function onRequestPost(context: PagesContext): Promise<Response> {
     // label covers both so ops triage isn't sent chasing a malformed body when the
     // real cause was a timeout (String(err) carries the actual SyntaxError/TimeoutError).
     console.error("[contact] postmark batch result unreadable (parse or timeout)", String(err));
+    report("contact.postmark_result_unreadable", { cause: String(err) });
     supportOk = false;
   }
 

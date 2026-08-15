@@ -15,6 +15,7 @@ import {
   readFirstParseableCookie,
   recordConsentWithdrawal,
   serializeConsentPayload,
+  resetConsentChainReportForTests,
   submitConsentToCookiebot,
   toIsoTimestamp,
   writeConsentCookie,
@@ -25,6 +26,7 @@ import {
   stubDomainCookieJar,
   type JarEntry,
 } from "./cookie-jar.test-helpers";
+import { resetErrorSinkForTests } from "./error-sink";
 
 const payload: ConsentPayload = {
   v: 1,
@@ -327,9 +329,19 @@ function stubCookieJar() {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
   // unstubAllGlobals does not undo a spy, and a console.error left mocked would
   // swallow the next file's output as well as this one's.
   vi.restoreAllMocks();
+  // THE ERROR SINK'S TWO LATCHES ARE MODULE STATE, and they are latched for a
+  // PAGE LOAD — which in a test file is the whole file unless somebody clears
+  // them. Reset here rather than in the T-44 block, because the tests that leak
+  // them are the OTHER ones: every test that lets `onCookiebotConsent` run out
+  // its ten-second wait spends the consent-chain latch, whether or not a DSN was
+  // configured at the time. Found the hard way — the first T-44 test passed
+  // alone and failed in the suite.
+  resetConsentChainReportForTests();
+  resetErrorSinkForTests();
 });
 
 /**
@@ -1867,5 +1879,166 @@ describe("toIsoTimestamp", () => {
     // the corpus must actually exercise the non-null branch, or this asserts
     // nothing at all
     expect(produced).toBeGreaterThan(0);
+  });
+});
+
+// =============================================================================
+// THE CONSENT CHAIN'S HEALTH SIGNAL (T-44, executing loop decision D-6)
+// =============================================================================
+// The wait giving up is correct behaviour — it is indistinguishable from a
+// blocked uc.js, which legitimately happens. Until now it was also SILENT, and
+// that silence is exactly the shape of T-43: for a week every page load ended in
+// this branch, the banner sat there, nothing measured, the return leg never ran,
+// and the published cookie declaration promised something the product did not do.
+// Three deploys to find. These tests pin the line that would have said it on the
+// first one — and pin, just as hard, what may NOT travel with it.
+describe("onCookiebotConsent — reporting a chain that never started (T-44)", () => {
+  afterEach(() => {
+    closeSubscriptions();
+    resetConsentChainReportForTests();
+    resetErrorSinkForTests();
+  });
+
+  const SINK_DSN = "https://abc123def456@o4511218925699072.ingest.de.sentry.io/4511300000000000";
+
+  /** Envelope bodies the sink posted, with the event line parsed out. */
+  function captureSink() {
+    const events: Record<string, unknown>[] = [];
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", SINK_DSN);
+    vi.stubGlobal("fetch", (_url: unknown, init: { body?: unknown }) => {
+      const lines = String(init?.body).split("\n").filter(Boolean);
+      events.push(JSON.parse(lines[2]));
+      return Promise.resolve(new Response("", { status: 200 }));
+    });
+    return events;
+  }
+
+  it("reports that Cookiebot never became usable, once the wait has given up", () => {
+    vi.useFakeTimers();
+    stubDomainCookieJar([storedAnswer, platformChoice(true, true, true)]);
+    const events = captureSink();
+    cookiebotDouble();
+
+    subscribe(() => {});
+    // Still waiting: the report belongs to giving up, not to not-yet-succeeding.
+    vi.advanceTimersByTime(5_000);
+    expect(events).toHaveLength(0);
+
+    vi.advanceTimersByTime(6_000);
+    expect(events).toHaveLength(1);
+    expect(events[0].tags).toEqual({
+      runtime: "browser",
+      rule: "consent_chain.cookiebot_never_usable",
+    });
+    expect(events[0].level).toBe("error");
+  });
+
+  it("says WHAT WAS MEASURED, not merely that something broke", () => {
+    // The platform's build condition (D-6, and their lesson
+    // a-tidy-failure-path-erases-the-cause-it-was-built-to-report.md): a report
+    // that only says "the chain failed" is the tidy failure path all over again.
+    // These four numbers are the whole triage — a published-but-unconstructed
+    // object is a different incident from no object at all, and both are
+    // different from a stored answer that never settled.
+    vi.useFakeTimers();
+    stubDomainCookieJar([storedAnswer]);
+    const events = captureSink();
+    const cookiebot = cookiebotDouble();
+    cookiebot.publishes(); // the object exists; its API does not
+
+    subscribe(() => {});
+    vi.advanceTimersByTime(11_000);
+
+    expect(events[0].extra).toEqual({
+      waitedMs: 10_000,
+      cookiebotPresent: true,
+      cookiebotUsable: false,
+      cookiebotCookies: 1,
+      deliveries: 0,
+    });
+  });
+
+  it("says nothing when the chain did start", () => {
+    vi.useFakeTimers();
+    stubDomainCookieJar([]);
+    const events = captureSink();
+    const cookiebot = cookiebotDouble();
+
+    subscribe(() => {});
+    cookiebot.constructs();
+    vi.advanceTimersByTime(11_000);
+
+    expect(events).toEqual([]);
+  });
+
+  it("reports one incident even though all five subscribers time out", () => {
+    // Every subscriber runs its own wait, so a Cookiebot that never arrives times
+    // out once per subscriber. Five identical reports of one page load's single
+    // failure would burn a monthly volume quota that is shared with the platform.
+    vi.useFakeTimers();
+    stubDomainCookieJar([]);
+    const events = captureSink();
+    cookiebotDouble();
+
+    for (let i = 0; i < 5; i += 1) subscribe(() => {});
+    vi.advanceTimersByTime(11_000);
+
+    expect(events).toHaveLength(1);
+  });
+
+  it("never sends the visitor's consent choice, only counts", () => {
+    // THE HARD LIMIT, at the one call site where it bites. The sink is ungated by
+    // design (D-6) precisely so it still speaks for someone who refused
+    // everything — which is exactly why this report may not carry what they
+    // refused. Both cookies are in the jar here and neither's contents may appear.
+    vi.useFakeTimers();
+    stubDomainCookieJar([storedAnswer, platformChoice(false, false, false)]);
+    const events = captureSink();
+    cookiebotDouble();
+
+    subscribe(() => {});
+    vi.advanceTimersByTime(11_000);
+
+    const wire = JSON.stringify(events[0]);
+    expect(wire).not.toContain(storedAnswer.value);
+    expect(wire).not.toContain("necessary");
+    expect(wire).not.toContain("statistics");
+    // The cookie is counted, never read: a count cannot carry a choice.
+    expect(wire).not.toContain(serializeConsentPayload({ v: 1, t: chosenOnPlatform, p: false, s: false, m: false }));
+  });
+
+  it("does not depend on ld_consent at all — the T-38 measurement", () => {
+    // T-38 watches for a THIRD consent subscriber that reads `ld_consent` inside
+    // a Cookiebot handler; that would make the JSX order in app/layout.tsx
+    // load-bearing for one more component. This reporter is deliberately not
+    // one: it lives inside the WAIT rather than in a handler, and the failure it
+    // watches is the ABSENCE of any delivery — which a subscriber could not see,
+    // because a subscriber only ever observes states that were delivered.
+    //
+    // Pinned by behaviour rather than by prose: the same report, byte for byte,
+    // whether the handover cookie is present with a granting choice or absent
+    // entirely. A reporter that read it could not produce the same event twice.
+    vi.useFakeTimers();
+    const withCookie = captureSink();
+    stubDomainCookieJar([storedAnswer, platformChoice(true, true, true)]);
+    cookiebotDouble();
+    subscribe(() => {});
+    vi.advanceTimersByTime(11_000);
+
+    closeSubscriptions();
+    resetConsentChainReportForTests();
+    resetErrorSinkForTests();
+
+    vi.useFakeTimers();
+    const withoutCookie = captureSink();
+    stubDomainCookieJar([storedAnswer]);
+    cookiebotDouble();
+    subscribe(() => {});
+    vi.advanceTimersByTime(11_000);
+
+    expect(withCookie).toHaveLength(1);
+    expect(withoutCookie).toHaveLength(1);
+    expect(withCookie[0].extra).toEqual(withoutCookie[0].extra);
+    expect(JSON.stringify(withCookie[0])).not.toContain(chosenOnPlatform);
   });
 });
