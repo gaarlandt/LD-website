@@ -1016,7 +1016,8 @@ const unsettled = () => ({
  * A window that can fire Cookiebot's events INTO THE VOID, which is the one
  * browser behaviour a subscribe-then-fire test cannot express: an event with no
  * listener is gone, not queued, and uc.js has already fired all four by the time
- * React mounts. `settle` moves Cookiebot's state the way uc.js does a beat later.
+ * React mounts. `becomes` replaces the object the way uc.js does a beat later —
+ * used both for "the CMP finally arrived" and for "it settled its answer".
  */
 function stubCookiebotWindow(cookiebot: unknown) {
   const listeners = new Map<string, Set<() => void>>();
@@ -1040,32 +1041,56 @@ function stubCookiebotWindow(cookiebot: unknown) {
     fire(type: string) {
       for (const listener of [...(listeners.get(type) ?? [])]) listener();
     },
-    settle(next: unknown) {
+    becomes(next: unknown) {
       win.Cookiebot = next;
     },
   };
 }
 
+/**
+ * Every subscription in the two blocks below goes through here, and each block
+ * tears them all down afterwards.
+ *
+ * NOT TIDINESS. A subscription can now hold a live interval, and one left running
+ * past `vi.unstubAllGlobals()` ticks into a world with no `window` and takes an
+ * unrelated test down with it — a leak in the rig that would read as a failure in
+ * the code. `useEffect` cleanup is what does this in production; this is the same
+ * discipline, and it makes every test here exercise the unsubscribe path as well.
+ */
+const openSubscriptions: (() => void)[] = [];
+function subscribe(handler: (consent: ConsentPayload | null) => void) {
+  const unsubscribe = onCookiebotConsent(handler);
+  openSubscriptions.push(unsubscribe);
+  return unsubscribe;
+}
+function closeSubscriptions() {
+  while (openSubscriptions.length) openSubscriptions.pop()!();
+  vi.useRealTimers();
+}
+
+const chosenOnPlatform = "2026-08-15T08:00:00.000Z";
+
+/**
+ * Cookiebot's own cookie, host-only as uc.js writes it. Only its PRESENCE is ever
+ * read, so the value is a stand-in — but a realistic one, because a test carrying
+ * an empty value would quietly bless a reader that requires content.
+ */
+const storedAnswer: JarEntry = {
+  name: "CookieConsent",
+  value: "%7Bstamp%3A%27dQw4w9%27%2Cnecessary%3Atrue%7D",
+  domain: null,
+};
+
+/** The visitor's answer as the platform left it on the shared domain. */
+const platformChoice = (p: boolean, s: boolean, m: boolean): JarEntry => ({
+  name: CONSENT_COOKIE_NAME,
+  value: serializeConsentPayload({ v: 1, t: chosenOnPlatform, p, s, m }),
+  domain: ".letsdog.nl",
+});
+
 describe("onCookiebotConsent — the direct delivery (T-43)", () => {
-  const chosenOnPlatform = "2026-08-15T08:00:00.000Z";
-
-  /**
-   * Cookiebot's own cookie, host-only as uc.js writes it. Only its PRESENCE is
-   * ever read, so the value is a stand-in — but a realistic one, because a test
-   * carrying an empty value would quietly bless a reader that requires content.
-   */
-  const storedAnswer: JarEntry = {
-    name: "CookieConsent",
-    value: "%7Bstamp%3A%27dQw4w9%27%2Cnecessary%3Atrue%7D",
-    domain: null,
-  };
-
-  /** The visitor's answer as the platform left it on the shared domain. */
-  const platformChoice = (p: boolean, s: boolean, m: boolean): JarEntry => ({
-    name: CONSENT_COOKIE_NAME,
-    value: serializeConsentPayload({ v: 1, t: chosenOnPlatform, p, s, m }),
-    domain: ".letsdog.nl",
-  });
+  // Nested, so it drains before the file-level `vi.unstubAllGlobals()`.
+  afterEach(closeSubscriptions);
 
   // THE ORDER TEST. Written out rather than imported from COOKIEBOT_EVENTS on
   // purpose: this is a statement about what uc.js fires, and it has to stay true
@@ -1086,7 +1111,7 @@ describe("onCookiebotConsent — the direct delivery (T-43)", () => {
     // the browser does not replay them for a component that mounts later.
     for (const event of COOKIEBOT_FIRES) cookiebot.fire(event);
 
-    onCookiebotConsent((consent) => seen.push(consent));
+    subscribe((consent) => seen.push(consent));
 
     // On the old guard this array stays empty, and every consumer — ConsentSync
     // above all — is never asked anything at all.
@@ -1098,7 +1123,7 @@ describe("onCookiebotConsent — the direct delivery (T-43)", () => {
     stubCookiebotWindow(settled(false, true, false, "2026-08-15T07:30:00.000Z"));
     const seen: (ConsentPayload | null)[] = [];
 
-    onCookiebotConsent((consent) => seen.push(consent));
+    subscribe((consent) => seen.push(consent));
 
     expect(seen).toEqual([{ v: 1, t: "2026-08-15T07:30:00.000Z", p: false, s: true, m: false }]);
   });
@@ -1115,11 +1140,11 @@ describe("onCookiebotConsent — the direct delivery (T-43)", () => {
     const cookiebot = stubCookiebotWindow(unsettled());
     const seen: (ConsentPayload | null)[] = [];
 
-    onCookiebotConsent((consent) => seen.push(consent));
+    subscribe((consent) => seen.push(consent));
     expect(seen).toEqual([]);
 
     // uc.js finishes, with the refusal the visitor really made on this host.
-    cookiebot.settle(settled(false, false, false, "2026-08-14T20:00:00.000Z"));
+    cookiebot.becomes(settled(false, false, false, "2026-08-14T20:00:00.000Z"));
     cookiebot.fire("CookiebotOnConsentReady");
     expect(seen).toEqual([{ v: 1, t: "2026-08-14T20:00:00.000Z", p: false, s: false, m: false }]);
   });
@@ -1134,7 +1159,7 @@ describe("onCookiebotConsent — the direct delivery (T-43)", () => {
 
     // ConsentSync's body, verbatim in shape: read the cookie, ask the predicate,
     // hand it over. Nothing is mocked between the trigger and Cookiebot's API.
-    onCookiebotConsent((cookiebot) => {
+    subscribe((cookiebot) => {
       const cookie = readConsentCookie();
       if (!cookie || !consentCookieSupersedes(cookie, cookiebot)) return;
       submitConsentToCookiebot(cookie);
@@ -1155,7 +1180,7 @@ describe("onCookiebotConsent — the direct delivery (T-43)", () => {
     stubCookiebotWindow({ ...unsettled(), submitCustomConsent });
     const seen: (ConsentPayload | null)[] = [];
 
-    onCookiebotConsent((cookiebot) => {
+    subscribe((cookiebot) => {
       seen.push(cookiebot);
       const cookie = readConsentCookie();
       if (!cookie || !consentCookieSupersedes(cookie, cookiebot)) return;
@@ -1175,7 +1200,7 @@ describe("onCookiebotConsent — the direct delivery (T-43)", () => {
     const cookiebot = stubCookiebotWindow(undefined);
     const seen: (ConsentPayload | null)[] = [];
 
-    onCookiebotConsent((consent) => seen.push(consent));
+    subscribe((consent) => seen.push(consent));
     cookiebot.fire("CookiebotOnLoad");
 
     expect(seen).toEqual([]);
@@ -1193,9 +1218,155 @@ describe("onCookiebotConsent — the direct delivery (T-43)", () => {
     stubCookiebotWindow(unsettled());
     const seen: (ConsentPayload | null)[] = [];
 
-    onCookiebotConsent((consent) => seen.push(consent));
+    subscribe((consent) => seen.push(consent));
 
     expect(seen).toEqual([null]);
+  });
+});
+
+// =============================================================================
+// WAITING FOR THE OBJECT. The block above narrowed the guard; this one is about
+// the `return` one line ABOVE that guard, which is where production actually
+// stopped.
+// =============================================================================
+// Resource timing on letsdog.nl, 2026-08-15, with the narrowing deployed and
+// verified present in the served chunk: domInteractive 137 ms, all twelve app
+// chunks done at 210 ms, uc.js 221 ms, configuration.js 441 ms, cc.js 549 ms.
+// The subscription is created before Cookiebot exists, so `deliver(false)` exits
+// on `!window.Cookiebot` and the narrowed guard is never reached. And the event
+// fallback is dead: we are listening from 210 ms, an event-borne delivery skips
+// the cookie check entirely, and `hasResponse` still never flipped — so no
+// Cookiebot event arrives on a normal page load, while a hand-dispatched one
+// works. Both halves of the delivery mechanism missed.
+//
+// The order these tests reproduce is therefore the second one nobody had: not
+// "the events already fired" but "the CMP is not there yet". Every test below
+// starts with `window.Cookiebot` undefined, which is what a real page load looks
+// like at the moment React mounts.
+describe("onCookiebotConsent — waiting for Cookiebot to arrive (T-43)", () => {
+  afterEach(closeSubscriptions);
+
+  it("delivers once Cookiebot appears, having not been there at subscribe time", () => {
+    vi.useFakeTimers();
+    stubDomainCookieJar([platformChoice(true, true, true)]);
+    const cookiebot = stubCookiebotWindow(undefined);
+    const seen: (ConsentPayload | null)[] = [];
+
+    subscribe((consent) => seen.push(consent));
+    expect(seen).toEqual([]);
+
+    // 200 ms of hydrated page with no CMP in it. Saying anything here would be
+    // inventing a choice; the wait's whole job is to say nothing yet.
+    vi.advanceTimersByTime(200);
+    expect(seen).toEqual([]);
+
+    // uc.js runs. Cookiebot exists and knows nothing, and nothing is stored for
+    // it to learn — so the read is final and the visitor's platform choice can
+    // finally be acted on.
+    cookiebot.becomes(unsettled());
+    vi.advanceTimersByTime(1000);
+
+    // Exactly one delivery, which also says the wait stopped itself.
+    expect(seen).toEqual([null]);
+  });
+
+  it("still says nothing when Cookiebot arrives with an answer it has not settled", () => {
+    // The stored-refusal hazard, now reachable through the wait as well. The
+    // narrowing is what holds here, and it must hold identically whether the
+    // object was there at subscribe time or turned up 300 ms later.
+    vi.useFakeTimers();
+    stubDomainCookieJar([storedAnswer, platformChoice(true, true, true)]);
+    const cookiebot = stubCookiebotWindow(undefined);
+    const seen: (ConsentPayload | null)[] = [];
+
+    subscribe((consent) => seen.push(consent));
+    cookiebot.becomes(unsettled());
+    vi.advanceTimersByTime(1000);
+
+    expect(seen).toEqual([]);
+  });
+
+  it("keeps waiting through the settle race and delivers the real answer", () => {
+    // WHY THE WAIT ENDS ON A DELIVERY AND NOT ON THE OBJECT APPEARING. Stopping
+    // at "Cookiebot exists" would hand this visitor to the event path — the one
+    // measured as never firing. So the wait keeps looking, and the answer that
+    // arrives is Cookiebot's own refusal, not the cookie's grant.
+    vi.useFakeTimers();
+    stubDomainCookieJar([storedAnswer, platformChoice(true, true, true)]);
+    const cookiebot = stubCookiebotWindow(undefined);
+    const seen: (ConsentPayload | null)[] = [];
+
+    subscribe((consent) => seen.push(consent));
+    cookiebot.becomes(unsettled());
+    vi.advanceTimersByTime(200);
+    expect(seen).toEqual([]);
+
+    cookiebot.becomes(settled(false, false, false, "2026-08-14T20:00:00.000Z"));
+    vi.advanceTimersByTime(1000);
+
+    expect(seen).toEqual([{ v: 1, t: "2026-08-14T20:00:00.000Z", p: false, s: false, m: false }]);
+  });
+
+  it("does not deliver twice when an event arrives while we are still waiting", () => {
+    vi.useFakeTimers();
+    stubDomainCookieJar([platformChoice(true, true, true)]);
+    const cookiebot = stubCookiebotWindow(undefined);
+    const seen: (ConsentPayload | null)[] = [];
+
+    subscribe((consent) => seen.push(consent));
+    expect(vi.getTimerCount()).toBe(1);
+
+    // Cookiebot arrives and announces itself in the same beat — the ordering we
+    // may no longer depend on, but which is still allowed to happen.
+    cookiebot.becomes(unsettled());
+    cookiebot.fire("CookiebotOnLoad");
+    expect(seen).toEqual([null]);
+
+    // The event ended the wait, stated directly rather than inferred from the
+    // absence of a second delivery.
+    expect(vi.getTimerCount()).toBe(0);
+    vi.advanceTimersByTime(5000);
+    expect(seen).toEqual([null]);
+  });
+
+  it("stops waiting when the subscription is torn down", () => {
+    // Every caller unsubscribes from a `useEffect` cleanup. A tick surviving that
+    // reads a page that may be gone and calls a handler nobody owns any more.
+    vi.useFakeTimers();
+    stubDomainCookieJar([platformChoice(true, true, true)]);
+    const cookiebot = stubCookiebotWindow(undefined);
+    const seen: (ConsentPayload | null)[] = [];
+
+    const unsubscribe = subscribe((consent) => seen.push(consent));
+    expect(vi.getTimerCount()).toBe(1);
+
+    unsubscribe();
+    expect(vi.getTimerCount()).toBe(0);
+
+    cookiebot.becomes(unsettled());
+    vi.advanceTimersByTime(5000);
+    expect(seen).toEqual([]);
+  });
+
+  it("gives up rather than waiting forever", () => {
+    // A uc.js that never arrives: blocked, or a network that gave up. Beyond the
+    // bound the visitor has been reading the page for ten seconds, and quietly
+    // rewriting their consent state then is worse than leaving the banner up —
+    // so a late arrival gets nothing, exactly as a blocked one always did.
+    vi.useFakeTimers();
+    stubDomainCookieJar([platformChoice(true, true, true)]);
+    const cookiebot = stubCookiebotWindow(undefined);
+    const seen: (ConsentPayload | null)[] = [];
+
+    subscribe((consent) => seen.push(consent));
+    expect(vi.getTimerCount()).toBe(1);
+
+    vi.advanceTimersByTime(60_000);
+    expect(vi.getTimerCount()).toBe(0);
+
+    cookiebot.becomes(unsettled());
+    vi.advanceTimersByTime(60_000);
+    expect(seen).toEqual([]);
   });
 });
 
