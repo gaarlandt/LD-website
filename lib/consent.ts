@@ -546,6 +546,27 @@ function cookiebotMayStillSettle(): boolean {
 }
 
 /**
+ * HOW LONG WE WAIT FOR uc.js, and how often we look. Both numbers are measured
+ * rather than picked (letsdog.nl resource timing, 2026-08-15 — the full figures
+ * are in `onCookiebotConsent`).
+ *
+ * 50 ms because the LATENCY is the product here, not the CPU. Cookiebot's object
+ * appears at ~221 ms and its dialog only after cc.js at ~549 ms, so a tick this
+ * short lets the adoption land inside that gap and the returning visitor never
+ * sees the banner flash at all. A tick is one property read, plus one
+ * `document.cookie` read once the object exists.
+ *
+ * 10 s because the bound has to survive a bad connection without ever becoming
+ * unbounded. Cookiebot's whole chain completes inside 550 ms on a normal load, so
+ * this is roughly twenty times the measured need — and beyond it the visitor has
+ * been reading the page for ten seconds, at which point silently rewriting their
+ * consent state is worse than leaving the banner up. Giving up looks exactly like
+ * a blocked uc.js, which is the behaviour that was already correct.
+ */
+const COOKIEBOT_WAIT_INTERVAL_MS = 50;
+const COOKIEBOT_WAIT_TIMEOUT_MS = 10_000;
+
+/**
  * Calls `handler` with the current state now and again on every change. `null`
  * means Cookiebot is loaded but records no choice. Returns an unsubscribe.
  *
@@ -601,26 +622,94 @@ function cookiebotMayStillSettle(): boolean {
  * NEXT page load that visitor now gets the direct `null` — where the all-false
  * `ld_consent` their withdrawal wrote meets D-4's clamp and the banner is shown,
  * which is what D-4 always said should happen and could not previously reach.
+ *
+ * SO WE WAIT FOR THE OBJECT, and that is the second half of T-43 — shipped a day
+ * later because the first half was correct and still did nothing. Narrowing the
+ * guard made the `null` deliverable; it did not make anything reach the guard.
+ * `deliver` exits one line earlier, on `!window.Cookiebot`, and on production
+ * that is where every page load ended. Resource timing on letsdog.nl, 2026-08-15,
+ * after the narrowing was deployed and verified present in the served chunk:
+ * domInteractive at 137 ms, all twelve app chunks finished at 210 ms, and
+ * Cookiebot's own scripts at 221 ms (uc.js), 441 ms (configuration.js), 549 ms
+ * (cc.js). React hydrates, the effects run, the subscriptions are created — and
+ * `window.Cookiebot` does not exist yet. The narrowed guard was unreachable code
+ * behind a `return` one line above it.
+ *
+ * AND THE EVENT PATH IS DEAD, WHICH IS NOW PROVEN RATHER THAN SUSPECTED. We
+ * attach the listeners at ~210 ms, BEFORE uc.js runs, so anything Cookiebot
+ * fired afterwards would reach us — and with the narrowing deployed a `fromEvent`
+ * delivery skips the cookie check entirely and would have triggered the adoption.
+ * `hasResponse` stayed false. A hand-dispatched `CookiebotOnLoad` flipped it
+ * instantly, so the listener works: Cookiebot simply never fires one on a normal
+ * page load here. That kills the last reason to treat the event list as the
+ * primary route. It stays subscribed because a real banner click does fire and
+ * costs nothing to catch — but nothing may depend on it.
+ *
+ * The wait is therefore the trigger, and it is a bounded poll rather than
+ * anything cleverer: there is no event for "the CMP object now exists", and
+ * `Object.defineProperty` on `window.Cookiebot` would fight uc.js for the same
+ * property. It re-runs the SAME `deliver(false)` — a poll delivery is not
+ * `fromEvent`, so it goes through the settle guard exactly like the subscribe-time
+ * read did.
+ *
+ * IT STOPS ON A DELIVERY, NOT ON THE OBJECT APPEARING, and that difference earns
+ * its keep in one case: Cookiebot arrives holding a `CookieConsent` it has not
+ * settled yet. The guard correctly says nothing, and stopping there would hand
+ * the rest of that visitor's page to the event path we just measured as dead. So
+ * the wait keeps looking and delivers the real answer the moment it settles. It
+ * still delivers AT MOST ONCE — the first delivery, by whichever route, ends it,
+ * so an event arriving mid-wait cannot produce a second copy of the same state.
+ *
+ * ALL FIVE SUBSCRIBERS RUN THEIR OWN WAIT, which is fine and does not disturb the
+ * one ordering that matters. ConsentSync must act only once ConsentCookie and
+ * MetaPixel are LISTENING (its `submitCustomConsent` fires Cookiebot's events
+ * synchronously) — and every subscription registers its listeners at mount, in
+ * tree order, long before any timer ticks. The polls only stagger the direct
+ * deliveries, and by then everyone is already subscribed.
  */
 export function onCookiebotConsent(
   handler: (consent: ConsentPayload | null) => void,
 ): () => void {
   if (typeof window === "undefined") return () => {};
 
-  const deliver = (fromEvent: boolean) => {
-    // No Cookiebot object yet: we know nothing, so say nothing. Guessing would
-    // read as "no choice", which is a claim we have no basis for.
-    if (!window.Cookiebot) return;
-    const consent = readCookiebotConsent();
-    if (consent === null && !fromEvent && cookiebotMayStillSettle()) return;
-    handler(consent);
+  let waiting: ReturnType<typeof setInterval> | undefined;
+  const stopWaiting = () => {
+    if (waiting === undefined) return;
+    clearInterval(waiting);
+    waiting = undefined;
   };
 
-  const onEvent = () => deliver(true);
+  // Reports whether it actually handed something over, which is what the wait
+  // needs: "the object is there" and "we have said something" are different
+  // facts, and the settle guard sits between them.
+  const deliver = (fromEvent: boolean): boolean => {
+    // No Cookiebot object yet: we know nothing, so say nothing. Guessing would
+    // read as "no choice", which is a claim we have no basis for.
+    if (!window.Cookiebot) return false;
+    const consent = readCookiebotConsent();
+    if (consent === null && !fromEvent && cookiebotMayStillSettle()) return false;
+    handler(consent);
+    return true;
+  };
+
+  const onEvent = () => {
+    // Whichever route speaks first ends the wait, so no state is delivered twice.
+    if (deliver(true)) stopWaiting();
+  };
   for (const event of COOKIEBOT_EVENTS) window.addEventListener(event, onEvent);
-  deliver(false);
+
+  if (!deliver(false)) {
+    let attemptsLeft = Math.ceil(COOKIEBOT_WAIT_TIMEOUT_MS / COOKIEBOT_WAIT_INTERVAL_MS);
+    waiting = setInterval(() => {
+      if (deliver(false) || --attemptsLeft <= 0) stopWaiting();
+    }, COOKIEBOT_WAIT_INTERVAL_MS);
+  }
 
   return () => {
+    // The timer FIRST: every caller runs this from a `useEffect` cleanup, and a
+    // tick that outlives the component reads a `window` its page may no longer
+    // have and calls a handler its subscriber has already torn down.
+    stopWaiting();
     for (const event of COOKIEBOT_EVENTS) window.removeEventListener(event, onEvent);
   };
 }
