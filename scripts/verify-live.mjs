@@ -213,15 +213,22 @@ class Report {
     this.current.reason = failed.length === 0 ? "" : `${failed.length} assertion(s) failed`;
   }
 
-  /** A proof that could not be attempted. Loud, and fatal — never a silent skip. */
-  notRun(error) {
+  /**
+   * A proof that could not be attempted. Loud, and fatal — never a silent skip.
+   * `broke` distinguishes the two reasons a proof goes unmeasured: you did not
+   * ask for it, or it fell over. Both leave the run unable to claim the
+   * behaviour; only the second one is a surprise.
+   */
+  notRun(error, broke = true) {
     this.current.status = "NOT RUN";
     this.current.reason = error;
     console.log(`  ${c.red("NOT RUN")} ${error}`);
-    console.log(
-      `         ${c.yellow("why")} an unrunnable proof is not a passing proof — this run cannot ` +
-        `claim the behaviour it did not measure`,
-    );
+    if (broke) {
+      console.log(
+        `         ${c.yellow("why")} an unrunnable proof is not a passing proof — this run cannot ` +
+          `claim the behaviour it did not measure`,
+      );
+    }
   }
 }
 
@@ -271,6 +278,34 @@ async function fetchFingerprint(url) {
   const res = await fetch(url, { headers: { "cache-control": "no-cache", pragma: "no-cache" } });
   if (!res.ok) throw new Error(`${url} answered ${res.status}`);
   return buildFingerprint(await res.text());
+}
+
+/**
+ * The same, but patient — for a deployment's own `<id>.pages.dev` alias.
+ *
+ * MEASURED WHILE BUILDING THIS, and it is exactly the moment the precondition is
+ * for: a deployment can be listed as Active and its own subdomain still answer
+ * 404 while Cloudflare propagates it. Timed on 2026-08-15 against deployment
+ * f6148f18 — the alias 404'd for roughly ten minutes after the row went Active,
+ * then answered normally. A run started right after a merge lands in that
+ * window, so the budget below is two minutes rather than a token retry, and the
+ * refusal after it is still correct: until that alias answers, we cannot prove
+ * what the apex is serving.
+ */
+async function fetchFingerprintPatiently(url, attempts = 8, delayMs = 15_000) {
+  let last;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      return await fetchFingerprint(url);
+    } catch (error) {
+      last = error;
+      if (i < attempts - 1) {
+        console.log(`  ${c.dim("·")}     waiting for ${url} to come up (${error.message})`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+  throw last;
 }
 
 async function git(...args) {
@@ -366,6 +401,31 @@ const FAULTS = {
     breaks: "P6",
     route: async (ctx) => ctx.route("**i.posthog.com/**", (r) => r.abort()),
   },
+  // THE ONE THAT ATTACKS THE NEGATIVES. Every other fault above breaks something
+  // a proof expects to see; this one makes something happen that four proofs
+  // expect NOT to see. It grants full consent through the CMP's own API on any
+  // page that has not been answered, which is the shape of the failure the whole
+  // "both directions" rule exists for: a gate that never turns red.
+  "grant-uninvited": {
+    breaks: "the NEGATIVE halves of P1 P2 P5 P6",
+    afterSettle: async (page) => {
+      await page.evaluate(() => {
+        if (window.Cookiebot?.hasResponse !== true) window.Cookiebot?.submitCustomConsent(true, true, true);
+      });
+      await page.waitForTimeout(1500);
+    },
+  },
+  // The same idea aimed at the one negative `grant-uninvited` cannot reach: a
+  // statistics refusal that has ALREADY been adopted (hasResponse is true), where
+  // the thing that must not happen is PostHog resuming. Unconditional, so it
+  // overrides a recorded refusal rather than filling in a missing answer.
+  "grant-statistics": {
+    breaks: "the NEGATIVE half of P6 (the stop)",
+    afterSettle: async (page) => {
+      await page.evaluate(() => window.Cookiebot?.submitCustomConsent(true, true, true));
+      await page.waitForTimeout(1500);
+    },
+  },
   "preset-attribution": {
     breaks: "P7",
     mapCookies: (cookies) => [
@@ -415,14 +475,26 @@ async function openSession(run, { cookies = [], url = `${SITE_ORIGIN}/` } = {}) 
   const initialCookies = fault?.mapCookies ? fault.mapCookies(cookies) : cookies;
   if (initialCookies.length) await context.addCookies(initialCookies);
 
+  // TWO LOGS, AND THE DIFFERENCE BETWEEN THEM IS LOAD-BEARING — found by turning
+  // this runner's own faults on it. A request that an extension, a route rule or
+  // a blocked host aborts still fires Chrome's `request` event, so counting
+  // requests answers "did the page TRY", never "did it succeed". That is the
+  // right question for a NEGATIVE (a pixel that tries and is blocked by someone
+  // else's ad blocker has still been asked for by us, and the gate has still
+  // failed) and the wrong one for a POSITIVE: --fault block-posthog left the
+  // capture assertion green because the aborted request was counted. Positives
+  // therefore assert on RESPONSES, negatives on REQUESTS.
   const requests = [];
+  const responses = [];
   context.on("request", (r) => requests.push({ url: r.url(), method: r.method(), at: Date.now() }));
+  context.on("response", (r) => responses.push({ url: r.url(), status: r.status(), at: Date.now() }));
 
   const page = await context.newPage();
   const session = {
     context,
     page,
     requests,
+    responses,
     fingerprints: [],
     settledAt: 0,
     async goto(target) {
@@ -498,12 +570,17 @@ async function openSession(run, { cookies = [], url = `${SITE_ORIGIN}/` } = {}) 
         };
       });
     },
+    /** Attempted — the right count for "this must never be asked for". */
     hits(pattern) {
       return requests.filter((r) => pattern.test(r.url));
     },
-    /** ms between the CMP settling and the first matching request, or null. */
+    /** Answered — the right count for "this must actually have loaded". */
+    loaded(pattern) {
+      return responses.filter((r) => pattern.test(r.url) && r.status < 400);
+    },
+    /** ms between the CMP settling and the first matching response, or null. */
     latency(pattern) {
-      const first = requests.find((r) => pattern.test(r.url));
+      const first = responses.find((r) => pattern.test(r.url));
       return first && this.settledAt ? first.at - this.settledAt : null;
     },
     close() {
@@ -791,8 +868,9 @@ proof("P5", "Meta — fbevents.js only on marketing consent, revoked on withdraw
     await clickBanner(granted, BUTTON_ALLOW_ALL);
     await granted.page.waitForTimeout(2500);
     const latency = granted.latency(FBEVENTS);
-    if (latency !== null) r.note(`fbevents.js requested ${latency} ms after the consent was recorded`);
-    r.check("marketing · fbevents.js requests", granted.hits(FBEVENTS).length, expect.atLeast(1), "the load gate is the consent gate");
+    if (latency !== null) r.note(`fbevents.js answered ${latency} ms after the consent was recorded`);
+    r.check("marketing · fbevents.js requested", granted.hits(FBEVENTS).length, expect.atLeast(1), "the load gate is the consent gate");
+    r.check("marketing · fbevents.js actually loaded", granted.loaded(FBEVENTS).length, expect.atLeast(1), "a request that never gets an answer is a pixel that is not there — assert on the response, not the attempt");
     r.check("marketing · window.fbq", (await granted.cmp()).fbq, expect.eq("function"), "an fbq that never becomes a function means trackEvent's Meta sink is silently dead");
     r.check("marketing · _fbp cookie", (await granted.cookieNames()).includes("_fbp"), expect.eq(true), "the cookie is the observable consequence of a loaded pixel");
 
@@ -837,8 +915,8 @@ proof("P6", "PostHog — runs without an answer, STOPS on an explicit refusal of
   let deviceId = null;
   try {
     await unanswered.observeNegative();
-    const assets = unanswered.requests.filter((h) => POSTHOG_ASSETS.test(h.url));
-    const ingest = unanswered.requests.filter((h) => POSTHOG_INGEST(h.url));
+    const assets = unanswered.responses.filter((h) => POSTHOG_ASSETS.test(h.url) && h.status < 400);
+    const ingest = unanswered.responses.filter((h) => POSTHOG_INGEST(h.url) && h.status < 400);
     r.note(
       `${assets.length} request(s) to the assets host (remote config, extensions) · ` +
         `${ingest.length} to the ingestion host (captured events)`,
@@ -1068,11 +1146,40 @@ async function main() {
       `  ${c.yellow("SKIP")}  provenance       ${c.yellow("--skip-provenance: the commit behind this build was never identified")}`,
     );
   } else if (liveFingerprint) {
+    // THREE SEPARATE FAILURES, THREE SEPARATE MESSAGES. Rolling them into one
+    // catch is how this block first shipped, and the first real deploy it met
+    // reported "needs wrangler logged in" for a deployment alias that was merely
+    // still propagating. A precondition whose job is naming the broken link may
+    // not misname it.
+    let deployment;
+    let deployed;
+    let expectedCommit;
     try {
-      const deployment = await newestProductionDeployment();
-      const deployed = await fetchFingerprint(`${deployment.Deployment}/`);
-      const expectedCommit = args.commit ?? (await git("rev-parse", "--short", "origin/main"));
+      deployment = await newestProductionDeployment();
+      expectedCommit = args.commit ?? (await git("rev-parse", "--short", "origin/main"));
+    } catch (error) {
+      fail(
+        `build provenance could not be established — ${error.message}`,
+        "needs `wrangler` logged in (pages:read) and a git checkout with an origin/main. Pass " +
+          "--skip-provenance to run anyway; the report will then say on every line that the build " +
+          "was never identified",
+      );
+    }
 
+    if (deployment) {
+      try {
+        deployed = await fetchFingerprintPatiently(`${deployment.Deployment}/`);
+      } catch (error) {
+        fail(
+          `the newest Production deployment (${deployment.Id.slice(0, 8)}, commit ${deployment.Source}, ` +
+            `${deployment.Status}) is not serving its own alias yet — ${error.message}`,
+          "Cloudflare has not finished building or propagating it, so the apex is still on the PREVIOUS " +
+            "build. Measuring now would test the wrong code and call it green. Wait a minute and re-run",
+        );
+      }
+    }
+
+    if (deployment && deployed) {
       if (deployed.hash !== liveFingerprint) {
         fail(
           `the apex is NOT serving deployment ${deployment.Id.slice(0, 8)} ` +
@@ -1092,12 +1199,6 @@ async function main() {
         ok("commit", `${deployment.Source} — matches ${args.commit ? "--commit" : "origin/main"}`);
         ok("apex serves it", `identical fingerprint on ${deployment.Deployment}`);
       }
-    } catch (error) {
-      fail(
-        `build provenance could not be established — ${error.message}`,
-        "needs `wrangler` logged in (pages:read). Pass --skip-provenance to run anyway; the report will then " +
-          "say on every line that the build was never identified",
-      );
     }
   }
 
@@ -1140,7 +1241,7 @@ async function main() {
     for (const p of PROOFS) {
       report.begin(p.id, p.title);
       if (args.only && !args.only.includes(p.id)) {
-        report.notRun(`not selected by --only ${args.only.join(",")}`);
+        report.notRun(`not selected by --only ${args.only.join(",")}`, false);
         continue;
       }
       try {
