@@ -1595,26 +1595,48 @@ describe("onCookiebotConsent — published is not constructed (T-43)", () => {
 // The whole point of the two changes above, in the order they actually happen.
 // Before them, step 4 wrote a phantom row into the platform's consent history on
 // every platform change.
+//
+// STEP 3 USED TO BE A HAND-CALL (T-45). These two blocks said "end to end" while
+// stubbing a `{ Cookiebot: { submitCustomConsent } }` and calling
+// `submitConsentToCookiebot` themselves — so they asserted that the DECISIONS
+// compose, and stayed green through both deploys in which nothing ever asked for
+// a decision. They now run on the hostile double and reach Cookiebot through
+// `onCookiebotConsent`, which is the only route production has.
 describe("a choice changed on the platform, end to end", () => {
+  afterEach(closeSubscriptions);
+
   it("reaches Cookiebot once and leaves the cookie's own timestamp alone", () => {
+    vi.useFakeTimers();
     const chosenOnPlatform = "2026-08-08T08:00:00.000Z";
     const { writes } = stubCookieJar();
-    const submitCustomConsent = vi.fn();
+    const cookiebot = cookiebotDouble();
 
     // 1. the platform wrote its refusal into the shared cookie
     writeConsentCookie(
       { v: 1, t: chosenOnPlatform, p: false, s: false, m: false },
       "letsdog.nl",
     );
-    // 2. the visitor lands here, where Cookiebot still holds the older consent
-    const stale: ConsentPayload = { v: 1, t: "2026-08-08T06:00:00.000Z", p: true, s: true, m: true };
-    const fromCookie = readConsentCookie()!;
-    expect(consentCookieSupersedes(fromCookie, stale)).toBe(true);
 
-    // 3. Cookiebot is put into that choice and stamps the moment at NOW
-    vi.stubGlobal("window", { Cookiebot: { submitCustomConsent } });
-    submitConsentToCookiebot(fromCookie);
-    expect(submitCustomConsent).toHaveBeenCalledWith(false, false, false);
+    // 2. the visitor lands here. React hydrates and ConsentSync subscribes into a
+    //    page that has no CMP in it yet — the ordering all of this failed on.
+    const seen: (ConsentPayload | null)[] = [];
+    subscribe((cb) => {
+      seen.push(cb);
+      const cookie = readConsentCookie();
+      if (!cookie || !consentCookieSupersedes(cookie, cb)) return;
+      submitConsentToCookiebot(cookie);
+    });
+    cookiebot.publishes();
+    vi.advanceTimersByTime(500);
+    expect(seen).toEqual([]);
+
+    // 3. uc.js finishes and settles the older consent this host still holds.
+    //    Cookiebot is then put into the newer choice and stamps the moment at NOW.
+    const stale: ConsentPayload = { v: 1, t: "2026-08-08T06:00:00.000Z", p: true, s: true, m: true };
+    cookiebot.settles({ p: true, s: true, m: true, at: stale.t });
+    vi.advanceTimersByTime(1000);
+    expect(seen).toEqual([stale]);
+    expect(cookiebot.submitCustomConsent).toHaveBeenCalledWith(false, false, false);
     const echoed: ConsentPayload = { v: 1, t: "2026-08-08T09:30:00.000Z", p: false, s: false, m: false };
 
     // 4. its consent event reaches the write side, which must stay silent
@@ -1625,7 +1647,7 @@ describe("a choice changed on the platform, end to end", () => {
     );
 
     // 5. and a second pass adopts nothing, whatever the clocks say
-    expect(consentCookieSupersedes(fromCookie, echoed)).toBe(false);
+    expect(consentCookieSupersedes(readConsentCookie()!, echoed)).toBe(false);
   });
 });
 
@@ -1634,24 +1656,38 @@ describe("a choice changed on the platform, end to end", () => {
 // Cookiebot record to be newer than. The read-back trap of step 4 is identical,
 // and it is the reason the cookie's `t` survives a path that never wrote it.
 describe("a choice made on the platform, never answered here, end to end", () => {
+  afterEach(closeSubscriptions);
+
   it("adopts once and still leaves the cookie's own timestamp alone", () => {
+    vi.useFakeTimers();
     const chosenOnPlatform = "2026-08-13T08:00:00.000Z";
     const { writes } = stubCookieJar();
-    const submitCustomConsent = vi.fn();
+    const cookiebot = cookiebotDouble();
 
     // 1. the platform wrote the visitor's grant into the shared cookie
     writeConsentCookie(
       { v: 1, t: chosenOnPlatform, p: false, s: true, m: true },
       "letsdog.nl",
     );
-    // 2. the visitor lands here for the first time: Cookiebot has no response
-    const fromCookie = readConsentCookie()!;
-    expect(consentCookieSupersedes(fromCookie, null)).toBe(true);
 
-    // 3. Cookiebot is put into that choice and stamps the moment at NOW
-    vi.stubGlobal("window", { Cookiebot: { submitCustomConsent } });
-    expect(submitConsentToCookiebot(fromCookie)).toBe(true);
-    expect(submitCustomConsent).toHaveBeenCalledWith(false, true, true);
+    // 2. the visitor lands here for the first time, into a page with no CMP yet
+    const seen: (ConsentPayload | null)[] = [];
+    subscribe((cb) => {
+      seen.push(cb);
+      const cookie = readConsentCookie();
+      if (!cookie || !consentCookieSupersedes(cookie, cb)) return;
+      submitConsentToCookiebot(cookie);
+    });
+    cookiebot.publishes();
+    vi.advanceTimersByTime(500);
+    expect(seen).toEqual([]);
+
+    // 3. uc.js constructs. Cookiebot has no response, so the read is a final
+    //    null, and it is put into the platform's choice, stamping NOW.
+    cookiebot.constructs();
+    vi.advanceTimersByTime(1000);
+    expect(seen).toEqual([null]);
+    expect(cookiebot.submitCustomConsent).toHaveBeenCalledWith(false, true, true);
     const echoed: ConsentPayload = { v: 1, t: "2026-08-13T09:45:00.000Z", p: false, s: true, m: true };
 
     // 4. its consent event reaches the write side, which must stay silent — the
@@ -1662,25 +1698,36 @@ describe("a choice made on the platform, never answered here, end to end", () =>
     expect(readConsentCookie()?.t).toBe(chosenOnPlatform);
 
     // 5. and a second pass adopts nothing
-    expect(consentCookieSupersedes(fromCookie, echoed)).toBe(false);
+    expect(consentCookieSupersedes(readConsentCookie()!, echoed)).toBe(false);
   });
 
   it("shows the banner instead when the platform choice refused everything", () => {
+    vi.useFakeTimers();
     const { writes } = stubCookieJar();
-    const submitCustomConsent = vi.fn();
+    const cookiebot = cookiebotDouble();
 
     writeConsentCookie(
       { v: 1, t: "2026-08-13T08:00:00.000Z", p: false, s: false, m: false },
       "letsdog.nl",
     );
-    const fromCookie = readConsentCookie()!;
-    expect(consentCookieSupersedes(fromCookie, null)).toBe(false);
 
-    // Nothing is submitted, so Cookiebot keeps no response and renders its
-    // banner. The accepted price of the clamp: this visitor is asked once more
-    // here. Asking is the safe direction; suppressing is not.
-    vi.stubGlobal("window", { Cookiebot: { submitCustomConsent } });
-    expect(submitCustomConsent).not.toHaveBeenCalled();
+    const seen: (ConsentPayload | null)[] = [];
+    subscribe((cb) => {
+      seen.push(cb);
+      const cookie = readConsentCookie();
+      if (!cookie || !consentCookieSupersedes(cookie, cb)) return;
+      submitConsentToCookiebot(cookie);
+    });
+    cookiebot.publishes();
+    cookiebot.constructs();
+    vi.advanceTimersByTime(1000);
+
+    // The visitor IS delivered — anything less and nothing about them is
+    // observable — and then nothing is submitted, so Cookiebot keeps no response
+    // and renders its banner. The accepted price of the clamp: this visitor is
+    // asked once more here. Asking is the safe direction; suppressing is not.
+    expect(seen).toEqual([null]);
+    expect(cookiebot.submitCustomConsent).not.toHaveBeenCalled();
     expect(writes).toHaveLength(1);
   });
 });
