@@ -989,27 +989,45 @@ describe("submitConsentToCookiebot", () => {
 // waits for an event that already happened.
 
 /**
+ * PUBLISHED BUT NOT CONSTRUCTED: `window.Cookiebot` answers, its API does not
+ * exist yet. Not a hypothetical shape — uc.js assigns `window.Cookiebot=this` at
+ * byte 61890 and `submitCustomConsent=function` at 105795, in different phases,
+ * and its three scripts land in waves 221 / 441 / 549 ms apart. This is what the
+ * page held when the deployed poll build delivered into it, wasted its one
+ * delivery and stopped.
+ *
+ * Everything except the method, so that a test failing here can only be about
+ * readiness: `hasResponse` and `consent` are present and perfectly readable.
+ */
+const partial = () => ({
+  hasResponse: false,
+  consent: { necessary: true, preferences: false, statistics: false, marketing: false },
+  consentUTC: null,
+});
+
+/**
  * Cookiebot with a settled answer: what `readCookiebotConsent` is allowed to
- * report as a choice.
+ * report as a choice. Constructed, hence the method — an object without it is
+ * `partial()` above, and no longer speaks to anyone.
  */
 function settled(p: boolean, s: boolean, m: boolean, at: string) {
   return {
     hasResponse: true,
     consent: { necessary: true, preferences: p, statistics: s, marketing: m },
     consentUTC: new Date(at),
+    submitCustomConsent: () => {},
   };
 }
 
 /**
- * Cookiebot before it has settled anything: the object exists, the answer does
- * not. Indistinguishable — from the object alone — from a Cookiebot that is
- * mid-flight over a stored answer, which is the entire reason the guard reads a
- * cookie instead of this state.
+ * Cookiebot constructed but before it has settled anything: the API exists, the
+ * answer does not. Indistinguishable — from the object alone — from a Cookiebot
+ * that is mid-flight over a stored answer, which is the entire reason the guard
+ * reads a cookie instead of this state.
  */
 const unsettled = () => ({
-  hasResponse: false,
-  consent: { necessary: true, preferences: false, statistics: false, marketing: false },
-  consentUTC: null,
+  ...partial(),
+  submitCustomConsent: () => {},
 });
 
 /**
@@ -1367,6 +1385,97 @@ describe("onCookiebotConsent — waiting for Cookiebot to arrive (T-43)", () => 
     cookiebot.becomes(unsettled());
     vi.advanceTimersByTime(60_000);
     expect(seen).toEqual([]);
+  });
+});
+
+// =============================================================================
+// PUBLISHED IS NOT CONSTRUCTED. The third order nobody had, and the one that
+// survived both previous repairs.
+// =============================================================================
+// Measured on the deployed poll build: `hasResponse` still false after 2500 ms,
+// dialog on screen, no `_ga`, `fbq` undefined — while at rest the object was
+// complete (`submitCustomConsent` a function, `consent` present) and a
+// hand-dispatched `CookiebotOnLoad` flipped `hasResponse` instantly. Listeners
+// attached, downstream chain proven good, and yet no submit had happened during
+// load: `synced.current` was still false.
+//
+// What fits all of that is a tick landing in the interval where uc.js has
+// published `window.Cookiebot` but not yet built its API — byte 61890 versus
+// 105795 of the vendor file, in different phases, with the three scripts landing
+// 221 / 441 / 549 ms apart. The tick read the object, found no `CookieConsent`,
+// delivered `null` — correctly, by the letter of the guard — and ConsentSync's
+// `submitConsentToCookiebot` then found no method, returned false, and left
+// `synced.current` false. The delivery had "succeeded", so the wait stopped. One
+// tick, one wasted delivery, no error anywhere.
+//
+// EVERY TEST BELOW STARTS FROM A PARTIAL OBJECT, because that is the state a
+// green suite kept agreeing with a broken site about.
+describe("onCookiebotConsent — published is not constructed (T-43)", () => {
+  afterEach(closeSubscriptions);
+
+  it("says nothing while Cookiebot is published but not yet constructed", () => {
+    vi.useFakeTimers();
+    stubDomainCookieJar([platformChoice(true, true, true)]);
+    const cookiebot = stubCookiebotWindow(partial());
+    const seen: (ConsentPayload | null)[] = [];
+
+    subscribe((consent) => seen.push(consent));
+
+    // A full second of ticks against a hollow object. Reading `hasResponse` off
+    // it would be the same premature read this module refuses everywhere else.
+    vi.advanceTimersByTime(1000);
+    expect(seen).toEqual([]);
+    // And the wait is still alive — nothing landed, so nothing was spent.
+    expect(vi.getTimerCount()).toBe(1);
+
+    cookiebot.becomes(unsettled());
+    vi.advanceTimersByTime(100);
+    expect(seen).toEqual([null]);
+  });
+
+  // THE PRODUCTION FAILURE, END TO END. On the deployed poll build this delivers
+  // at t=0 into the hollow object, `submitConsentToCookiebot` returns false, the
+  // wait stops, and the method arriving later reaches nobody — `submitCustomConsent`
+  // is never called, which is exactly what `hasResponse: false` after 2500 ms
+  // looked like at the objects.
+  it("reaches the adoption path when the API is constructed, not when it is published", () => {
+    vi.useFakeTimers();
+    stubDomainCookieJar([platformChoice(true, true, true)]);
+    const submitCustomConsent = vi.fn();
+    const cookiebot = stubCookiebotWindow(partial());
+
+    subscribe((cb) => {
+      const cookie = readConsentCookie();
+      if (!cookie || !consentCookieSupersedes(cookie, cb)) return;
+      submitConsentToCookiebot(cookie);
+    });
+
+    vi.advanceTimersByTime(1000);
+    expect(submitCustomConsent).not.toHaveBeenCalled();
+
+    // uc.js finishes constructing. The wait is still there to notice.
+    cookiebot.becomes({ ...partial(), submitCustomConsent });
+    vi.advanceTimersByTime(100);
+
+    expect(submitCustomConsent).toHaveBeenCalledTimes(1);
+    expect(submitCustomConsent).toHaveBeenCalledWith(true, true, true);
+  });
+
+  it("does not deliver on an event either while the API is only published", () => {
+    // Readiness gates EVERY route. An event carrying a state we cannot read
+    // safely is not better evidence than a tick carrying the same state — and
+    // treating it as such would spend the delivery and stop the wait, which is
+    // the whole failure in a different costume.
+    vi.useFakeTimers();
+    stubDomainCookieJar([platformChoice(true, true, true)]);
+    const cookiebot = stubCookiebotWindow(partial());
+    const seen: (ConsentPayload | null)[] = [];
+
+    subscribe((consent) => seen.push(consent));
+    cookiebot.fire("CookiebotOnLoad");
+
+    expect(seen).toEqual([]);
+    expect(vi.getTimerCount()).toBe(1);
   });
 });
 
