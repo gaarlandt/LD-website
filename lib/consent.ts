@@ -25,6 +25,8 @@
 // records a consent choice is itself strictly necessary (R4), so this cookie
 // does not require consent to be written.
 
+import { reportRuleBreach } from "./error-sink";
+
 export const CONSENT_COOKIE_NAME = "ld_consent";
 export const CONSENT_COOKIE_VERSION = 1;
 export const CONSENT_COOKIE_DOMAIN = ".letsdog.nl";
@@ -339,14 +341,28 @@ export function buildHostOnlyDeletion(name: string): string {
  *
  * `logPrefix` is the only thing that differs between the two, and the sentence
  * around it is shared ON PURPOSE: one operator grepping one fixed string finds
- * the same failure on either cookie and on either host. `console` rather than an
- * error service because this repo has no error sink at all — adding one is a
- * decision of its own, not something to smuggle in under a cookie fix.
+ * the same failure on either cookie and on either host.
+ *
+ * AND IT NOW REACHES A REAL SINK TOO (T-44, executing D-6). This comment used to
+ * end "`console` rather than an error service because this repo has no error
+ * sink at all"; it has one now. The console lines are unchanged — they are what
+ * the platform's mirror greps for, and they are the whole of the report on any
+ * deploy where `NEXT_PUBLIC_SENTRY_DSN` is unset. The error/warning split is
+ * carried into the sink as two distinct RULE IDS rather than one id at two
+ * levels, because the distinction is a distinction of cause and not of severity:
+ * a copy that survives a host-only wipe is a second WRITER on the shared domain,
+ * while one that does not was a planted host-only copy we just removed. Those are
+ * different incidents and want different counts.
+ *
+ * WHAT TRAVELS, AND WHAT MAY NOT. The cookie NAME, how many copies arrived, and
+ * whether one survived — never a cookie VALUE, and on `ld_consent` never the
+ * choice it records. That clamp is enforced in `lib/error-report.ts`, not here.
  */
 export function createDuplicateCookieRepair(name: string, logPrefix: string): () => void {
   let reported = false;
   return () => {
-    if (countCookiesNamed(document.cookie, name) <= 1) return;
+    const copies = countCookiesNamed(document.cookie, name);
+    if (copies <= 1) return;
 
     // NEVER with a Domain — that variant destroys the shared record on both
     // hosts. The string comes from a function whose only job is leaving the
@@ -368,6 +384,11 @@ export function createDuplicateCookieRepair(name: string, logPrefix: string): ()
     }`;
     if (persists) console.error(message, detail);
     else console.warn(message, detail);
+
+    reportRuleBreach(
+      persists ? "handover_cookie.duplicate_persists" : "handover_cookie.duplicate_repaired",
+      { cookie: name, copies, persists },
+    );
   };
 }
 
@@ -613,6 +634,67 @@ function cookiebotIsUsable(): boolean {
 }
 
 /**
+ * THE CONSENT CHAIN'S ONE HEALTH SIGNAL, and it is latched for the whole page.
+ *
+ * WHAT IT WATCHES. `onCookiebotConsent` waits a bounded 10 s for a USABLE
+ * Cookiebot and then gives up. Giving up is correct behaviour — it is
+ * indistinguishable from a blocked uc.js, which is a thing that legitimately
+ * happens — but until now it was also SILENT, and that silence is precisely the
+ * failure of T-43: for a week every page load ended in this branch, the banner
+ * sat there, no `_ga`, no `fbq`, the return leg never ran, the published cookie
+ * declaration promised something the product did not do, and nothing anywhere
+ * said so. It cost three deploys to find. This is the line that would have said
+ * it on the first one.
+ *
+ * WHY IT IS LATCHED AT MODULE LEVEL AND NOT PER SUBSCRIPTION. All five
+ * subscribers run their own wait, so a Cookiebot that never arrives times out
+ * five times on one page load — five identical reports of one incident, against
+ * a monthly volume quota shared with the platform. The latch is per page load,
+ * which is the right grain: the incident is "on this page load the chain never
+ * started", and it happens once no matter how many components asked.
+ *
+ * WHY IT IS NOT A SUBSCRIBER, WHICH MATTERS FOR T-38 AND IS A DELIBERATE CHOICE.
+ * The obvious way to report consent-chain health is a sixth component that
+ * subscribes to Cookiebot and reads `ld_consent` inside the handler — and that
+ * would be the third such subscriber, which is T-38's own stated trigger
+ * condition. It would also be worse instrumentation: a subscriber can only
+ * observe states that were DELIVERED, and the failure being watched here is the
+ * absence of any delivery at all. So the report sits inside the wait itself,
+ * where that absence is a local fact, and it reads only Cookiebot's own
+ * `CookieConsent` — by COUNT — plus whether the object and its API exist. It
+ * never reads `ld_consent`, subscribes to nothing, and adds no component to
+ * `app/layout.tsx`. T-38 does not fire.
+ *
+ * AND NOTHING ABOUT THE VISITOR'S CHOICE TRAVELS. Note what is measured: how
+ * long we waited, whether the object was published, whether its API was
+ * constructed, and how many `CookieConsent` cookies exist. Not their contents.
+ * The counting is `countCookiesNamed`, which never returns a value — see the
+ * hard limit at the top of `lib/error-report.ts` for why that matters more here
+ * than anywhere else in the repo.
+ */
+let consentChainStallReported = false;
+
+function reportConsentChainStall(waitedMs: number): void {
+  if (consentChainStallReported) return;
+  consentChainStallReported = true;
+  reportRuleBreach("consent_chain.cookiebot_never_usable", {
+    waitedMs,
+    cookiebotPresent: typeof window !== "undefined" && !!window.Cookiebot,
+    cookiebotUsable: cookiebotIsUsable(),
+    cookiebotCookies:
+      typeof document === "undefined"
+        ? 0
+        : countCookiesNamed(document.cookie, COOKIEBOT_COOKIE_NAME),
+    deliveries: 0,
+  });
+}
+
+/** Test seam: forget the page-load latch. Not used in production code. */
+export function resetConsentChainReportForTests(): void {
+  consentChainStallReported = false;
+}
+
+/**
  * Calls `handler` with the current state now and again on every change. `null`
  * means Cookiebot is loaded but records no choice. Returns an unsubscribe.
  *
@@ -756,7 +838,17 @@ export function onCookiebotConsent(
   if (!deliver(false)) {
     let attemptsLeft = Math.ceil(COOKIEBOT_WAIT_TIMEOUT_MS / COOKIEBOT_WAIT_INTERVAL_MS);
     waiting = setInterval(() => {
-      if (deliver(false) || --attemptsLeft <= 0) stopWaiting();
+      // The two exits are now told apart, and that is the whole of the health
+      // signal. Before T-44 both ended on the same `stopWaiting()`, so "the chain
+      // started" and "the chain never started" left the same trace: none.
+      if (deliver(false)) {
+        stopWaiting();
+        return;
+      }
+      if (--attemptsLeft <= 0) {
+        stopWaiting();
+        reportConsentChainStall(COOKIEBOT_WAIT_TIMEOUT_MS);
+      }
     }, COOKIEBOT_WAIT_INTERVAL_MS);
   }
 

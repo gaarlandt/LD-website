@@ -550,3 +550,228 @@ describe("onRequestPost — creator applications (kind: \"creator\")", () => {
     expect(customer.HtmlBody).not.toContain("Ik film mijn hond elke dag.");
   });
 });
+
+// =============================================================================
+// THE ERROR SINK ON THE WORKERS SIDE (T-44, executing loop decision D-6)
+// =============================================================================
+// D-6 called these eight failure paths the STRONGEST justification for having a
+// sink at all: each one is a lost lead or a dead form, and each one landed until
+// now in a live Cloudflare log stream nobody watches. What is pinned here is
+// therefore both halves — that a report goes out carrying WHICH path broke and
+// WHAT was measured, and that the reporter can never become the failure itself.
+//
+// NOT PINNED HERE, and stated plainly rather than implied: that Sentry accepts
+// the envelope. That needs a DSN, which lives only in the Cloudflare dashboard.
+describe("the error sink — reporting the eight failure paths", () => {
+  const SINK_DSN = "https://abc123def456@o4511218925699072.ingest.de.sentry.io/4511300000000000";
+  const ENVELOPE_HOST = "o4511218925699072.ingest.de.sentry.io";
+
+  type SentryPost = { url: string; body: string };
+
+  /**
+   * The same routing idea as `stubFetch`, plus a third destination. Written
+   * separately because `stubFetch` throws on an unexpected URL, and here the
+   * third URL is the thing under test.
+   */
+  function stubFetchWithSink(scenario: FetchScenario = {}) {
+    const posts: SentryPost[] = [];
+    const ts = { ok: true, status: 200, success: true, abort: false, ...scenario.turnstile };
+    const pm = {
+      ok: true,
+      status: 200,
+      body: [{ ErrorCode: 0, Message: "OK" }] as unknown,
+      abort: false,
+      ...scenario.postmark,
+    };
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: unknown, init?: { body?: unknown }) => {
+        const url = String(input);
+        if (url.includes(ENVELOPE_HOST)) {
+          posts.push({ url, body: String(init?.body) });
+          return new Response("", { status: 200 });
+        }
+        if (url.includes("challenges.cloudflare.com")) {
+          if (ts.abort) throw timeoutError();
+          if (!ts.ok) return new Response("upstream error", { status: ts.status });
+          return jsonResponse({ success: ts.success });
+        }
+        if (url.includes("api.postmarkapp.com")) {
+          if (pm.abort) throw timeoutError();
+          if (!pm.ok) return new Response("upstream error", { status: pm.status });
+          return jsonResponse(pm.body);
+        }
+        throw new Error(`unexpected fetch: ${url}`);
+      }),
+    );
+    return posts;
+  }
+
+  /** The event line of an envelope — header, item header, item. */
+  function eventOf(post: SentryPost): Record<string, unknown> {
+    return JSON.parse(post.body.split("\n").filter(Boolean)[2]);
+  }
+
+  function callWithSink(
+    request: Request,
+    env: EnvLike & { NEXT_PUBLIC_SENTRY_DSN?: string } = {},
+    waitUntil?: (promise: Promise<unknown>) => void,
+  ) {
+    return onRequestPost({
+      request,
+      env: { POSTMARK_SERVER_TOKEN: "pm-token", NEXT_PUBLIC_SENTRY_DSN: SINK_DSN, ...env },
+      waitUntil,
+    });
+  }
+
+  it("reports the missing Postmark token, tagged as the Function runtime", async () => {
+    const posts = stubFetchWithSink();
+    const res = await callWithSink(makeRequest(VALID), { POSTMARK_SERVER_TOKEN: undefined });
+
+    expect(res.status).toBe(500);
+    expect(posts).toHaveLength(1);
+    expect(posts[0].url).toBe(
+      `https://${ENVELOPE_HOST}/api/4511300000000000/envelope/` +
+        "?sentry_key=abc123def456&sentry_version=7",
+    );
+    const event = eventOf(posts[0]);
+    expect(event.tags).toEqual({
+      runtime: "pages-function",
+      rule: "contact.postmark_token_missing",
+    });
+    // One project, two runtimes: the tag is what tells them apart.
+    expect(event.extra).toEqual({ hostname: PREVIEW_HOST });
+  });
+
+  it("reports which upstream said what — the status, not just 'it failed'", async () => {
+    const posts = stubFetchWithSink({ postmark: { ok: false, status: 503 } });
+    const res = await callWithSink(makeRequest(VALID));
+
+    expect(res.status).toBe(502);
+    const event = eventOf(posts[0]);
+    expect(event.tags).toMatchObject({ rule: "contact.postmark_batch_non_2xx" });
+    expect(event.extra).toEqual({ hostname: PREVIEW_HOST, status: 503 });
+  });
+
+  it("reports a Turnstile siteverify timeout with the exception text", async () => {
+    const posts = stubFetchWithSink({ turnstile: { abort: true } });
+    const res = await callWithSink(makeRequest({ ...VALID, turnstileToken: "t" }));
+
+    expect(res.status).toBe(400);
+    const event = eventOf(posts[0]);
+    expect(event.tags).toMatchObject({ rule: "contact.turnstile_siteverify_failed" });
+    expect(String((event.extra as Record<string, unknown>).cause)).toContain("timed out");
+  });
+
+  it("reports a partial failure with Postmark's code but NOT its message", async () => {
+    // The Message routinely quotes the address it could not deliver to — the
+    // submitter's e-mail. The code is what you triage on; the full line is in
+    // the console next to it.
+    const posts = stubFetchWithSink({
+      postmark: { body: [{ ErrorCode: 406, Message: "You tried to send to jan@example.nl" }] },
+    });
+    const res = await callWithSink(makeRequest(VALID));
+
+    expect(res.status).toBe(502);
+    const event = eventOf(posts[0]);
+    expect(event.tags).toMatchObject({ rule: "contact.postmark_support_not_accepted" });
+    expect(event.extra).toEqual({ hostname: PREVIEW_HOST, errorCode: 406 });
+    expect(posts[0].body).not.toContain("jan@example.nl");
+  });
+
+  it("marks the production Pages alias as production, matching the Turnstile posture", async () => {
+    // lib/prod-hosts.ts calls that host preview for ANALYTICS tagging. A report
+    // from a gate that was ENFORCED must not be filed under preview.
+    const posts = stubFetchWithSink();
+    await callWithSink(makeRequest(VALID, { host: "website-letsdog.pages.dev" }), {
+      POSTMARK_SERVER_TOKEN: undefined,
+      TURNSTILE_SECRET_KEY: "real-secret",
+    });
+    expect(eventOf(posts[0]).environment).toBe("production");
+  });
+
+  it("hands the POST to waitUntil so the invocation cannot cancel it", async () => {
+    // An un-awaited fetch is enough to stay off the response's critical path,
+    // but on Cloudflare the invocation can be torn down as soon as the Response
+    // is returned — and a reporter that USUALLY reports is worse than none.
+    const posts = stubFetchWithSink();
+    const kept: Promise<unknown>[] = [];
+    const res = await callWithSink(
+      makeRequest(VALID),
+      { POSTMARK_SERVER_TOKEN: undefined },
+      (promise) => kept.push(promise),
+    );
+
+    expect(res.status).toBe(500);
+    expect(kept).toHaveLength(1);
+    expect(posts).toHaveLength(1);
+    await expect(kept[0]).resolves.toBeUndefined();
+  });
+
+  it("still answers when the sink hangs — nothing awaits the report", async () => {
+    // The response must not wait on Sentry. A POST that never settles is the
+    // sharpest form of that question.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: unknown) => {
+        const url = String(input);
+        if (url.includes(ENVELOPE_HOST)) return new Promise<Response>(() => {});
+        if (url.includes("challenges.cloudflare.com")) return jsonResponse({ success: true });
+        return jsonResponse([{ ErrorCode: 0 }]);
+      }),
+    );
+
+    const res = await callWithSink(makeRequest(VALID), { POSTMARK_SERVER_TOKEN: undefined });
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ ok: false, error: "server_not_configured" });
+  });
+
+  it("still answers when the sink's own POST rejects", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: unknown) => {
+        const url = String(input);
+        if (url.includes(ENVELOPE_HOST)) throw new Error("sentry unreachable");
+        if (url.includes("challenges.cloudflare.com")) return jsonResponse({ success: true });
+        return jsonResponse([{ ErrorCode: 0 }]);
+      }),
+    );
+
+    const res = await callWithSink(makeRequest(VALID), { POSTMARK_SERVER_TOKEN: undefined });
+    expect(res.status).toBe(500);
+  });
+
+  it("still delivers a healthy submission untouched with the sink configured", async () => {
+    const posts = stubFetchWithSink();
+    const res = await callWithSink(makeRequest(VALID));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    expect(posts).toHaveLength(0);
+  });
+
+  it("is a complete no-op with no DSN — the normal state before somebody sets it", async () => {
+    // NEXT_PUBLIC_SENTRY_DSN lives only in the Cloudflare dashboard, so every
+    // deploy made before it is set runs this branch. It must break nothing and
+    // send nothing: not one extra request, and the same response as before.
+    const posts = stubFetchWithSink({ postmark: { ok: false, status: 503 } });
+    const res = await onRequestPost({
+      request: makeRequest(VALID),
+      env: { POSTMARK_SERVER_TOKEN: "pm-token" },
+    });
+
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ ok: false, error: "send_failed" });
+    expect(posts).toHaveLength(0);
+  });
+
+  it("is a no-op on a malformed DSN rather than throwing inside a failure path", async () => {
+    const posts = stubFetchWithSink();
+    const res = await callWithSink(makeRequest(VALID), {
+      POSTMARK_SERVER_TOKEN: undefined,
+      NEXT_PUBLIC_SENTRY_DSN: "not-a-dsn",
+    });
+    expect(res.status).toBe(500);
+    expect(posts).toHaveLength(0);
+  });
+});
