@@ -9,6 +9,7 @@ import {
   countConsentCookies,
   createConsentRecorder,
   newestRecordedConsent,
+  onCookiebotConsent,
   parseConsentPayload,
   readConsentCookie,
   readFirstParseableCookie,
@@ -963,6 +964,238 @@ describe("submitConsentToCookiebot", () => {
     expect(submitConsentToCookiebot(payload)).toBe(false);
     vi.stubGlobal("window", { Cookiebot: { hasResponse: true } });
     expect(submitConsentToCookiebot(payload)).toBe(false);
+  });
+});
+
+// =============================================================================
+// THE TRIGGER (T-43). Every block above tests a DECISION. This one tests whether
+// the decision is ever asked for.
+// =============================================================================
+// Measured on production 2026-08-15: with an all-true `ld_consent` on
+// `.letsdog.nl` and no `CookieConsent`, letsdog.nl showed the banner anyway,
+// `Cookiebot.hasResponse` stayed false, `_ga` and `fbq` stayed absent, and the
+// dataLayer carried only the denied `consent default` and never an update.
+// Dispatching `CookiebotOnLoad` by hand flipped `hasResponse` at once — so the
+// deployed bundle held a correct `consentCookieSupersedes`, a correct
+// `submitConsentToCookiebot` and a subscribe-time read that never called either.
+//
+// WHY NOTHING ABOVE SAW IT, AND WHAT THAT ASKS OF THESE TESTS. A test subscribes
+// and then fires; a browser fires and then mounts React. In the first order the
+// bug cannot occur, so a behaviour-only test is green on the broken code too —
+// which is how a suite of 291 shipped this for a week. The first test below
+// therefore reproduces the ORDER rather than the behaviour, and it is the one
+// that fails on the old guard. The rest pin the two halves the narrowing keeps
+// apart: a stored answer still gets its beat to settle, an absent one no longer
+// waits for an event that already happened.
+
+/**
+ * Cookiebot with a settled answer: what `readCookiebotConsent` is allowed to
+ * report as a choice.
+ */
+function settled(p: boolean, s: boolean, m: boolean, at: string) {
+  return {
+    hasResponse: true,
+    consent: { necessary: true, preferences: p, statistics: s, marketing: m },
+    consentUTC: new Date(at),
+  };
+}
+
+/**
+ * Cookiebot before it has settled anything: the object exists, the answer does
+ * not. Indistinguishable — from the object alone — from a Cookiebot that is
+ * mid-flight over a stored answer, which is the entire reason the guard reads a
+ * cookie instead of this state.
+ */
+const unsettled = () => ({
+  hasResponse: false,
+  consent: { necessary: true, preferences: false, statistics: false, marketing: false },
+  consentUTC: null,
+});
+
+/**
+ * A window that can fire Cookiebot's events INTO THE VOID, which is the one
+ * browser behaviour a subscribe-then-fire test cannot express: an event with no
+ * listener is gone, not queued, and uc.js has already fired all four by the time
+ * React mounts. `settle` moves Cookiebot's state the way uc.js does a beat later.
+ */
+function stubCookiebotWindow(cookiebot: unknown) {
+  const listeners = new Map<string, Set<() => void>>();
+  const win: {
+    Cookiebot?: unknown;
+    addEventListener: (type: string, listener: () => void) => void;
+    removeEventListener: (type: string, listener: () => void) => void;
+  } = {
+    Cookiebot: cookiebot,
+    addEventListener(type, listener) {
+      const forType = listeners.get(type) ?? new Set<() => void>();
+      forType.add(listener);
+      listeners.set(type, forType);
+    },
+    removeEventListener(type, listener) {
+      listeners.get(type)?.delete(listener);
+    },
+  };
+  vi.stubGlobal("window", win);
+  return {
+    fire(type: string) {
+      for (const listener of [...(listeners.get(type) ?? [])]) listener();
+    },
+    settle(next: unknown) {
+      win.Cookiebot = next;
+    },
+  };
+}
+
+describe("onCookiebotConsent — the direct delivery (T-43)", () => {
+  const chosenOnPlatform = "2026-08-15T08:00:00.000Z";
+
+  /**
+   * Cookiebot's own cookie, host-only as uc.js writes it. Only its PRESENCE is
+   * ever read, so the value is a stand-in — but a realistic one, because a test
+   * carrying an empty value would quietly bless a reader that requires content.
+   */
+  const storedAnswer: JarEntry = {
+    name: "CookieConsent",
+    value: "%7Bstamp%3A%27dQw4w9%27%2Cnecessary%3Atrue%7D",
+    domain: null,
+  };
+
+  /** The visitor's answer as the platform left it on the shared domain. */
+  const platformChoice = (p: boolean, s: boolean, m: boolean): JarEntry => ({
+    name: CONSENT_COOKIE_NAME,
+    value: serializeConsentPayload({ v: 1, t: chosenOnPlatform, p, s, m }),
+    domain: ".letsdog.nl",
+  });
+
+  // THE ORDER TEST. Written out rather than imported from COOKIEBOT_EVENTS on
+  // purpose: this is a statement about what uc.js fires, and it has to stay true
+  // independently of the list the module happens to subscribe to.
+  const COOKIEBOT_FIRES = [
+    "CookiebotOnConsentReady",
+    "CookiebotOnAccept",
+    "CookiebotOnDecline",
+    "CookiebotOnLoad",
+  ];
+
+  it("still reaches the handler when Cookiebot's events all fired before we subscribed", () => {
+    stubDomainCookieJar([]);
+    const cookiebot = stubCookiebotWindow(unsettled());
+    const seen: (ConsentPayload | null)[] = [];
+
+    // The page happens first. Nothing is listening, so these are simply gone —
+    // the browser does not replay them for a component that mounts later.
+    for (const event of COOKIEBOT_FIRES) cookiebot.fire(event);
+
+    onCookiebotConsent((consent) => seen.push(consent));
+
+    // On the old guard this array stays empty, and every consumer — ConsentSync
+    // above all — is never asked anything at all.
+    expect(seen).toEqual([null]);
+  });
+
+  it("delivers a settled answer immediately, exactly as before", () => {
+    stubDomainCookieJar([storedAnswer]);
+    stubCookiebotWindow(settled(false, true, false, "2026-08-15T07:30:00.000Z"));
+    const seen: (ConsentPayload | null)[] = [];
+
+    onCookiebotConsent((consent) => seen.push(consent));
+
+    expect(seen).toEqual([{ v: 1, t: "2026-08-15T07:30:00.000Z", p: false, s: true, m: false }]);
+  });
+
+  // THE HAZARD THE GUARD STILL EXISTS FOR, and the reason it was narrowed rather
+  // than removed. Cookiebot holds a stored REFUSAL that has not settled yet: the
+  // object is there, `hasResponse` is still false, so the read is null. Handing
+  // that null on would adopt the other host's grant — D-4 adopts a granting
+  // cookie whenever Cookiebot reports nothing — and destroy a local refusal that
+  // was one beat from arriving. The clamp cannot catch this one: it inspects the
+  // COOKIE, and the cookie grants.
+  it("says nothing while a stored answer has not settled yet", () => {
+    stubDomainCookieJar([storedAnswer, platformChoice(true, true, true)]);
+    const cookiebot = stubCookiebotWindow(unsettled());
+    const seen: (ConsentPayload | null)[] = [];
+
+    onCookiebotConsent((consent) => seen.push(consent));
+    expect(seen).toEqual([]);
+
+    // uc.js finishes, with the refusal the visitor really made on this host.
+    cookiebot.settle(settled(false, false, false, "2026-08-14T20:00:00.000Z"));
+    cookiebot.fire("CookiebotOnConsentReady");
+    expect(seen).toEqual([{ v: 1, t: "2026-08-14T20:00:00.000Z", p: false, s: false, m: false }]);
+  });
+
+  // The return leg driven THROUGH the trigger instead of around it. Every
+  // assertion here already held when the handler was called by hand; none of them
+  // was ever reached on a real page load.
+  it("reaches the adoption path for a platform grant with no local answer", () => {
+    stubDomainCookieJar([platformChoice(true, true, true)]);
+    const submitCustomConsent = vi.fn();
+    stubCookiebotWindow({ ...unsettled(), submitCustomConsent });
+
+    // ConsentSync's body, verbatim in shape: read the cookie, ask the predicate,
+    // hand it over. Nothing is mocked between the trigger and Cookiebot's API.
+    onCookiebotConsent((cookiebot) => {
+      const cookie = readConsentCookie();
+      if (!cookie || !consentCookieSupersedes(cookie, cookiebot)) return;
+      submitConsentToCookiebot(cookie);
+    });
+
+    expect(submitCustomConsent).toHaveBeenCalledWith(true, true, true);
+  });
+
+  it("delivers for a platform refusal too, and the D-4 clamp still shows the banner", () => {
+    // Delivery and adoption are different questions and this is where they part.
+    // The handler MUST be reached — otherwise nothing about this visitor is
+    // observable at all — and must then decline, so Cookiebot keeps no response
+    // and renders its banner. The accepted price of the clamp, not a gap in the
+    // fix. It is also the visitor who withdrew here yesterday: their own
+    // all-false cookie is what they arrive with today.
+    stubDomainCookieJar([platformChoice(false, false, false)]);
+    const submitCustomConsent = vi.fn();
+    stubCookiebotWindow({ ...unsettled(), submitCustomConsent });
+    const seen: (ConsentPayload | null)[] = [];
+
+    onCookiebotConsent((cookiebot) => {
+      seen.push(cookiebot);
+      const cookie = readConsentCookie();
+      if (!cookie || !consentCookieSupersedes(cookie, cookiebot)) return;
+      submitConsentToCookiebot(cookie);
+    });
+
+    expect(seen).toEqual([null]);
+    expect(submitCustomConsent).not.toHaveBeenCalled();
+  });
+
+  it("stays silent when there is no Cookiebot object at all", () => {
+    // An ad blocker, or a uc.js that never arrived. "No CMP here" is not "no
+    // choice made": reporting null would revoke Meta's pixel and open the
+    // adoption path on the strength of a choice nobody made. Not even an event
+    // may open it — the object check sits ahead of the `fromEvent` branch.
+    stubDomainCookieJar([platformChoice(true, true, true)]);
+    const cookiebot = stubCookiebotWindow(undefined);
+    const seen: (ConsentPayload | null)[] = [];
+
+    onCookiebotConsent((consent) => seen.push(consent));
+    cookiebot.fire("CookiebotOnLoad");
+
+    expect(seen).toEqual([]);
+  });
+
+  it("does not mistake a CookieConsentBulkTicket for a stored answer", () => {
+    // Cookiebot's neighbouring cookies share the prefix. A `startsWith` match
+    // would read one of them as "an answer is stored" and lay the guard straight
+    // back over the whole return leg — the same silence as before, under a suite
+    // that still passes.
+    stubDomainCookieJar([
+      { name: "CookieConsentBulkTicket", value: "ticket", domain: null },
+      platformChoice(true, true, true),
+    ]);
+    stubCookiebotWindow(unsettled());
+    const seen: (ConsentPayload | null)[] = [];
+
+    onCookiebotConsent((consent) => seen.push(consent));
+
+    expect(seen).toEqual([null]);
   });
 });
 

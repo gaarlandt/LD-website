@@ -496,25 +496,111 @@ const COOKIEBOT_EVENTS = [
 ] as const;
 
 /**
- * Calls `handler` with the current choice now (if one already exists) and again
- * on every change. `null` means Cookiebot is loaded but records no choice.
- * Returns an unsubscribe.
+ * COOKIEBOT'S OWN COOKIE, and the only place an answer of its can be stored.
+ *
+ * Near-mirror of our `ld_consent` and easy to confuse while reading this file,
+ * so state the difference once: `CookieConsent` is Cookiebot's record of what
+ * the visitor told ITS banner, written host-only by uc.js and therefore unusable
+ * as a handover (the reason this module exists at all — see the header);
+ * `ld_consent` is ours, on the shared parent domain, and Cookiebot has never
+ * heard of it.
+ *
+ * Script-readable by construction: uc.js writes it from the page, so it cannot
+ * carry HttpOnly, and Cookiebot reads it back the same way we do here. It is the
+ * `CookieConsent` row of the published cookie declaration
+ * (`content/cookieverklaring.md`, Cookiebot, 1 year).
+ */
+const COOKIEBOT_COOKIE_NAME = "CookieConsent";
+
+/**
+ * Can Cookiebot's "no answer" still become an answer without the visitor doing
+ * anything? The question `deliver` below needs, answered from a fact about the
+ * browser rather than a guess about timing.
+ *
+ * A stored answer lives in `CookieConsent` and nowhere else, so if that cookie
+ * is absent there is nothing for uc.js to settle FROM: the state we just read is
+ * final until the visitor acts on the banner, and acting on the banner arrives
+ * as an event we are subscribed to. If it is present, Cookiebot may be
+ * mid-flight — the object exists, `hasResponse` is not true yet — and the read
+ * we just took is premature rather than empty.
+ *
+ * That covers the half-built object too, and better than a `hasResponse` check
+ * would: `readCookiebotConsent` also returns null when `hasResponse` is already
+ * true but `cb.consent` has not been attached yet, and in that state the cookie
+ * is by definition there.
+ *
+ * EXACT NAME MATCH, hence `countCookiesNamed` rather than a `startsWith`.
+ * Cookiebot's neighbouring `CookieConsentBulkTicket` / `CookieConsentBulkSetting-…`
+ * share the prefix, and counting one of those as "an answer is stored" would put
+ * the guard back over the whole return leg — the exact failure this narrowing
+ * repairs, silently.
+ *
+ * "CANNOT LOOK" ANSWERS YES, which is the conservative direction: without a
+ * readable `document` we cannot prove there is nothing stored, and the cost of
+ * being wrong is asymmetric (see `deliver`). Practically unreachable — a browser
+ * with a `window` always has a `document` — but the polarity is the point.
+ */
+function cookiebotMayStillSettle(): boolean {
+  if (typeof document === "undefined") return true;
+  return countCookiesNamed(document.cookie, COOKIEBOT_COOKIE_NAME) > 0;
+}
+
+/**
+ * Calls `handler` with the current state now and again on every change. `null`
+ * means Cookiebot is loaded but records no choice. Returns an unsubscribe.
  *
  * The immediate call is not belt-and-braces: Cookiebot settles a stored consent
  * within milliseconds of uc.js loading, which can easily beat a React effect,
  * and a subscriber that only ever listens would then miss the only event of the
  * page for exactly the visitors who already consented.
  *
- * WHY `null` IS ONLY EVER DELIVERED FROM AN EVENT. A withdrawal is not a fourth
- * category of consent — Cookiebot's `withdraw()` sets `hasResponse` back to
- * false, so "the visitor took it all back" and "the visitor has not answered
- * yet" are the same observable state, and the only thing separating them is
- * that a withdrawal arrives as an event. Reporting `null` from the subscribe-
- * time read as well would be actively wrong: at that moment Cookiebot's object
- * can already exist while its init is still mid-flight, so a returning
- * consenting visitor would momentarily look like a refusing one, and a
- * subscriber acting on that would delete the very cookies it is about to
- * recreate.
+ * A `null` IS DELIVERED DIRECTLY, BUT ONLY ONCE NOTHING CAN STILL SETTLE — and
+ * that narrowing is T-43. Until 2026-08-15 the subscribe-time read refused to
+ * report `null` at all, on the reasoning that Cookiebot's object can exist while
+ * its init is mid-flight, so a returning consenting visitor would momentarily
+ * look like a refusing one. True, but the condition was drawn far too wide: it
+ * also suppressed the one case the return leg exists FOR. A visitor who chose on
+ * mijn.letsdog.nl and opens letsdog.nl has an `ld_consent` and no Cookiebot
+ * answer, so the read is `null` — and on a normal page load Cookiebot's events
+ * have already fired before React mounts ConsentSync, so no `fromEvent` delivery
+ * ever came after it. Measured on production that day: an all-true `ld_consent`
+ * on `.letsdog.nl` with no `CookieConsent` left `Cookiebot.hasResponse` false,
+ * the banner at `display: flex`, no `_ga`, no `fbq`, and a dataLayer carrying
+ * only the denied `consent default` and never an update — unchanged after three
+ * seconds and after a second reload, so not a matter of patience. Dispatching
+ * `CookiebotOnLoad` by hand flipped `hasResponse` immediately: every part worked
+ * except the trigger. Meanwhile the published cookie declaration promised the
+ * opposite in as many words ("Je keuze geldt op allebei"), which made it a legal
+ * document describing something the product did not do.
+ *
+ * WHY THE GUARD WAS NARROWED AND NOT DELETED. A `null` is not inert downstream:
+ * `consentCookieSupersedes(cookie, null)` ADOPTS a granting cookie (D-4), so a
+ * `null` delivered while Cookiebot's own STORED REFUSAL has not settled yet would
+ * push the other host's grant into the CMP and destroy that refusal — silently,
+ * in exactly the direction D-4's clamp exists to prevent. The clamp does not
+ * cover this: it refuses an all-false COOKIE, and here the cookie grants while
+ * the refusal is the local answer that has not arrived. So the direct `null`
+ * waits on the one thing that tells a premature read from a final one, and it is
+ * an observable fact rather than a timing assumption: Cookiebot has nothing
+ * stored to settle from. Delivering `null` then cannot overwrite a stored
+ * refusal, because there is none.
+ *
+ * Read the two branches as one rule and the shape is exact: the guard now holds
+ * precisely when an event is still owed to us, and gets out of the way when it
+ * is not.
+ *
+ * STILL TRUE, AND STILL LOAD-BEARING: no Cookiebot object means no delivery at
+ * all. "No CMP here" is not "no choice made", and reporting `null` for it would
+ * attribute a choice nobody made — an ad blocker or a failed uc.js would then
+ * read as a refusal to MetaPixel and as an adoption trigger to ConsentSync.
+ *
+ * And a withdrawal still reaches subscribers as an event: `withdraw()` clears
+ * `hasResponse` AND its cookie, so "took it all back" and "never answered" stay
+ * the same observable state, told apart only by having seen the consent go away
+ * within one subscription (`createConsentRecorder`). What changes is that on the
+ * NEXT page load that visitor now gets the direct `null` — where the all-false
+ * `ld_consent` their withdrawal wrote meets D-4's clamp and the banner is shown,
+ * which is what D-4 always said should happen and could not previously reach.
  */
 export function onCookiebotConsent(
   handler: (consent: ConsentPayload | null) => void,
@@ -526,7 +612,7 @@ export function onCookiebotConsent(
     // read as "no choice", which is a claim we have no basis for.
     if (!window.Cookiebot) return;
     const consent = readCookiebotConsent();
-    if (consent === null && !fromEvent) return;
+    if (consent === null && !fromEvent && cookiebotMayStillSettle()) return;
     handler(consent);
   };
 

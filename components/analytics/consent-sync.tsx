@@ -42,6 +42,14 @@ export function ConsentSync() {
     // within milliseconds of uc.js loading, which can happen either side of this
     // effect. onCookiebotConsent covers both by replaying the current state
     // immediately and again on every event.
+    //
+    // "IMMEDIATELY" IS THE HALF THAT HAD TO BE EARNED, and it is why this
+    // component did nothing on production for a week (T-43). The visitor this
+    // exists for has no Cookiebot answer, so the immediate read is `null` — and
+    // until 2026-08-15 that read was suppressed, leaving this subscription
+    // waiting on an event uc.js had already fired before React mounted. Nothing
+    // here was wrong and nothing here changed; the fix is in lib/consent.ts, in
+    // the one condition that decides when a `null` may be reported directly.
     return onCookiebotConsent((cookiebot) => {
       if (synced.current) return;
       const cookie = readConsentCookie();
