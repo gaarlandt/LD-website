@@ -1136,6 +1136,35 @@ function cookiebotDouble(options: CookiebotDoubleOptions = {}) {
   };
 }
 
+// The rig's own guard, tested — because a guard nothing exercises is exactly the
+// decoration this unit exists to abolish. If `constructed`/`answer` ever stopped
+// implying "already on the page", a test could quietly buy itself the friendly
+// world without naming it, and nothing else here would notice.
+describe("cookiebotDouble — the rig's own guard", () => {
+  it("refuses a half-stated opt-in", () => {
+    expect(() => cookiebotDouble({ constructed: true })).toThrow(/before-hydration/);
+    expect(() =>
+      cookiebotDouble({ answer: { p: false, s: true, m: false, at: "2026-08-15T07:30:00.000Z" } }),
+    ).toThrow(/before-hydration/);
+  });
+
+  it("leaves the window empty by default, and never fires on its own", () => {
+    const cookiebot = cookiebotDouble();
+    expect((globalThis as { window?: { Cookiebot?: unknown } }).window?.Cookiebot).toBeUndefined();
+    // Published is not constructed: the object answers, the API does not exist.
+    cookiebot.publishes();
+    const published = (globalThis as { window: { Cookiebot: Record<string, unknown> } }).window
+      .Cookiebot;
+    expect(published.hasResponse).toBe(false);
+    expect(published.submitCustomConsent).toBeUndefined();
+    cookiebot.constructs();
+    expect(
+      (globalThis as { window: { Cookiebot: Record<string, unknown> } }).window.Cookiebot
+        .submitCustomConsent,
+    ).toBe(cookiebot.submitCustomConsent);
+  });
+});
+
 /**
  * Every subscription in the two blocks below goes through here, and each block
  * tears them all down afterwards.
