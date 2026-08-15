@@ -567,6 +567,52 @@ const COOKIEBOT_WAIT_INTERVAL_MS = 50;
 const COOKIEBOT_WAIT_TIMEOUT_MS = 10_000;
 
 /**
+ * Is Cookiebot CONSTRUCTED, not merely PUBLISHED? The precondition for reading
+ * anything off it, and the third and last thing T-43 turned out to be.
+ *
+ * `window.Cookiebot` existing is not the same as Cookiebot being ready, and in
+ * uc.js it is not even the same PHASE. Read out of the 121 KB vendor file on
+ * 2026-08-15: `window.Cookiebot=this` sits at byte 61890, inside an init path,
+ * while `submitCustomConsent=function` is at 105795 and `window.CookieConsent=`
+ * at 120638 — and its three scripts land in waves (uc.js 221 ms,
+ * configuration.js 441 ms, cc.js 549 ms). So there is a real interval in which
+ * the object answers `!!window.Cookiebot` while its API does not exist yet.
+ *
+ * THAT INTERVAL IS WHERE THE SECOND FIX DIED, and it died quietly because the
+ * object looked fine. A poll tick landing there read `hasResponse: false`, found
+ * no `CookieConsent` cookie, and therefore DELIVERED — correctly, by the letter
+ * of the guard. ConsentSync then called `submitConsentToCookiebot`, which found
+ * no `submitCustomConsent`, returned false, and left `synced.current` false. And
+ * because the delivery had "succeeded", the wait stopped. One tick, one wasted
+ * delivery, no second chance, no error anywhere. Measured on the deployed poll
+ * build: `hasResponse` still false after 2500 ms, dialog on screen, no `_ga`, no
+ * `fbq` — while a hand-dispatched `CookiebotOnLoad` flipped it instantly, which
+ * proves the listeners were attached and the whole downstream chain worked.
+ *
+ * WHY THIS METHOD IS THE RIGHT SIGNAL rather than a timer or a private flag. It
+ * is the vendor's own evidence that the API surface is built: it is assigned
+ * late in construction, it is public and documented, and in this deployment it is
+ * unguarded — `if(!this.hasFramework||this.frameworkLoaded||this.frameworkBlocked)`
+ * with `hasFramework` false here — so once present, calling it always takes effect
+ * and sets `hasResponse` synchronously. Every other candidate is a guess about
+ * timing; this is a fact about the object.
+ *
+ * IT GATES EVERY ROUTE, events included. A half-built object's `hasResponse` and
+ * `consent` are not trustworthy for ANY consumer, not just for the one that
+ * submits: reading them early is the same premature read this module already
+ * refuses everywhere else. The cost is named and accepted: a Cookiebot that never
+ * exposes `submitCustomConsent` would get no deliveries at all, which would also
+ * silence the OUTBOUND leg (`ld_consent` would stop being written). The vendor
+ * source has it, the live object has it, and it is documented public API — and
+ * the failure is bounded by the wait, after which we behave exactly as we already
+ * do for a blocked uc.js.
+ */
+function cookiebotIsUsable(): boolean {
+  if (typeof window === "undefined") return false;
+  return typeof window.Cookiebot?.submitCustomConsent === "function";
+}
+
+/**
  * Calls `handler` with the current state now and again on every change. `null`
  * means Cookiebot is loaded but records no choice. Returns an unsubscribe.
  *
@@ -610,10 +656,12 @@ const COOKIEBOT_WAIT_TIMEOUT_MS = 10_000;
  * precisely when an event is still owed to us, and gets out of the way when it
  * is not.
  *
- * STILL TRUE, AND STILL LOAD-BEARING: no Cookiebot object means no delivery at
+ * STILL TRUE, AND STILL LOAD-BEARING: no USABLE Cookiebot means no delivery at
  * all. "No CMP here" is not "no choice made", and reporting `null` for it would
  * attribute a choice nobody made — an ad blocker or a failed uc.js would then
- * read as a refusal to MetaPixel and as an adoption trigger to ConsentSync.
+ * read as a refusal to MetaPixel and as an adoption trigger to ConsentSync. What
+ * counts as "here" tightened on 2026-08-15 from "the object exists" to "its API
+ * is constructed"; `cookiebotIsUsable` carries the reason and the measurement.
  *
  * And a withdrawal still reaches subscribers as an event: `withdraw()` clears
  * `hasResponse` AND its cookie, so "took it all back" and "never answered" stay
@@ -652,6 +700,12 @@ const COOKIEBOT_WAIT_TIMEOUT_MS = 10_000;
  * `fromEvent`, so it goes through the settle guard exactly like the subscribe-time
  * read did.
  *
+ * WHAT IT WAITS FOR IS READINESS, NOT PRESENCE, and that distinction is what the
+ * poll was missing when it shipped: uc.js publishes `window.Cookiebot` in an
+ * earlier phase than the one that builds its API, so a tick could deliver into a
+ * hollow object, satisfy itself that it had delivered, and stop. See
+ * `cookiebotIsUsable` — that predicate is the whole of the third repair.
+ *
  * IT STOPS ON A DELIVERY, NOT ON THE OBJECT APPEARING, and that difference earns
  * its keep in one case: Cookiebot arrives holding a `CookieConsent` it has not
  * settled yet. The guard correctly says nothing, and stopping there would hand
@@ -683,9 +737,10 @@ export function onCookiebotConsent(
   // needs: "the object is there" and "we have said something" are different
   // facts, and the settle guard sits between them.
   const deliver = (fromEvent: boolean): boolean => {
-    // No Cookiebot object yet: we know nothing, so say nothing. Guessing would
-    // read as "no choice", which is a claim we have no basis for.
-    if (!window.Cookiebot) return false;
+    // No USABLE Cookiebot yet: we know nothing, so say nothing. Guessing would
+    // read as "no choice", which is a claim we have no basis for — and a
+    // published-but-unconstructed object is a guess wearing the object's clothes.
+    if (!cookiebotIsUsable()) return false;
     const consent = readCookiebotConsent();
     if (consent === null && !fromEvent && cookiebotMayStillSettle()) return false;
     handler(consent);
