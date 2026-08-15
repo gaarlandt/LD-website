@@ -1,6 +1,6 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 const root = dirname(fileURLToPath(import.meta.url));
 
@@ -21,5 +21,16 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // GIT WORKTREES ARE NOT PART OF THIS CHECKOUT'S SUITE, and leaving them in
+    // makes `npm test` lie in both directions. The prescribed way to build here
+    // is one worktree per PR under `.claude/worktrees/<task>/`, which is inside
+    // the repo — so vitest's default globs walk straight into every parallel
+    // branch. Measured 2026-08-15 with two worktrees present: `npm test` in the
+    // main checkout reported 37 files / 927 tests instead of 12 / 310, ran
+    // another branch's tests against THIS branch's `@/` alias, and produced a
+    // failure that belonged to neither. The inflation is the worse half: a
+    // sibling's green tests pad the count that a session reads as "my suite
+    // passed".
+    exclude: [...configDefaults.exclude, "**/.claude/worktrees/**"],
   },
 });
