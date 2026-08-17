@@ -1436,6 +1436,133 @@ describe("createAttributionRecorder — absence of an answer", () => {
 });
 
 // =============================================================================
+// THE MOMENT SURVIVES A DELETION BY SOMEBODY ELSE (loop T-58)
+// =============================================================================
+// Measured on production 2026-08-17 and live since 2026-08-11: a visitor lands
+// tagged, allows everything, then withdraws statistics on the same page. `t`
+// moved forward, and the record it belongs to is the one the platform turns into
+// Meta's `fbc` using exactly that field as the click moment.
+//
+// NEITHER FUNCTION INVOLVED IS WRONG ON ITS OWN, which is why nothing here was
+// red before: `recordFirstTouch` refuses when a record exists, and
+// `applyConsentToStored` carries `t` over letter for letter. Both are already
+// pinned above. The fault is on the seam, and it needs a THIRD writer to appear
+// at all — Cookiebot deletes `ld_attribution` when statistics are withdrawn,
+// entirely correctly, because T-57 classified it as a Statistics cookie. The
+// deletions below are therefore written as a stranger writes them, not through
+// this module's own `deleteAttributionCookie`: a test that deletes with the code
+// under test is a test of that code, not of the seam.
+//
+// THE TIMESTAMPS ARE AN HOUR APART ON PURPOSE. With `new Date()` on both sides
+// the bug and the fix differ by a millisecond or two, and a broken run reads as
+// green — which is exactly how this survived six days here and, on the platform
+// side, a mutation that left all 69 of their tests passing.
+describe("createAttributionRecorder — a deletion mid-page-view must not restamp", () => {
+  const LANDED_AT = "2026-08-17T18:00:00.000Z";
+  const AN_HOUR_LATER = "2026-08-17T19:00:00.000Z";
+
+  const grantAll = choice(LANDED_AT, true, true);
+  const statisticsWithdrawn = choice(AN_HOUR_LATER, false, true);
+
+  /** A deletion by somebody who is not this module — Cookiebot's, in shape. */
+  function someoneElseDeletes() {
+    document.cookie = `${ATTRIBUTION_COOKIE_NAME}=; Max-Age=0; Path=/`;
+  }
+
+  it("re-captures with the LANDING moment after Cookiebot wipes the record", () => {
+    stubCookieJar();
+    const record = createAttributionRecorder(
+      { utm_source: "nieuwsbrief", utm_campaign: "schoon", fbclid: "KLIKID777" },
+      "letsdog.nl",
+      LANDED_AT,
+    );
+
+    record(grantAll);
+    expect(readAttributionCookie()?.t).toBe(LANDED_AT);
+
+    // The visitor withdraws statistics. Cookiebot deletes the cookie for the
+    // category it was classified under, and our handler runs on that same event.
+    someoneElseDeletes();
+    record(statisticsWithdrawn);
+
+    // FIRST touch, so the moment is the landing's — not this event's. Without the
+    // fix this is AN_HOUR_LATER and the platform reads an ad click that never
+    // happened at that time.
+    expect(readAttributionCookie()?.t).toBe(LANDED_AT);
+  });
+
+  it("still narrows what it re-captures to the gates that are open", () => {
+    // The moment must not be preserved by simply rewriting the old record: the
+    // withdrawn category has to be gone from the re-capture too, or the fix
+    // would trade a restamp for a consent breach.
+    stubCookieJar();
+    const record = createAttributionRecorder(
+      { utm_source: "nieuwsbrief", utm_campaign: "schoon", fbclid: "KLIKID777" },
+      "letsdog.nl",
+      LANDED_AT,
+    );
+
+    record(grantAll);
+    someoneElseDeletes();
+    record(statisticsWithdrawn);
+
+    const after = readAttributionCookie();
+    expect(after?.fbclid).toBe("KLIKID777");
+    expect(after?.utm_source).toBeUndefined();
+    expect(after?.utm_campaign).toBeUndefined();
+  });
+
+  it("holds the moment across repeated deletions in one page view", () => {
+    // Cookiebot fires more than once per page view, and every one of those events
+    // is another chance to re-stamp. The moment is a property of the arrival, so
+    // the count must not matter.
+    stubCookieJar();
+    const record = createAttributionRecorder({ fbclid: "KLIKID777" }, "letsdog.nl", LANDED_AT);
+
+    record(grantAll);
+    someoneElseDeletes();
+    record(statisticsWithdrawn);
+    someoneElseDeletes();
+    record(statisticsWithdrawn);
+
+    expect(readAttributionCookie()?.t).toBe(LANDED_AT);
+  });
+
+  it("stamps the moment the recorder was BUILT when none is given", () => {
+    // The default is what production runs on: the component builds the recorder
+    // in the effect that reads the URL, so "when it was built" IS the landing.
+    // Pinned because a caller who builds the recorder somewhere other than mount
+    // silently gets a different meaning for `t`.
+    //
+    // THE CLOCK IS FAKED AND ADVANCED A FULL HOUR, and that is the whole reason
+    // this test is worth having. Written against the real clock it failed
+    // against the un-fixed code by ONE MILLISECOND — a true red, but one that
+    // survives only as long as two `new Date()` calls happen to straddle a
+    // millisecond boundary. That is the failure this repo has already paid for
+    // twice: a comparison whose two sides are too close together reads a broken
+    // site as green. Faking the clock makes the gap an hour and the verdict
+    // deterministic.
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date(LANDED_AT));
+      stubCookieJar();
+      const record = createAttributionRecorder({ fbclid: "f1" }, "letsdog.nl");
+
+      vi.setSystemTime(new Date(AN_HOUR_LATER));
+      record(grantAll);
+      expect(readAttributionCookie()?.t).toBe(LANDED_AT);
+
+      someoneElseDeletes();
+      record(statisticsWithdrawn);
+
+      expect(readAttributionCookie()?.t).toBe(LANDED_AT);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+// =============================================================================
 // THE SAME BREACH, NOW ALSO IN A REAL SINK (T-44, executing loop decision D-6)
 // =============================================================================
 // Contract rule 5 says reporting is part of the rule and not a nicety, and until

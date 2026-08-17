@@ -768,10 +768,30 @@ export function effectiveConsent(cookiebot: ConsentPayload | null): ConsentPaylo
  * after all, just not from Cookiebot: `ld_consent` records a real refusal as an
  * explicit all-false, while a visitor nobody asked has no such cookie. That is
  * the same distinction `lib/consent.ts` already draws, read from the other side.
+ *
+ * `landedAt` IS THE MOMENT OF THE LANDING, NOT THE MOMENT OF THE CONSENT EVENT,
+ * and the default evaluates once — when the recorder is built, which is when the
+ * effect that read `landing` off the URL ran. It has to be stamped here for the
+ * same reason `landing` is captured here: both describe the arrival, and both
+ * have to survive every later event on that page view.
+ *
+ * WITHOUT IT THIS HANDLER RESTAMPS, and it took six days and a production
+ * measurement to see (loop T-58, introduced 2026-08-11 by the commit that added
+ * the handover). Neither of the two calls below is wrong on its own —
+ * `recordFirstTouch` refuses when a record exists and `applyConsentToStored`
+ * carries `t` over untouched — so the fault lives on the seam, and only when a
+ * THIRD party removes the record between them: `ld_attribution` is classified
+ * Statistics at the CMP (T-57), so withdrawing statistics makes Cookiebot delete
+ * it, correctly. This handler then runs on that same event, finds an empty jar,
+ * sees no existing record, and captures the landing parameters again — which the
+ * URL still carries. Stamped with "now", that hands the platform a first touch
+ * that is really a last touch, and it builds Meta's `fbc` from this field as the
+ * click moment.
  */
 export function createAttributionRecorder(
   landing: AttributionParams,
   hostname: string,
+  landedAt: string = new Date().toISOString(),
 ): (consent: ConsentPayload | null) => void {
   let sawConsent = false;
 
@@ -790,7 +810,7 @@ export function createAttributionRecorder(
     const consent = effectiveConsent(cookiebot);
     const gates: ConsentGates = consent ? { s: consent.s, m: consent.m } : { s: false, m: false };
 
-    if (hasAnyParam(landing)) recordFirstTouch(landing, gates, hostname);
+    if (hasAnyParam(landing)) recordFirstTouch(landing, gates, hostname, landedAt);
     narrowStoredToConsent(gates, hostname);
   };
 }
