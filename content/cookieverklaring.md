@@ -1,7 +1,7 @@
 ---
 title: Cookieverklaring
 description: Welke cookies Let's dog gebruikt op letsdog.nl en mijn.letsdog.nl, waarom, en hoe je je keuze op elk moment weer omzet.
-lead: Laatst bijgewerkt op 12 augustus 2026.
+lead: Laatst bijgewerkt op 17 augustus 2026.
 ---
 
 Deze verklaring legt uit welke cookies en vergelijkbare technieken Let's dog gebruikt, waarom, en hoe je je keuze op elk moment weer omzet. Hij hoort bij het [Privacybeleid](/privacybeleid).
@@ -97,6 +97,10 @@ Trek je marketing in, dan wissen we meteen de advertentiecookies die er al stond
 ## 7. Cookies van anderen
 
 Stripe, Google, Meta, Cloudflare en Cookiebot plaatsen hun eigen cookies wanneer je de bijbehorende categorie toestaat. PostHog is de uitzondering die in 3.3 staat: die meet door zolang je niets kiest, en stopt zodra je nee zegt tegen statistiek. Zij zijn allemaal zelf verantwoordelijk voor hun cookies, en wat zij ermee doen staat in hun eigen verklaringen op hun eigen sites.
+
+**Sentry hoort ook in dit rijtje, en hij hoort er anders in: hij zet helemaal geen cookies.** Loopt er op letsdog.nl iets stuk, bijvoorbeeld een formulier dat niet verstuurt of een keuze die niet doorkomt? Dan sturen we een technische foutmelding naar Sentry, zodat we het kunnen repareren. Die melding zegt wát er misging en wat we daarbij gemeten hebben, en niet wie je bent: er gaat geen naam mee, geen e-mailadres, en ook niet wat je bij de cookievraag hebt gekozen. Er wordt niets op je apparaat opgeslagen en de gegevens blijven in Europa.
+
+**Dit staat altijd aan, ook als je alles weigert.** Dat zeggen we liever hardop dan dat je het ergens ontdekt. Zonder foutmeldingen weten we niet dát er iets kapot is, en iets kan juist stukgaan bij iemand die alles geweigerd heeft, en dan zouden we het nooit zien. Daarom laten we die ene melding wél door. En precies daarom mag er niets persoonlijks in, jouw cookiekeuze voorop.
 
 ## 8. Wijzigingen
 
