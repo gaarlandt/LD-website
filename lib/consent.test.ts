@@ -1077,7 +1077,19 @@ function cookiebotDouble(options: CookiebotDoubleOptions = {}) {
     );
   }
 
-  const submitCustomConsent = vi.fn();
+  // COOKIEBOT WIST `ld_consent` BINNEN submitCustomConsent, en deze dubbel doet
+  // dat mee. Gemeten op productie 2026-08-17 (T-53) met een hook op de
+  // cookie-setter: zestien verwijderingen uit `removeCookieHTTP` in uc.js, een
+  // per pad/domein-combinatie, vóórdat het zijn consent-event vuurt.
+  //
+  // Zonder dit was de dubbel een `vi.fn()` die niets deed, en dan konden de twee
+  // tests hieronder die "laat het tijdstempel met rust" beweren GROEN staan
+  // terwijl productie wel degelijk herstempelde. Dat is de faalvorm die dit
+  // bestand elders al benoemt: een dubbel die het vertakte veld netjes aanlevert,
+  // bewijst de bedrading niet.
+  const submitCustomConsent = vi.fn(() => {
+    if (typeof document !== "undefined") document.cookie = `${CONSENT_COOKIE_NAME}=; Max-Age=0`;
+  });
 
   /** Published, not constructed. Everything except the method. */
   const publishedShape = () => ({
@@ -1101,10 +1113,14 @@ function cookiebotDouble(options: CookiebotDoubleOptions = {}) {
   const listeners = new Map<string, Set<() => void>>();
   const win: {
     Cookiebot?: unknown;
+    location: { hostname: string };
     addEventListener: (type: string, listener: () => void) => void;
     removeEventListener: (type: string, listener: () => void) => void;
   } = {
     Cookiebot: undefined,
+    // Production always has one, and the restore in `submitConsentToCookiebot`
+    // needs it to pick the cookie's Domain.
+    location: { hostname: "letsdog.nl" },
     addEventListener(type, listener) {
       const forType = listeners.get(type) ?? new Set<() => void>();
       forType.add(listener);
@@ -1683,7 +1699,12 @@ describe("a choice changed on the platform, end to end", () => {
 
     // 4. its consent event reaches the write side, which must stay silent
     writeConsentCookie(echoed, "letsdog.nl");
-    expect(writes).toHaveLength(1);
+    // THREE assignments, not one, and each is load-bearing (T-53): the platform's
+    // own write, then Cookiebot DELETING our cookie inside submitCustomConsent,
+    // then the restore that puts the original moment back. Before T-53 this read
+    // `toHaveLength(1)` because the double's submit was a no-op — the assertion
+    // was true of the rig and false of production.
+    expect(writes).toHaveLength(3);
     expect(readConsentCookie()?.t).toBe(
       chosenOnPlatform,
     );
@@ -1736,7 +1757,10 @@ describe("a choice made on the platform, never answered here, end to end", () =>
     //    platform appends a row per newer timestamp, and nobody chose anything
     //    on this host.
     writeConsentCookie(echoed, "letsdog.nl");
-    expect(writes).toHaveLength(1);
+    // Zelfde drieslag als de test hierboven (T-53): de platformschrijving,
+    // Cookiebots verwijdering binnen submitCustomConsent, en de restore die het
+    // oorspronkelijke moment terugzet.
+    expect(writes).toHaveLength(3);
     expect(readConsentCookie()?.t).toBe(chosenOnPlatform);
 
     // 5. and a second pass adopts nothing
@@ -2145,5 +2169,110 @@ describe("readConsentState — the third state (T-47)", () => {
     const state = readConsentState();
     expect(state.source).toBe("cookie");
     expect(state.payload?.s).toBe(true);
+  });
+});
+
+// =============================================================================
+// T-53 — ADOPTING A CHOICE MUST NOT RESTAMP IT
+// =============================================================================
+// Measured on production 2026-08-17 by hooking the `document.cookie` setter: a
+// one-hour-old grant made on mijn.letsdog.nl came back stamped seconds ago.
+// Before/after reads cannot see why, because it all happens inside one
+// synchronous `submitCustomConsent` call: Cookiebot issues SIXTEEN deletions of
+// `ld_consent` (every path/domain combination, from `removeCookieHTTP` in
+// uc.js), then fires its consent event, and our recorder rewrites the cookie
+// from `Cookiebot.consentUTC` — which the CMP has just stamped at now. The
+// recorder's "same choice, don't rewrite" guard cannot help, because at that
+// instant there is no cookie left to compare against.
+//
+// Why it matters beyond tidiness: `t` is the ONLY field newest-wins decides on,
+// so restamping turns an hour-old platform choice into a choice made here, and
+// the audit trail then names the wrong host.
+describe("submitConsentToCookiebot restores the original moment (T-53)", () => {
+  const CHOSEN_AN_HOUR_AGO = "2026-08-17T11:14:26.244Z";
+  const RESTAMPED_BY_COOKIEBOT = "2026-08-17T12:14:30.836Z";
+
+  const adopted: ConsentPayload = {
+    v: CONSENT_COOKIE_VERSION,
+    t: CHOSEN_AN_HOUR_AGO,
+    p: true,
+    s: true,
+    m: true,
+  };
+
+  /**
+   * Cookiebot as production actually behaves: accepting a programmatic choice
+   * DELETES our cookie on the way. A double that merely records the call would
+   * be green against the bug, which is the whole reason this one deletes.
+   */
+  function cookiebotThatDeletesOurCookie(onSubmit?: () => void) {
+    vi.stubGlobal("window", {
+      location: { hostname: "letsdog.nl" },
+      Cookiebot: {
+        submitCustomConsent: () => {
+          document.cookie = `${CONSENT_COOKIE_NAME}=; Max-Age=0`;
+          onSubmit?.();
+        },
+      },
+    });
+  }
+
+  it("puts the ORIGINAL moment back after Cookiebot wiped the cookie", () => {
+    stubDomainCookieJar([
+      { name: CONSENT_COOKIE_NAME, value: serializeConsentPayload(adopted), domain: ".letsdog.nl" },
+    ]);
+    // …and our recorder rewrites it with Cookiebot's fresh stamp, exactly as on
+    // production, while still inside the submit call.
+    cookiebotThatDeletesOurCookie(() => {
+      document.cookie = buildConsentCookie({ ...adopted, t: RESTAMPED_BY_COOKIEBOT }, "letsdog.nl");
+    });
+
+    expect(submitConsentToCookiebot(adopted)).toBe(true);
+
+    expect(readConsentCookie()?.t).toBe(CHOSEN_AN_HOUR_AGO);
+  });
+
+  it("restores the cookie when Cookiebot deleted it and nothing put it back", () => {
+    // The fragility the measurement exposed: without our recorder happening to
+    // run, the handover cookie would silently disappear on every consent change.
+    stubDomainCookieJar([
+      { name: CONSENT_COOKIE_NAME, value: serializeConsentPayload(adopted), domain: ".letsdog.nl" },
+    ]);
+    cookiebotThatDeletesOurCookie();
+
+    submitConsentToCookiebot(adopted);
+
+    expect(readConsentCookie()).toEqual(adopted);
+  });
+
+  it("does NOT clobber a genuinely different choice that landed meanwhile", () => {
+    const somethingNewer: ConsentPayload = {
+      v: CONSENT_COOKIE_VERSION,
+      t: RESTAMPED_BY_COOKIEBOT,
+      p: false,
+      s: false,
+      m: false,
+    };
+    stubDomainCookieJar([
+      { name: CONSENT_COOKIE_NAME, value: serializeConsentPayload(adopted), domain: ".letsdog.nl" },
+    ]);
+    cookiebotThatDeletesOurCookie(() => {
+      document.cookie = buildConsentCookie(somethingNewer, "letsdog.nl");
+    });
+
+    submitConsentToCookiebot(adopted);
+
+    // Different categories, so it is not our restamp to undo — leave it.
+    expect(readConsentCookie()).toEqual(somethingNewer);
+  });
+
+  it("still reports false, and writes nothing, without a usable Cookiebot", () => {
+    stubDomainCookieJar([
+      { name: CONSENT_COOKIE_NAME, value: serializeConsentPayload(adopted), domain: ".letsdog.nl" },
+    ]);
+    vi.stubGlobal("window", { location: { hostname: "letsdog.nl" }, Cookiebot: undefined });
+
+    expect(submitConsentToCookiebot(adopted)).toBe(false);
+    expect(readConsentCookie()?.t).toBe(CHOSEN_AN_HOUR_AGO);
   });
 });

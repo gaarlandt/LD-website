@@ -1260,5 +1260,58 @@ export function submitConsentToCookiebot(payload: ConsentPayload): boolean {
   const cb = typeof window === "undefined" ? undefined : window.Cookiebot;
   if (typeof cb?.submitCustomConsent !== "function") return false;
   cb.submitCustomConsent(payload.p, payload.s, payload.m);
+  // COOKIEBOT DELETES `ld_consent` INSIDE THIS CALL, AND THEN OUR OWN RECORDER
+  // REWRITES IT WITH THE WRONG MOMENT. Restoring it here is what keeps the
+  // contract's "adoption does not restamp" rule true.
+  //
+  // MEASURED ON PRODUCTION 2026-08-17 (T-53), by hooking the `document.cookie`
+  // setter and reading the stacks — before/after reads cannot see this, because
+  // the whole thing happens inside one synchronous call:
+  //
+  //   1. `submitCustomConsent` makes Cookiebot apply the choice, and on the way
+  //      it issues SIXTEEN deletions of `ld_consent`, one per path/domain
+  //      combination, all from `CookieControl.Cookie.removeCookieHTTP` in uc.js.
+  //      It does not recognise this cookie as one of its own declared ones.
+  //   2. Cookiebot then fires its consent event, still inside this call.
+  //   3. Our recorder answers that event and calls `writeConsentCookie`, whose
+  //      `existing` read now returns NULL — the cookie was deleted a moment ago —
+  //      so its "same choice, don't rewrite" guard cannot fire, and it writes
+  //      the payload built from `Cookiebot.consentUTC`, which the CMP has just
+  //      stamped at NOW.
+  //
+  // The result was a one-hour-old choice made on mijn.letsdog.nl reappearing as
+  // a choice made here, seconds ago. That breaks the other host's newest-wins
+  // comparison (`t` is the only field it decides on) and makes the audit trail
+  // name the wrong host.
+  //
+  // WHY THE RESTORE BELONGS HERE AND NOT IN THE RECORDER: the recorder cannot
+  // tell an adopted choice from a freshly clicked one, and for a real click
+  // stamping `now` is exactly right. This function is the one place that knows
+  // the choice came from an existing cookie. It runs after step 3 above, so it
+  // has the last word.
+  //
+  // NOT VIA `writeConsentCookie`, and that is not a shortcut: its first guard is
+  // "same choice, so do not rewrite", which is exactly the state we are in — the
+  // categories match and only `t` is wrong, so it would return and leave the
+  // restamp standing. Restoring a moment we just read is the one write that has
+  // to bypass that guard.
+  //
+  // The condition keeps it honest in both directions it can be wrong:
+  //   - cookie ABSENT: Cookiebot deleted it and nothing put it back. Restore it,
+  //     which also closes a fragility this measurement exposed — without our
+  //     recorder happening to run, the handover cookie would silently vanish on
+  //     every consent change.
+  //   - SAME choice, any stamp: that is the restamp; put the real moment back.
+  //   - DIFFERENT categories: leave it alone. Something legitimately newer landed
+  //     between the read and here, and overwriting it would be the clobber this
+  //     whole contract exists to prevent.
+  // Same `typeof document` guard every writer in this module carries: the module
+  // is imported in a Node test runner, and a reporter that throws on the way to
+  // restoring a cookie would be worse than the restamp it is fixing.
+  if (typeof document === "undefined") return true;
+  const current = readConsentCookie();
+  if (current === null || isSameChoice(current, payload)) {
+    document.cookie = buildConsentCookie(payload, window.location.hostname);
+  }
   return true;
 }
