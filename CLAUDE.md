@@ -48,7 +48,25 @@ npm run optimize:images # Regenerate AVIF/WebP variants after adding/changing a 
 npm run assets          # optimize:images + regenerate favicons + og image
 npm run verify:live     # Drive a real Chrome against the DEPLOYED site and measure the consent
                         # + attribution chain at the objects (~2 min). See below.
+npm run verify:lockfile # Does Cloudflare's `npm ci` still accept package.json + package-lock.json?
+                        # ~400ms. Runs automatically on push via the committed pre-push hook.
+npm run hooks:install   # One-off per clone: activate scripts/githooks (sets core.hooksPath).
 ```
+
+**`npm run verify:lockfile` — the one gate that runs the command Cloudflare runs.** `npm ci`
+refuses a package.json and package-lock.json that have drifted apart; `npm run build`, the typecheck
+and all 420 tests do not. That gap cost two days of failed production builds (loop T-51, second
+occurrence after `6e2f8fd`) while every local gate stayed green — so a guard that re-runs the gates
+we already have cannot catch this class by construction. This copies the two files to a temp dir and
+runs `npm ci --dry-run` there: **~400 ms**, and it never touches `node_modules` (a real `npm ci`
+deletes it first). It refuses to run under the wrong Node major, because these optional binaries
+resolve differently per major and Cloudflare builds on **20** while the local default is 24 —
+regenerating a lockfile under the wrong one is how it drifts. Fix with
+`nvm exec 20 npm install --package-lock-only` and commit the lockfile. **Wired to a committed
+pre-push hook** (`scripts/githooks/pre-push`, activated once per clone with `npm run hooks:install`)
+that fires *only* when those two files are in the range being pushed; it blocks on a real finding and
+deliberately never blocks when Node 20 is simply absent, since the Cloudflare preview still runs the
+real command as the backstop.
 
 **`npm run verify:live` — the post-deploy check for anything hanging off a third party.**
 Seven proofs against production (`scripts/verify-live.mjs`), each measured in **both**

@@ -10,6 +10,8 @@
     "test": "vitest run",
     "typecheck:test": "tsc -p tsconfig.test.json --noEmit",
     "verify:live": "node scripts/verify-live.mjs",
+    "verify:lockfile": "node scripts/verify-lockfile.mjs",
+    "hooks:install": "git config core.hooksPath scripts/githooks && echo \"git hooks actief via scripts/githooks\"",
     "optimize:images": "node scripts/optimize-images.mjs",
     "generate:icons": "node scripts/generate-icons.mjs",
     "generate:og": "node scripts/generate-og-image.mjs",
