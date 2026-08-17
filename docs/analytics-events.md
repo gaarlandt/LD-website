@@ -118,6 +118,22 @@ Ads land on **both** `letsdog.nl` and the platform, and both now carry a Meta pi
 1. **`Purchase` never fires here, and can't.** Payment happens on another domain. That is no longer a hole in the reporting, though: since **2026-08-10** the platform sends `Purchase` **server-side over Meta's Conversions API**, into this same dataset — which is exactly why the pixel here had to move datasets too (see above). This host sees the funnel up to `AddToCart`. That `Purchase` is on the **same VAT basis** as the `AddToCart` this site sends — see the note under the mapping table.
 2. **Production hosts only — the pixel does not exist on previews.** Meta has no `traffic_type`/`environment` equivalent, so a single dataset receives everything; the only way to keep preview and localhost out of the numbers campaigns optimise against is not to fire there at all. Since 2026-08-07 the base code is wrapped in a runtime `PROD_HOSTS` check (`letsdog.nl`, `www.letsdog.nl`), so off production nothing loads — no `fbevents.js`, no `window.fbq` — and the guards in `lib/analytics.ts` skip the Meta sink on their own. The check is at runtime because one static export serves both hosts. **Consequence: you cannot verify the pixel on a branch preview.** Verify on production with Meta Pixel Helper or Events Manager → Test Events. Meta's `<noscript>` fallback pixel is omitted for the same reason — it cannot be host-gated.
 
+### The browser pixel does not talk to Meta directly — a Conversions API Gateway sits in between
+
+**Measured on production 2026-08-17, and it is deliberate: the gateway is Jur's, installed on the dataset.** Nothing in this repo configures it and nothing here can change it — it is a setting on the Meta dataset, delivered to the browser inside the pixel's own config. The request order on the homepage, after marketing consent:
+
+```
+557 ms  connect.facebook.net/en_US/fbevents.js
+667 ms  connect.facebook.net/signals/config/958837033882897     ← the dataset's config
+709 ms  fetch → https://capig.datah04.com/events/<64-hex>       ← the gateway
+```
+
+**Why it is worth a section here rather than a footnote.** Grep this repo for that host and you get nothing, so anyone who meets it in a cookie scan or a network tab will reasonably suspect an injected third party — that is exactly what happened (loop task **T-56**), and it cost a round of measurement to rule out our own code, the `keuzehulp` iframe, and a leftover from the WordPress site. Three consequences to know:
+
+- **`Integration: Multiple` on `PageView`/`ViewContent`/`AddToCart` in Events Manager is the gateway, not double-counting.** A CAPI Gateway mirrors browser events server-side, so one visitor action legitimately arrives over two integrations and Meta deduplicates them. It does **not** conflict with the ownership split above, which is about which *host* fires an event.
+- **The gateway host is a data recipient.** Visitor events leave the browser to `capig.datah04.com` before reaching Meta. Whatever the cookie declaration and the privacy policy say about Meta has to cover that hop too — that text is Jur's call, not this file's.
+- **Cookiebot's scanner reports a `cee` cookie for that provider, categorised Marketing.** Not reproduced in `document.cookie` on this host, even with full consent (measured 2026-08-17); why the two disagree was not chased down. Don't assume it is absent just because one read did not find it.
+
 `PageView` fires **exactly once per page a visitor actually sees**, via two mechanisms that hand off to each other: the base code fires it when the pixel loads (a hard load for a visitor whose marketing consent is already stored, otherwise the moment they grant it), and [`meta-pixel-pageview.tsx`](../components/analytics/meta-pixel-pageview.tsx) fires it on each subsequent App Router **soft** navigation. The first client render is deliberately skipped so the landing page isn't counted twice. Without that component the whole site would report a single PageView per session and page-based retargeting audiences would stay empty. Verified on the dev server: one beacon on load, a second with the new URL after a soft nav to `/prijzen/`.
 
 ## Consent posture
