@@ -29,6 +29,7 @@ import {
   CONSENT_COOKIE_NAME,
   newestRecordedConsent,
   readConsentCookie,
+  readConsentState,
 } from "@/lib/consent";
 import {
   ATTRIBUTION_COOKIE_NAME,
@@ -48,15 +49,34 @@ import {
 // ld_consent — "does this govern?"
 // =============================================================================
 
+// `silent` sits ONLY on the non-governing branch, and it is REQUIRED there.
+//
+// It answers the second question the contract asks once the first is settled:
+// no governing choice, fine — but may a destination running on LEGITIMATE
+// INTEREST still receive anything? Silence (no cookie at all) says yes; a cookie
+// that is present and unreadable says no, because somebody answered a banner and
+// the bytes are unreadable almost only because our two repos drifted.
+//
+// REQUIRED rather than optional, agreed with PF on 2026-08-17 and for the reason
+// this loader exists at all: an optional key lets a vector forget it and thereby
+// assert nothing, which is indistinguishable from a vector that meant to. And
+// refused on the governing branch, where it would claim nothing.
 type ConsentExpectation =
-  | { governs: false }
+  | { governs: false; silent: boolean }
   | { governs: true; categories: { p: boolean; s: boolean; m: boolean }; t: string };
 
 function validateConsentExpectation(where: string, raw: unknown): ConsentExpectation {
   const value = asObject(where, raw);
   if (value.governs === false) {
-    refuseExtraKeys(where, value, ["governs"]);
-    return { governs: false };
+    refuseExtraKeys(where, value, ["governs", "silent"]);
+    if (typeof value.silent !== "boolean") {
+      throw new Error(
+        `${where}: "silent" is required when governs is false — it is what separates an ABSENT ` +
+          `cookie (legitimate interest still applies) from a PRESENT but unreadable one (it does ` +
+          `not). Omitting it would assert nothing while looking like an assertion.`,
+      );
+    }
+    return { governs: false, silent: value.silent };
   }
   if (value.governs !== true) throw new Error(`${where}: "governs" must be a boolean`);
   refuseExtraKeys(where, value, ["governs", "categories", "t"]);
@@ -96,11 +116,22 @@ function validateConsentExpectation(where: string, raw: unknown): ConsentExpecta
  * duplicate repair against a real `document.cookie`, and the point of this file
  * is the behaviour and not a convenient slice of it.
  */
-function consentVerdict(raw: string): ConsentExpectation {
-  stubDomainCookieJar([{ name: CONSENT_COOKIE_NAME, value: raw, domain: ".letsdog.nl" }]);
+function consentVerdict(raw: string | null): ConsentExpectation {
+  // `null` = no cookie of this name at all, so the jar gets no entry. Note this
+  // is NOT the same as an entry with an empty value: that one is a cookie
+  // somebody wrote, and the contract puts the two on opposite sides of `silent`.
+  stubDomainCookieJar(
+    raw === null ? [] : [{ name: CONSENT_COOKIE_NAME, value: raw, domain: ".letsdog.nl" }],
+  );
   try {
     const governing = newestRecordedConsent(null, readConsentCookie());
-    if (governing === null) return { governs: false };
+    if (governing === null) {
+      // `silent` is composed from EFFECTIVE BEHAVIOUR, as the hub README
+      // requires, not from a private state name: `readConsentState()` is the
+      // seam posthog-provider.tsx actually gates on, so a vector that goes red
+      // here is a vector about what this site really does.
+      return { governs: false, silent: readConsentState().source === "absent" };
+    }
     return {
       governs: true,
       categories: { p: governing.p, s: governing.s, m: governing.m },
@@ -122,10 +153,17 @@ function corruptConsent(expectation: ConsentExpectation): { label: string; expec
         label: "governs flipped to true",
         expect: { governs: true, categories: { p: true, s: true, m: true }, t: "2026-01-01T00:00:00.000Z" },
       },
+      // Without this the `silent` key would be green by construction — asserted
+      // on ten vectors and checked by nothing, which is worse than not asserting
+      // it, because it reads as covered.
+      {
+        label: "silent flipped",
+        expect: { governs: false, silent: !expectation.silent },
+      },
     ];
   }
   return [
-    { label: "governs flipped to false", expect: { governs: false } },
+    { label: "governs flipped to false", expect: { governs: false, silent: false } },
     ...(["p", "s", "m"] as const).map((key) => ({
       label: `category ${key} flipped`,
       expect: {

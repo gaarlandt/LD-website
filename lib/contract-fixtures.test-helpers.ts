@@ -112,8 +112,22 @@ export function findHubFixtures(): string {
 export type Vector<Expectation> = {
   /** Stable identifier; also the test name on both sides. */
   name: string;
-  /** The cookie VALUE exactly as it arrives on the wire. */
-  raw: string;
+  /**
+   * The cookie VALUE exactly as it arrives on the wire — or `null` for NO COOKIE
+   * OF THIS NAME AT ALL.
+   *
+   * `null` is a distinct state from `""`, and conflating the two is the whole
+   * reason it exists (added 2026-08-17 with the `silent` verdict). `""` is a
+   * cookie that is PRESENT with an empty value — somebody wrote it — while
+   * `null` means nobody did. Under the consent contract those fall on opposite
+   * sides of the legitimate-interest question: an empty value is a refusal, an
+   * absent cookie is silence.
+   *
+   * Without this, `silent` could never be asserted as `true` on any vector: a
+   * vector is bytes, "no cookie" has none, and a field that is constant across
+   * every vector discriminates nothing.
+   */
+  raw: string | null;
   /** The contract rule or the task this vector pins. What makes a failure legible. */
   why: string;
   /** The EFFECTIVE verdict both repos must reach. */
@@ -208,14 +222,21 @@ export function loadVectorFile<Expectation>(
     if (seen.has(vector.name)) throw new Error(`${where}: duplicate name "${vector.name}"`);
     seen.add(vector.name);
 
-    if (typeof vector.raw !== "string") {
-      throw new Error(`${where} (${vector.name}): "raw" must be a string`);
+    // `null` is allowed and means "no cookie of this name at all" — see the
+    // `raw` field's own note for why that is a different state from `""` and why
+    // the `silent` verdict cannot be asserted without it. `undefined` is not
+    // allowed: a missing key must stay distinguishable from a deliberate null,
+    // or a typo in the key name reads as an assertion about absence.
+    if (vector.raw !== null && typeof vector.raw !== "string") {
+      throw new Error(
+        `${where} (${vector.name}): "raw" must be a string, or null for "no cookie at all"`,
+      );
     }
     // A `;` ends a cookie in a header, so a vector carrying one could never
     // arrive at a parser intact — it would silently become a different, shorter
     // value, and the verdict either side reached would be about bytes nobody
     // wrote down.
-    if (vector.raw.includes(";")) {
+    if (vector.raw !== null && vector.raw.includes(";")) {
       throw new Error(
         `${where} (${vector.name}): "raw" contains a ";", which a browser would read as the end ` +
           `of the cookie. A vector has to survive a cookie header to mean anything.`,
