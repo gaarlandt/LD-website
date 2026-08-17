@@ -887,6 +887,74 @@ export function readConsentCookie(): ConsentPayload | null {
 }
 
 /**
+ * WHICH OF THE THREE STATES this host's `ld_consent` is in — and the third one
+ * is the reason this type exists.
+ *
+ * `readConsentCookie()` answers "is there a governing choice" with a payload or
+ * `null`, and that is the right shape for every consumer whose action is gated
+ * on the CHOICE. But `null` collapses two causes that the contract treats
+ * differently:
+ *
+ * - **absent** — nobody wrote anything. Nobody has spoken, so there is nothing
+ *   to contradict, and a destination running on LEGITIMATE INTEREST may keep
+ *   measuring. This is the case that grounds PostHog here at all.
+ * - **unreadable** — a cookie IS present and cannot be read: bytes we do not
+ *   understand, or a version we do not accept. Somebody answered a banner (you
+ *   do not carry an `ld_consent` otherwise), and we cannot tell what they said.
+ *
+ * The platform has kept these apart since day one (`ConsentSource` is
+ * five-valued there; its `isSilent` covers `absent` and `native` and pointedly
+ * not `unreadable`), and until now this side did not, so a visitor with a
+ * corrupted cookie was measured here and not there.
+ *
+ * WHY UNREADABLE FALLS TO THE SAFE SIDE, and the reason is not about the
+ * visitor: bytes go unreadable almost exclusively because the two repos have
+ * drifted — a version one writes and the other refuses, a `t` one side sends.
+ * That is OUR defect, and reading our own defect as "no choice, so carry on
+ * measuring" lets a bug quietly widen what we collect. Stated plainly because
+ * it is a real cost: someone who never refused anything but carries a broken
+ * cookie loses product analytics. Nobody loses a right; we lose numbers.
+ */
+export type ConsentCookieSource = "absent" | "cookie" | "unreadable";
+
+export type ConsentCookieState = {
+  source: ConsentCookieSource;
+  /** The governing payload, and ONLY when `source === "cookie"`. */
+  payload: ConsentPayload | null;
+};
+
+/**
+ * The handover cookie as one of three states — the read seam for consumers that
+ * need to tell "nobody answered" from "somebody answered and we cannot read it".
+ *
+ * Deliberately a SECOND function rather than a widened `readConsentCookie()`.
+ * That one's `null` is load-bearing for five call sites whose behaviour must not
+ * move in this change, and its contract ("first parseable, version enforced by
+ * the caller") is what the shared fixtures pin. This one composes the same two
+ * steps the version-enforcing consumers already compose — read, then require the
+ * contract version — so the two cannot answer differently about the same bytes.
+ *
+ * Version handling is the subtle half: an `ld_consent` at a version we do not
+ * recognise is UNREADABLE, not absent. The contract refuses such a record whole
+ * rather than half-reading it, and "refused whole" is exactly the state this
+ * type calls unreadable — a choice exists, we may not interpret it.
+ */
+export function readConsentState(): ConsentCookieState {
+  if (typeof document === "undefined") return { source: "absent", payload: null };
+  // Rule 6 first, for the same reason `readConsentCookie` does it: a planted
+  // host-only copy must not decide which of the three states we report.
+  repairDuplicateConsentCookies();
+  const header = document.cookie;
+  const parsed = readFirstParseableCookie(header, CONSENT_COOKIE_NAME, parseConsentPayload);
+  const governing = parsed !== null && parsed.v === CONSENT_COOKIE_VERSION ? parsed : null;
+  if (governing !== null) return { source: "cookie", payload: governing };
+  return {
+    source: countCookiesNamed(header, CONSENT_COOKIE_NAME) > 0 ? "unreadable" : "absent",
+    payload: null,
+  };
+}
+
+/**
  * Do these two payloads record the same CHOICE? The three categories and the
  * contract version — deliberately not `t`.
  *

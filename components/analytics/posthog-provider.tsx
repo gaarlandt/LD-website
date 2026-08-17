@@ -6,7 +6,7 @@ import { PostHogProvider as PHProvider } from "posthog-js/react";
 import { isProdHost } from "@/lib/prod-hosts";
 import {
   onCookiebotConsent,
-  readConsentCookie,
+  readConsentState,
   newestRecordedConsent,
   type ConsentPayload,
 } from "@/lib/consent";
@@ -23,9 +23,15 @@ import {
 // sentence true.
 //
 // THEREFORE, AND THIS IS THE INVERSE OF meta-pixel.tsx: the rule is "stop on a
-// recorded no", not "start on a yes". No recorded choice means we run. Do not
-// "tighten" this into a full opt-in gate — that would change the legal grounds
-// and falsify the published declaration.
+// recorded no", not "start on a yes". SILENCE means we run. Do not "tighten"
+// this into a full opt-in gate — that would change the legal grounds and falsify
+// the published declaration.
+//
+// Silence is narrower than "no readable choice", and that distinction is T-47:
+// an `ld_consent` that is PRESENT but unreadable is not silence — somebody
+// answered a banner and the bytes are unreadable because our two repos drifted —
+// so it stops us. An ABSENT cookie is silence and does not. See
+// `readConsentState` in lib/consent.ts for why the defect falls to the safe side.
 //
 // Identity + event conventions follow the Let's dog cross-product contract: EU
 // host, defaults '2026-01-30', session recording off, respect DNT, and an `app`
@@ -41,12 +47,6 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     if (!key) return;
-
-    // The newest choice across BOTH writers. Reading Cookiebot alone would act on
-    // a stale answer when the visitor decided on mijn.letsdog.nl, and a $pageview
-    // cannot be un-sent.
-    const merged = (consent: ConsentPayload | null): ConsentPayload | null =>
-      newestRecordedConsent(consent, readConsentCookie());
 
     const start = (liftOptOut: boolean) => {
       if (!posthog.__loaded) {
@@ -110,14 +110,32 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
       posthog.opt_out_capturing();
     };
 
-    // Refused = a RECORDED choice whose statistics category is false. `null`
-    // (nothing recorded anywhere) is not a refusal — under legitimate interest it
-    // is exactly the case we are allowed to measure in. A grant is the mirror:
-    // an explicit true, which is the only thing that may lift a stored opt-out.
-    const apply = (consent: ConsentPayload | null) => {
-      const choice = merged(consent);
-      if (choice?.s === false) stop();
-      else start(choice?.s === true);
+    // Refused = a RECORDED choice whose statistics category is false. A grant is
+    // the mirror: an explicit true, which is the only thing that may lift a
+    // stored opt-out.
+    //
+    // NO RECORDED CHOICE IS TWO CASES, NOT ONE, and that is what this function
+    // exists to keep apart (T-47, and the platform's rule since day one). Under
+    // legitimate interest we may measure while nobody has SPOKEN — but a present
+    // `ld_consent` we cannot read is not silence: somebody answered a banner and
+    // we cannot tell what they said, almost always because the two repos drifted.
+    // Our own defect has to fall to the safe side, so it stops us.
+    //
+    // ORDER IS LOAD-BEARING. The explicit-choice tests come FIRST, so a readable
+    // local yes from Cookiebot still starts PostHog even while a corrupt
+    // `ld_consent` sits next to it. Only when NEITHER writer yields a governing
+    // choice does the unreadable cookie decide — which is precisely the platform's
+    // `isSilent` seam, arrived at from the other side.
+    const apply = (cookiebot: ConsentPayload | null) => {
+      const cookie = readConsentState();
+      // The newest choice across BOTH writers. Reading Cookiebot alone would act
+      // on a stale answer when the visitor decided on mijn.letsdog.nl, and a
+      // $pageview cannot be un-sent.
+      const choice = newestRecordedConsent(cookiebot, cookie.payload);
+      if (choice?.s === true) return start(true);
+      if (choice?.s === false) return stop();
+      if (cookie.source === "unreadable") return stop();
+      start(false);
     };
 
     // The pre-Cookiebot decision. Cookiebot loads async and a refusal may already

@@ -1,6 +1,10 @@
 import posthog from "posthog-js";
 import { toMetaEvent, type MetaEventParams } from "@/lib/meta-events";
-import { readConsentCookie, readCookiebotConsent } from "@/lib/consent";
+import {
+  readConsentCookie,
+  readCookiebotConsent,
+  newestRecordedConsent,
+} from "@/lib/consent";
 import { metaSendGranted } from "@/lib/meta-consent";
 
 // `typeof window.fbq === "function"` is no longer enough on its own to mean
@@ -80,14 +84,46 @@ export function trackMetaPageView(): void {
   }
 }
 
-// The one identify opportunity on the marketing site (contact-form success).
-// Email is lowercased — it's the cross-product join key per the Let's dog
-// PostHog identity contract. No alias() chains, no GA4 user-id mapping.
+// The one identify opportunity on the marketing site (contact- and creator-form
+// success).
+//
+// IDENTIFY ON THE ANONYMOUS DEVICE ID, NEVER ON THE EMAIL ADDRESS — and this is
+// a REVERSAL of what this function did until 2026-08-17 and of what the old
+// identity contract prescribed (it named the lowercased email as the join key).
+// Two things changed under it:
+//
+//  1. **One shared project.** Since 2026-08-12 this site reports into the
+//     platform's PostHog project. An email as `distinct_id` therefore puts a
+//     personal datum in a space shared with the platform's uuid-identified
+//     people — and into a `.letsdog.nl` cookie, readable by every host on the
+//     shared domain. Nobody decided that; it followed from a key switch.
+//  2. **The join no longer needs it.** Continuity across hosts runs on the
+//     shared `$device_id` in posthog-js's own cookie, which the platform adopts
+//     through the SDK's `bootstrap` option. Identifying on an email would in fact
+//     BREAK that join the moment one host normalises differently.
+//
+// The rule now lives in the host register `posthog-cross-product-identity.md`
+// ("Wat elke host moet implementeren", point 3). Still no alias() chains and no
+// GA4 user-id mapping.
+//
+// THE EMAIL IS KEPT AT MOST AS A PERSON PROPERTY, BEHIND AN EXPLICIT YES. It is
+// analytics data about a person, so it rides STATISTICS — and PostHog's
+// legitimate-interest ground covers measuring, not storing an identifier for
+// someone who never agreed to it. No explicit statistics consent → the identify
+// still happens (it is the device id, which we may hold) but carries no email.
 export function identifyLead(
   email: string,
   props?: Record<string, string | number | boolean>,
 ): void {
   if (typeof window === "undefined" || !posthog.__loaded) return;
-  const lower = email.trim().toLowerCase();
-  posthog.identify(lower, { email: lower, ...props });
+  // `$device_id` is the random UUID posthog-js minted for this browser. Read it
+  // rather than `get_distinct_id()`: after any earlier identify the latter is
+  // whatever we identified AS, so reading it would re-identify on a stale value
+  // and, for anyone carrying the pre-2026-08-17 state, re-assert their email.
+  const deviceId = posthog.get_property("$device_id");
+  if (typeof deviceId !== "string" || deviceId === "") return;
+  const consent = newestRecordedConsent(readCookiebotConsent(), readConsentCookie());
+  const personProps: Record<string, string | number | boolean> = { ...props };
+  if (consent?.s === true) personProps.email = email.trim().toLowerCase();
+  posthog.identify(deviceId, personProps);
 }

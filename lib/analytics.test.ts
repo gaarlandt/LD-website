@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { trackEvent, trackMetaPageView } from "./analytics";
+import posthog from "posthog-js";
+import { trackEvent, trackMetaPageView, identifyLead } from "./analytics";
 import {
   CONSENT_COOKIE_NAME,
   CONSENT_COOKIE_VERSION,
@@ -188,6 +189,132 @@ describe("the other sinks stay independent of the Meta gate", () => {
   it("never sends an unmapped event to Meta, consent or no consent", () => {
     const calls = stubBrowser({ cookiebot: { t: EARLIER, m: true } });
     trackEvent("cta_clicked", { link_destination: "checkout" });
+    expect(calls).toEqual([]);
+  });
+});
+
+// =============================================================================
+// T-46 — IDENTIFY ON THE DEVICE ID, NEVER ON THE EMAIL ADDRESS
+// =============================================================================
+// The reversal of 2026-08-17. Until then this site identified on the lowercased
+// email, which the OLD identity contract prescribed — correct while this site had
+// its own PostHog project, and wrong from the moment (2026-08-12) it started
+// reporting into the platform's. Two hosts, one project, and an email address as
+// `distinct_id` puts a personal datum in the shared space and in a `.letsdog.nl`
+// cookie every host on the domain can read. Nobody decided that; it followed from
+// a key switch.
+//
+// The join is not lost by this change — it never depended on the email. It runs
+// on the shared `$device_id` in posthog-js's own cookie, which the platform
+// adopts through the SDK's `bootstrap` option.
+describe("identifyLead identifies on $device_id, not the email (T-46)", () => {
+  const DEVICE_ID = "01a00426-4268-7b59-b8f4-b64054e143fc";
+
+  type Identify = { id: unknown; props: unknown };
+
+  /**
+   * Returns the recorded posthog.identify calls.
+   *
+   * `deviceId` is read with `in` rather than a destructuring default on purpose:
+   * passing `deviceId: undefined` explicitly TRIGGERS a default, and undefined is
+   * exactly the value the real `get_property` returns when there is no device id.
+   * A default here would silently hand the absent-id test a present id — which it
+   * did, and the test caught it.
+   */
+  function stubPostHog(opts: { loaded?: boolean; deviceId?: unknown } = {}): Identify[] {
+    const loaded = opts.loaded ?? true;
+    const deviceId = "deviceId" in opts ? opts.deviceId : DEVICE_ID;
+    const calls: Identify[] = [];
+    Object.defineProperty(posthog, "__loaded", { value: loaded, configurable: true, writable: true });
+    vi.spyOn(posthog, "get_property").mockImplementation((key: string) =>
+      key === "$device_id" ? deviceId : undefined,
+    );
+    vi.spyOn(posthog, "identify").mockImplementation((id?: string, props?: unknown) => {
+      calls.push({ id, props });
+    });
+    return calls;
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("passes the anonymous device id as the distinct id", () => {
+    stubBrowser({ cookie: cookieFor(LATER, false) });
+    const calls = stubPostHog();
+
+    identifyLead("Jur@Example.NL");
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0].id).toBe(DEVICE_ID);
+  });
+
+  // The regression this whole unit exists to prevent, stated as its own test so
+  // it cannot be lost in a refactor of the one above: no call to identify may
+  // carry the address as the IDENTIFIER, in any casing.
+  it("never puts the email address in the distinct id", () => {
+    stubBrowser({ cookie: cookieFor(LATER, false) });
+    const calls = stubPostHog();
+
+    identifyLead("Jur@Example.NL");
+
+    expect(String(calls[0].id)).not.toContain("@");
+  });
+
+  // Statistics granted: the address may ride along as a person PROPERTY. That is
+  // the "at most" the host register allows — a property on a person we already
+  // hold, not the key we hold them by.
+  it("keeps the email as a person property behind an explicit statistics yes", () => {
+    // cookieFor() carries s: true; the cookie is the newest writer here.
+    stubBrowser({ cookie: cookieFor(LATER, false) });
+    const calls = stubPostHog();
+
+    identifyLead("Jur@Example.NL", { form: "contact" });
+
+    expect(calls[0].props).toEqual({ form: "contact", email: "jur@example.nl" });
+  });
+
+  // No explicit yes — legitimate interest covers MEASURING, not storing an
+  // identifier for somebody who never agreed to it. The identify still happens
+  // (the device id is ours to hold); the address does not travel.
+  it("drops the email when statistics was refused", () => {
+    stubBrowser({ cookie: { ...cookieFor(LATER, false), s: false } });
+    const calls = stubPostHog();
+
+    identifyLead("Jur@Example.NL", { form: "contact" });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0].props).toEqual({ form: "contact" });
+  });
+
+  it("drops the email when nobody has answered anywhere", () => {
+    stubBrowser({});
+    const calls = stubPostHog();
+
+    identifyLead("Jur@Example.NL");
+
+    expect(calls[0].props).toEqual({});
+  });
+
+  // Without a device id there is nothing safe to identify ON, and the tempting
+  // fallback — get_distinct_id() — is exactly the wrong one: after any earlier
+  // identify it returns whatever we identified AS, which for anyone carrying the
+  // pre-2026-08-17 state is their email address. So: do nothing.
+  it("does nothing when there is no device id to identify on", () => {
+    stubBrowser({ cookie: cookieFor(LATER, false) });
+    const calls = stubPostHog({ deviceId: undefined });
+
+    identifyLead("Jur@Example.NL");
+
+    expect(calls).toEqual([]);
+  });
+
+  it("does nothing before PostHog has loaded", () => {
+    stubBrowser({ cookie: cookieFor(LATER, false) });
+    const calls = stubPostHog({ loaded: false });
+
+    identifyLead("Jur@Example.NL");
+
     expect(calls).toEqual([]);
   });
 });
