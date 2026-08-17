@@ -12,6 +12,7 @@ import {
   onCookiebotConsent,
   parseConsentPayload,
   readConsentCookie,
+  readConsentState,
   readFirstParseableCookie,
   recordConsentWithdrawal,
   serializeConsentPayload,
@@ -2040,5 +2041,109 @@ describe("onCookiebotConsent — reporting a chain that never started (T-44)", (
     expect(withoutCookie).toHaveLength(1);
     expect(withCookie[0].extra).toEqual(withoutCookie[0].extra);
     expect(JSON.stringify(withCookie[0])).not.toContain(chosenOnPlatform);
+  });
+});
+
+// =============================================================================
+// T-47 — ABSENT AND UNREADABLE ARE NOT THE SAME STATE
+// =============================================================================
+// The distinction the read side threw away until 2026-08-17: `readConsentCookie`
+// answers `null` for both, and PostHog's gate then measured a visitor carrying a
+// corrupt cookie exactly as it measures one carrying none. The platform has kept
+// them apart since day one (`isSilent` covers `absent` and `native`, pointedly
+// not `unreadable`), so this was a live cross-host divergence rather than a
+// tidiness question.
+//
+// MEASURED ON PRODUCTION BEFORE IT WAS BUILT, at the behaviour and not at the
+// source (2026-08-17, letsdog.nl): PostHog's extension assets load from
+// eu-assets.i.posthog.com only after `init`, which makes them a usable gate
+// probe. Absent → 4 asset loads. Explicit all-false refusal → 0. Unreadable at
+// an unknown version → 4. Unreadable as corrupt JSON → 4. The zero is the
+// control that proves the probe can go red; the two fours are the defect.
+describe("readConsentState — the third state (T-47)", () => {
+  const governing = (): JarEntry => ({
+    name: CONSENT_COOKIE_NAME,
+    value: serializeConsentPayload({
+      v: CONSENT_COOKIE_VERSION,
+      t: "2026-08-17T09:00:00.000Z",
+      p: false,
+      s: true,
+      m: false,
+    }),
+    domain: ".letsdog.nl",
+  });
+
+  const planted = (value: string): JarEntry => ({
+    name: CONSENT_COOKIE_NAME,
+    value,
+    domain: ".letsdog.nl",
+  });
+
+  it("reports ABSENT when no cookie of this name arrived at all", () => {
+    stubDomainCookieJar([]);
+    expect(readConsentState()).toEqual({ source: "absent", payload: null });
+  });
+
+  it("reports the governing choice when the bytes read", () => {
+    stubDomainCookieJar([governing()]);
+    const state = readConsentState();
+    expect(state.source).toBe("cookie");
+    expect(state.payload).toEqual({
+      v: CONSENT_COOKIE_VERSION,
+      t: "2026-08-17T09:00:00.000Z",
+      p: false,
+      s: true,
+      m: false,
+    });
+  });
+
+  // Each of these is a cookie somebody's browser really carries: it EXISTS, so a
+  // banner was answered, and we cannot say what the answer was.
+  it.each([
+    ["not JSON at all", "toestemming-ja"],
+    ["broken percent-encoding", "%7B%22v%22%3A1%2C%ZZ"],
+    ["an empty value", ""],
+    [
+      "a version this reader does not accept",
+      encodeURIComponent(
+        JSON.stringify({ v: CONSENT_COOKIE_VERSION + 1, t: "2026-08-17T09:00:00.000Z", p: true, s: true, m: true }),
+      ),
+    ],
+    [
+      "a category key missing",
+      encodeURIComponent(JSON.stringify({ v: CONSENT_COOKIE_VERSION, t: "2026-08-17T09:00:00.000Z", p: true, s: true })),
+    ],
+  ])("reports UNREADABLE for %s", (_label, value) => {
+    stubDomainCookieJar([planted(value)]);
+    expect(readConsentState()).toEqual({ source: "unreadable", payload: null });
+  });
+
+  // THE ONE THAT WOULD SILENTLY BE GOT WRONG. An unknown version is refused whole
+  // by the contract, and "refused whole" is unreadable, NOT absent — half-reading
+  // it would misreport a real choice, and calling it absent would resume measuring
+  // against one. `readConsentCookie` alone cannot see this: its parser does not
+  // look at `v` (the callers enforce it), so it hands back a payload here.
+  it("separates itself from readConsentCookie on an unknown version", () => {
+    const value = encodeURIComponent(
+      JSON.stringify({ v: CONSENT_COOKIE_VERSION + 1, t: "2026-08-17T09:00:00.000Z", p: true, s: true, m: true }),
+    );
+    stubDomainCookieJar([planted(value)]);
+
+    expect(readConsentCookie()).not.toBeNull();
+    expect(readConsentState().source).toBe("unreadable");
+  });
+
+  // Rule 6 runs on this read path too, so a planted host-only copy cannot decide
+  // which of the three states we report — the failure would be a REAL choice on
+  // the shared domain reported as unreadable, which then stops measuring for a
+  // visitor who granted it.
+  it("repairs a planted host-only copy before deciding the state", () => {
+    stubDomainCookieJar([
+      { name: CONSENT_COOKIE_NAME, value: "toestemming-ja", domain: null },
+      governing(),
+    ]);
+    const state = readConsentState();
+    expect(state.source).toBe("cookie");
+    expect(state.payload?.s).toBe(true);
   });
 });
