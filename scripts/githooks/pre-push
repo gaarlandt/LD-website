@@ -1,0 +1,52 @@
+#!/bin/sh
+# Run the lockfile guard before a push that touches the dependency files.
+#
+# Committed and activated with `npm run hooks:install` (which sets
+# core.hooksPath), so this file travels with the repo instead of living in one
+# person's .git/hooks — that was the gap in the first proposal for T-52.
+#
+# SHARP TRIGGER ON PURPOSE. `npm ci --dry-run` costs ~400 ms, which is cheap but
+# not free, and a guard that fires on every push to a docs branch is a guard
+# somebody deletes. It only runs when package.json or package-lock.json is
+# actually in the range being pushed.
+#
+# TWO RULES ABOUT WHEN IT MAY BLOCK, and the second is what keeps it installed:
+#   - It blocks on a REAL finding: the two files are out of sync, so Cloudflare's
+#     `npm ci` will fail and the deploy will not happen.
+#   - It NEVER blocks because the tooling is missing. If Node 20 cannot be found
+#     it says so loudly and lets the push through. Blocking someone's push over
+#     an unrelated local setup is exactly how a guard gets uninstalled, and the
+#     Cloudflare preview still runs the real command as the backstop.
+
+set -e
+
+REQUIRED_MAJOR=20
+RANGE_BASE=$(git rev-parse --verify --quiet '@{push}' 2>/dev/null || true)
+if [ -z "$RANGE_BASE" ]; then
+  RANGE_BASE=$(git rev-parse --verify --quiet origin/main 2>/dev/null || true)
+fi
+[ -z "$RANGE_BASE" ] && exit 0
+
+CHANGED=$(git diff --name-only "$RANGE_BASE"..HEAD -- package.json package-lock.json 2>/dev/null || true)
+[ -z "$CHANGED" ] && exit 0
+
+echo "pre-push: package.json/package-lock.json gewijzigd — lockfile controleren…"
+
+NODE_BIN=""
+if [ "$(node -e 'process.stdout.write(process.versions.node.split(".")[0])' 2>/dev/null)" = "$REQUIRED_MAJOR" ]; then
+  NODE_BIN="node"
+else
+  # The check only means something under the major Cloudflare builds with, so
+  # look for it rather than measuring the wrong runtime.
+  for candidate in "$HOME"/.nvm/versions/node/v${REQUIRED_MAJOR}.*/bin/node; do
+    [ -x "$candidate" ] && NODE_BIN="$candidate" && break
+  done
+fi
+
+if [ -z "$NODE_BIN" ]; then
+  echo "pre-push: WAARSCHUWING — geen Node ${REQUIRED_MAJOR} gevonden, lockfile NIET gecontroleerd."
+  echo "          De Cloudflare-preview draait `npm ci` alsnog; let daar op de check."
+  exit 0
+fi
+
+"$NODE_BIN" "$(git rev-parse --show-toplevel)/scripts/verify-lockfile.mjs"
