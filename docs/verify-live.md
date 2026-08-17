@@ -118,7 +118,38 @@ consent bug this site has had was a light that failed to turn red.
 | **P4** GA4 | after consent, a `consent update` in the **dataLayer** granting all four ad/analytics signals, and `_ga` written | before any answer, the default is `denied` and there is no update at all; after "Deny", `analytics_storage` stays denied and `_ga` is absent |
 | **P5** Meta | on marketing consent, `fbevents.js` is requested **and answered**, `window.fbq` is a function, `_fbp` written | without consent it is never requested, `fbq` is `undefined`, no `_fbp`; on `Cookiebot.withdraw()`, `fbq('consent','revoke')` is called and `_fbp`/`_fbc` are cleared |
 | **P6** PostHog | with **no answer** (legitimate interest) captured events reach `eu.i.posthog.com`; the shared `ph_<token>_posthog` cookie carries a `$device_id` that survives a navigation and is readable on `mijn.letsdog.nl` | with statistics **explicitly refused**, zero requests to either PostHog host and the cookie is gone |
-| **P7** `ld_attribution` | a tagged landing + consent records the first touch with the campaign params | an **untagged** return leaves it byte-identical, and a **second, different tagged** touch does not win — FIRST touch, the inverse of `ld_consent` |
+| **P7** `ld_attribution` | a tagged landing + consent records the first touch with the campaign params | an **untagged** return leaves it byte-identical; a **second, different tagged** touch does not win — FIRST touch, the inverse of `ld_consent`; and after a mid-page **statistics withdrawal** (which makes the CMP delete the record) the re-capture carries the **same `t`**, with `utm`/`gclid` gone, `fbclid` kept, and exactly one copy |
+| **P8** `ld_consent` — adoption does not move `t` | a planted all-true cookie stamped **an hour ago** is adopted (`hasResponse` true, whole choice) and its `t` and bytes are **unchanged**, in exactly one copy | a real choice made *here* **does** carry a fresh moment — a writer that never stamps is frozen, not fixed |
+
+### P7's second half and P8 both exist because of one blind spot
+
+Seven proofs measured this chain for weeks and **not one compared a timestamp** — all seven asked
+whether the *choice* arrives. That is how [T-53](../../loop/done/) (adoption restamping
+`ld_consent`) survived months of green runs, and how T-58 (a first touch quietly becoming a last
+touch on `ld_attribution`) survived six days. Both are timestamp bugs; nothing here could see a
+timestamp.
+
+**The planted `t` is an hour old, and without that these arms are worthless.** Stamped with
+`new Date()`, the bug and the correct behaviour differ by milliseconds, and a broken site reads as
+green. This is not a hypothetical: the unit test for T-58 initially failed against the broken code
+by *one millisecond* — a true red that survives only as long as two `new Date()` calls happen to
+straddle a boundary.
+
+**P7's `_ga` check is the positive control, not decoration.** Deleted-and-recaptured and
+merely-narrowed end in the same shape (`{t, fbclid}`); only `t` tells them apart. So if the CMP's
+deletion sweep did not run at all on a given run, an unchanged `t` is green for entirely the wrong
+reason. `_ga` is a known Statistics cookie in the same sweep — it going away is the evidence the
+sweep ran, which is why it is asserted rather than noted.
+
+**What P8 still guards, and what it does not.** Since `ld_consent` was registered with Cookiebot as
+a necessary cookie (T-54) the CMP no longer deletes it, so `writeConsentCookie` finds the record
+intact and its ordinary "same choice, nothing to write" gate keeps `t` in place — *without* the
+T-53 restore path being needed. A plain green P8 therefore proves the **outcome** the contract
+names, not that the restore code is alive. Measured, and it corrects the expectation this arm was
+written under: `--fault restamp-refusal` leaves P8 **green** because the site puts the original
+moment back, while the same fault turns P2 red — so the restore *is* running on production and
+still wins. That pair of runs is now the cheapest way to ask whether it lives. The restore's own
+unit test is where that code is watched by default.
 
 Two details that will otherwise rot:
 
@@ -143,7 +174,9 @@ output it produces is the output a real regression would produce.
 |---|---|---|
 | `block-cookiebot` | aborts `consent.cookiebot.com` | P0–P5 report **NOT RUN** (the CMP never becomes usable) |
 | `stale-consent` | the platform's cookie carries an unknown contract version | P1 (7 assertions) |
-| `restamp-refusal` | rewrites `ld_consent`'s `t` after the page settles | P2 (the byte-identity + `t` assertions) |
+| `restamp-refusal` | rewrites `ld_consent`'s `t` after the page settles | P2 (the byte-identity + `t` assertions). **Measured not to redden P8** — on the adoption path the site restores the original moment first; see above |
+| `restamp-adoption` | rewrites `ld_consent`'s `t` *after* the adoption has settled and our handlers have run | P8 (the `t` + byte-identity assertions) |
+| `restamp-attribution` | rewrites `ld_attribution`'s `t` on the consent event that follows the CMP's deletion — the exact shape T-58 had in production | the T-58 half of P7 |
 | `drop-handover` | deletes `ld_consent` before the hop to the platform | P3 ("readable on mijn.letsdog.nl") |
 | `swallow-consent-update` | drops `consent update` on its way into the dataLayer | P4 (5 assertions; `_ga` still passes, which is the point — the dataLayer assertion is independent) |
 | `block-fbevents` | aborts `connect.facebook.net` | P5 ("actually loaded" + `_fbp`) |
@@ -163,6 +196,14 @@ negative halves of **P3** ("deny travels as a refusal"), **P4** ("deny leaves an
 and **P7** ("a second tagged touch does not win"). Each shares its measurement machinery with a
 positive that *is* demonstrably red-able, but no single injected fault flips those three
 specific expectations, so they are argued rather than demonstrated.
+
+**`restamp-attribution` is declared but not yet demonstrated**, and that is a real gap rather than
+an oversight — stated here so the next reader does not take the row above as measured. When these
+arms were written, P7's T-58 half was **already red against production for the true reason** (`t`
+moved 2.0 s on build `5999405b3604`, 2026-08-17, with `_ga` gone as the control), so injecting a
+fault could not prove anything: a proof that is red cannot be shown to go red. It has to be
+re-run once the fix is live and P7 is green. Everything else in the table above was measured on
+that same build.
 
 ## Known red: PostHog transmits nothing from letsdog.nl
 

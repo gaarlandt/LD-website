@@ -11,7 +11,17 @@
 // becomes testable once it is out of a component (this repo's Vitest runs in the
 // Node environment, so a component's effect is not reachable from a test).
 //
-// Two things about the trigger itself are load-bearing:
+// Three things about the trigger itself are load-bearing:
+//
+// WHY THE MOMENT IS TAKEN HERE TOO, AND NOT WHERE THE COOKIE IS WRITTEN. Both
+// halves of a first touch — which campaign, and when — describe the ARRIVAL, so
+// both are fixed at mount and both stay fixed for the rest of the page view.
+// `createAttributionRecorder` stamps `landedAt` by default at the moment it is
+// built, which is this effect. Stamping at write time instead is loop T-58: it
+// looks identical until something deletes the record mid-page-view (Cookiebot
+// does, correctly, when statistics are withdrawn — `ld_attribution` is a
+// Statistics cookie since T-57), and the re-capture that follows then turns a
+// first touch into a last touch without an error anywhere.
 //
 // WHY IT READS THE URL ONCE, AT MOUNT. This sits in the root layout, which
 // survives App Router soft navigation, so the effect runs on the LANDING page

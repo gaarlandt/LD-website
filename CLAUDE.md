@@ -69,11 +69,16 @@ deliberately never blocks when Node 20 is simply absent, since the Cloudflare pr
 real command as the backstop.
 
 **`npm run verify:live` — the post-deploy check for anything hanging off a third party.**
-Seven proofs against production (`scripts/verify-live.mjs`), each measured in **both**
+Eight proofs against production (`scripts/verify-live.mjs`), each measured in **both**
 directions, driving the real Cookiebot on the real hosts: the return leg, the D-4 all-false
 clamp, the outbound leg to `mijn.letsdog.nl/checkout`, GA4's `consent update` in the dataLayer,
-Meta's load/revoke gate, PostHog's run-without-an-answer *and* stop-on-refusal, and
-`ld_attribution`'s first-touch rule. It exists because **a marker in the shipped bundle proves
+Meta's load/revoke gate, PostHog's run-without-an-answer *and* stop-on-refusal,
+`ld_attribution`'s first-touch rule (including the delete-then-recapture route that broke it,
+T-58), and — since 2026-08-17, T-55 — that **adopting the platform's `ld_consent` does not move
+its `t`**. That last one is the arm the first seven lacked by construction: all seven asked
+whether the *choice* arrives and none compared a *timestamp*, which is how a restamp on the
+return leg (T-53) stayed green for months. Its planted `t` is **an hour old on purpose** — with
+`new Date()` the bug and the fix differ by milliseconds and a broken site reads green. It exists because **a marker in the shipped bundle proves
 code was DELIVERED, not that it is CALLED** — three consecutive fixes for one consent bug passed
 307 green tests and did nothing on production, twice. Unit tests cannot see a Cookiebot that
 arrives in pieces; this can. Needs `wrangler` logged in (it refuses to run until it has *proved*
