@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import {
+  CONSENT_COOKIE_DOMAIN,
   CONSENT_COOKIE_NAME,
   CONSENT_COOKIE_VERSION,
   buildConsentCookie,
@@ -7,6 +8,7 @@ import {
   consentCookieDomain,
   consentCookieSupersedes,
   countConsentCookies,
+  createConsentAdopter,
   createConsentRecorder,
   newestRecordedConsent,
   onCookiebotConsent,
@@ -1021,6 +1023,14 @@ describe("submitConsentToCookiebot", () => {
  */
 type SettledAnswer = { p: boolean; s: boolean; m: boolean; at: string };
 
+/**
+ * The two numbers the T-53 repair stands or falls on, measured on production and
+ * written out here rather than imported from anywhere: they are a statement about
+ * what uc.js does, and they have to stay true independently of our code.
+ */
+const COOKIEBOT_DELETES_AFTER_MS = 99;
+const COOKIEBOT_EVENT_AFTER_MS = 995;
+
 type CookiebotDoubleOptions = {
   /**
    * WHEN the object appears, relative to our subscription. Production is
@@ -1077,18 +1087,42 @@ function cookiebotDouble(options: CookiebotDoubleOptions = {}) {
     );
   }
 
-  // COOKIEBOT WIST `ld_consent` BINNEN submitCustomConsent, en deze dubbel doet
-  // dat mee. Gemeten op productie 2026-08-17 (T-53) met een hook op de
-  // cookie-setter: zestien verwijderingen uit `removeCookieHTTP` in uc.js, een
-  // per pad/domein-combinatie, vóórdat het zijn consent-event vuurt.
+  // WHAT ACCEPTING A PROGRAMMATIC CHOICE REALLY DOES, ON THE CLOCK. This is the
+  // one place in this file where a wrong assumption has now cost two sessions, so
+  // the numbers below are measurements and not a model:
   //
-  // Zonder dit was de dubbel een `vi.fn()` die niets deed, en dan konden de twee
-  // tests hieronder die "laat het tijdstempel met rust" beweren GROEN staan
-  // terwijl productie wel degelijk herstempelde. Dat is de faalvorm die dit
-  // bestand elders al benoemt: een dubbel die het vertakte veld netjes aanlevert,
-  // bewijst de bedrading niet.
-  const submitCustomConsent = vi.fn(() => {
-    if (typeof document !== "undefined") document.cookie = `${CONSENT_COOKIE_NAME}=; Max-Age=0`;
+  //   ms 0    `submitCustomConsent` returns
+  //   ms 99   SIXTEEN deletions of `ld_consent`, one per path/domain combination,
+  //           all from `CookieControl.Cookie.removeCookieHTTP` in uc.js — it does
+  //           not recognise this cookie as one of its own
+  //   ms 995  its consent event fires, with `consentUTC` stamped at NOW
+  //
+  // Measured on letsdog.nl 2026-08-17 (T-53) by hooking the `document.cookie`
+  // setter and reading the stacks. Both earlier versions of this double got the
+  // ORDER wrong and both let a broken fix through a green suite: first it was a
+  // `vi.fn()` that did nothing, so two tests asserting "leaves the timestamp
+  // alone" were true of the rig and false of production; then it deleted and
+  // restamped SYNCHRONOUSLY inside the call, which was the previous session's
+  // hypothesis cast in code — and a repair placed on that hypothesis passed 424
+  // tests and did nothing at all on production. A double is not the place to
+  // write down what you think happens.
+  //
+  // ASYNCHRONOUS IS THE LOAD-BEARING PART: a test that never advances its timers
+  // sees the call and nothing else, exactly like a page that navigates away.
+  const submitCustomConsent = vi.fn((p: boolean, s: boolean, m: boolean) => {
+    setTimeout(() => {
+      if (typeof document === "undefined") return;
+      // The sixteen deletions, in the two forms a cookie jar can tell apart: the
+      // host-only copy and the one on the shared parent domain.
+      document.cookie = `${CONSENT_COOKIE_NAME}=; Max-Age=0`;
+      document.cookie = `${CONSENT_COOKIE_NAME}=; Max-Age=0; Domain=${CONSENT_COOKIE_DOMAIN}`;
+    }, COOKIEBOT_DELETES_AFTER_MS);
+    setTimeout(() => {
+      // Cookiebot re-stamps its own record at the moment it accepts the choice —
+      // that fresh `consentUTC` is what the recorder then writes into the cookie.
+      win.Cookiebot = settledShape({ p, s, m, at: new Date().toISOString() });
+      fire("CookiebotOnAccept");
+    }, COOKIEBOT_EVENT_AFTER_MS);
   });
 
   /** Published, not constructed. Everything except the method. */
@@ -1130,6 +1164,11 @@ function cookiebotDouble(options: CookiebotDoubleOptions = {}) {
       listeners.get(type)?.delete(listener);
     },
   };
+  /** A deliberately dispatched event — the double fires nothing except from `submitCustomConsent`. */
+  const fire = (type: string) => {
+    for (const listener of [...(listeners.get(type) ?? [])]) listener();
+  };
+
   if (arrival === "before-hydration") {
     win.Cookiebot = answer
       ? settledShape(answer)
@@ -1158,10 +1197,11 @@ function cookiebotDouble(options: CookiebotDoubleOptions = {}) {
     becomes(next: unknown) {
       win.Cookiebot = next;
     },
-    /** A deliberately dispatched event. The double fires nothing on its own. */
-    fire(type: string) {
-      for (const listener of [...(listeners.get(type) ?? [])]) listener();
-    },
+    /**
+     * A deliberately dispatched event. The double fires on its own only from
+     * `submitCustomConsent`, on the measured delay — never on a page load.
+     */
+    fire,
   };
 }
 
@@ -1665,52 +1705,55 @@ describe("a choice changed on the platform, end to end", () => {
 
   it("reaches Cookiebot once and leaves the cookie's own timestamp alone", () => {
     vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-08T09:30:00.000Z"));
     const chosenOnPlatform = "2026-08-08T08:00:00.000Z";
-    const { writes } = stubCookieJar();
+    const platformRefusal: ConsentPayload = {
+      v: 1,
+      t: chosenOnPlatform,
+      p: false,
+      s: false,
+      m: false,
+    };
+    // The domain-aware jar, because Cookiebot's deletions hit both the host-only
+    // and the shared copy and the Map-backed one cannot tell them apart.
+    stubDomainCookieJar([
+      {
+        name: CONSENT_COOKIE_NAME,
+        value: serializeConsentPayload(platformRefusal),
+        domain: ".letsdog.nl",
+      },
+    ]);
     const cookiebot = cookiebotDouble();
 
-    // 1. the platform wrote its refusal into the shared cookie
-    writeConsentCookie(
-      { v: 1, t: chosenOnPlatform, p: false, s: false, m: false },
-      "letsdog.nl",
-    );
-
-    // 2. the visitor lands here. React hydrates and ConsentSync subscribes into a
-    //    page that has no CMP in it yet — the ordering all of this failed on.
+    // 1. the visitor lands here. React hydrates and both consent components
+    //    subscribe into a page that has no CMP in it yet — the ordering all of
+    //    this failed on — with ConsentSync mounted LAST, as in app/layout.tsx.
     const seen: (ConsentPayload | null)[] = [];
-    subscribe((cb) => {
-      seen.push(cb);
-      const cookie = readConsentCookie();
-      if (!cookie || !consentCookieSupersedes(cookie, cb)) return;
-      submitConsentToCookiebot(cookie);
-    });
+    subscribe((cb) => seen.push(cb));
+    subscribe(createConsentRecorder("letsdog.nl"));
+    subscribe(createConsentAdopter("letsdog.nl"));
     cookiebot.publishes();
     vi.advanceTimersByTime(500);
     expect(seen).toEqual([]);
 
-    // 3. uc.js finishes and settles the older consent this host still holds.
-    //    Cookiebot is then put into the newer choice and stamps the moment at NOW.
+    // 2. uc.js finishes and settles the older consent this host still holds.
+    //    Cookiebot is then put into the newer choice — and re-stamps at NOW.
     const stale: ConsentPayload = { v: 1, t: "2026-08-08T06:00:00.000Z", p: true, s: true, m: true };
     cookiebot.settles({ p: true, s: true, m: true, at: stale.t });
-    vi.advanceTimersByTime(1000);
+    vi.advanceTimersByTime(100);
     expect(seen).toEqual([stale]);
     expect(cookiebot.submitCustomConsent).toHaveBeenCalledWith(false, false, false);
+
+    // 3. Cookiebot deletes our cookie, then fires its event; the recorder writes
+    //    the refusal back with the fresh stamp, and the adopter puts the
+    //    platform's own moment back. Net effect: the record is unchanged.
+    vi.advanceTimersByTime(COOKIEBOT_EVENT_AFTER_MS + 100);
+    expect(readConsentCookie()).toEqual(platformRefusal);
+
+    // 4. and a second pass adopts nothing, whatever the clocks say
     const echoed: ConsentPayload = { v: 1, t: "2026-08-08T09:30:00.000Z", p: false, s: false, m: false };
-
-    // 4. its consent event reaches the write side, which must stay silent
-    writeConsentCookie(echoed, "letsdog.nl");
-    // THREE assignments, not one, and each is load-bearing (T-53): the platform's
-    // own write, then Cookiebot DELETING our cookie inside submitCustomConsent,
-    // then the restore that puts the original moment back. Before T-53 this read
-    // `toHaveLength(1)` because the double's submit was a no-op — the assertion
-    // was true of the rig and false of production.
-    expect(writes).toHaveLength(3);
-    expect(readConsentCookie()?.t).toBe(
-      chosenOnPlatform,
-    );
-
-    // 5. and a second pass adopts nothing, whatever the clocks say
     expect(consentCookieSupersedes(readConsentCookie()!, echoed)).toBe(false);
+    expect(cookiebot.submitCustomConsent).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -1723,24 +1766,24 @@ describe("a choice made on the platform, never answered here, end to end", () =>
 
   it("adopts once and still leaves the cookie's own timestamp alone", () => {
     vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-13T09:45:00.000Z"));
     const chosenOnPlatform = "2026-08-13T08:00:00.000Z";
-    const { writes } = stubCookieJar();
-    const cookiebot = cookiebotDouble();
-
+    const platformGrant: ConsentPayload = { v: 1, t: chosenOnPlatform, p: false, s: true, m: true };
     // 1. the platform wrote the visitor's grant into the shared cookie
-    writeConsentCookie(
-      { v: 1, t: chosenOnPlatform, p: false, s: true, m: true },
-      "letsdog.nl",
-    );
+    stubDomainCookieJar([
+      {
+        name: CONSENT_COOKIE_NAME,
+        value: serializeConsentPayload(platformGrant),
+        domain: ".letsdog.nl",
+      },
+    ]);
+    const cookiebot = cookiebotDouble();
 
     // 2. the visitor lands here for the first time, into a page with no CMP yet
     const seen: (ConsentPayload | null)[] = [];
-    subscribe((cb) => {
-      seen.push(cb);
-      const cookie = readConsentCookie();
-      if (!cookie || !consentCookieSupersedes(cookie, cb)) return;
-      submitConsentToCookiebot(cookie);
-    });
+    subscribe((cb) => seen.push(cb));
+    subscribe(createConsentRecorder("letsdog.nl"));
+    subscribe(createConsentAdopter("letsdog.nl"));
     cookiebot.publishes();
     vi.advanceTimersByTime(500);
     expect(seen).toEqual([]);
@@ -1748,42 +1791,45 @@ describe("a choice made on the platform, never answered here, end to end", () =>
     // 3. uc.js constructs. Cookiebot has no response, so the read is a final
     //    null, and it is put into the platform's choice, stamping NOW.
     cookiebot.constructs();
-    vi.advanceTimersByTime(1000);
+    vi.advanceTimersByTime(100);
     expect(seen).toEqual([null]);
     expect(cookiebot.submitCustomConsent).toHaveBeenCalledWith(false, true, true);
-    const echoed: ConsentPayload = { v: 1, t: "2026-08-13T09:45:00.000Z", p: false, s: true, m: true };
 
-    // 4. its consent event reaches the write side, which must stay silent — the
-    //    platform appends a row per newer timestamp, and nobody chose anything
-    //    on this host.
-    writeConsentCookie(echoed, "letsdog.nl");
-    // Zelfde drieslag als de test hierboven (T-53): de platformschrijving,
-    // Cookiebots verwijdering binnen submitCustomConsent, en de restore die het
-    // oorspronkelijke moment terugzet.
-    expect(writes).toHaveLength(3);
-    expect(readConsentCookie()?.t).toBe(chosenOnPlatform);
+    // 4. Cookiebot deletes the cookie, then its consent event reaches the write
+    //    side. What the platform must NOT see afterwards is a newer timestamp:
+    //    it appends a row per newer one, and nobody chose anything on this host.
+    vi.advanceTimersByTime(COOKIEBOT_EVENT_AFTER_MS + 100);
+    expect(readConsentCookie()).toEqual(platformGrant);
 
     // 5. and a second pass adopts nothing
+    const echoed: ConsentPayload = { v: 1, t: "2026-08-13T09:45:00.000Z", p: false, s: true, m: true };
     expect(consentCookieSupersedes(readConsentCookie()!, echoed)).toBe(false);
+    expect(cookiebot.submitCustomConsent).toHaveBeenCalledTimes(1);
   });
 
   it("shows the banner instead when the platform choice refused everything", () => {
     vi.useFakeTimers();
-    const { writes } = stubCookieJar();
+    vi.setSystemTime(new Date("2026-08-13T09:45:00.000Z"));
+    const refusedThere: ConsentPayload = {
+      v: 1,
+      t: "2026-08-13T08:00:00.000Z",
+      p: false,
+      s: false,
+      m: false,
+    };
+    const { writes } = stubDomainCookieJar([
+      {
+        name: CONSENT_COOKIE_NAME,
+        value: serializeConsentPayload(refusedThere),
+        domain: ".letsdog.nl",
+      },
+    ]);
     const cookiebot = cookiebotDouble();
 
-    writeConsentCookie(
-      { v: 1, t: "2026-08-13T08:00:00.000Z", p: false, s: false, m: false },
-      "letsdog.nl",
-    );
-
     const seen: (ConsentPayload | null)[] = [];
-    subscribe((cb) => {
-      seen.push(cb);
-      const cookie = readConsentCookie();
-      if (!cookie || !consentCookieSupersedes(cookie, cb)) return;
-      submitConsentToCookiebot(cookie);
-    });
+    subscribe((cb) => seen.push(cb));
+    subscribe(createConsentRecorder("letsdog.nl"));
+    subscribe(createConsentAdopter("letsdog.nl"));
     cookiebot.publishes();
     cookiebot.constructs();
     vi.advanceTimersByTime(1000);
@@ -1794,7 +1840,10 @@ describe("a choice made on the platform, never answered here, end to end", () =>
     // asked once more here. Asking is the safe direction; suppressing is not.
     expect(seen).toEqual([null]);
     expect(cookiebot.submitCustomConsent).not.toHaveBeenCalled();
-    expect(writes).toHaveLength(1);
+    // Nothing was written at all: no adoption, and the recorder never saw a
+    // consent go away, so the platform's refusal stands exactly as it wrote it.
+    expect(writes).toHaveLength(0);
+    expect(readConsentCookie()).toEqual(refusedThere);
   });
 });
 
@@ -2188,11 +2237,19 @@ describe("readConsentState — the third state (T-47)", () => {
 // Why it matters beyond tidiness: `t` is the ONLY field newest-wins decides on,
 // so restamping turns an hour-old platform choice into a choice made here, and
 // the audit trail then names the wrong host.
-describe("submitConsentToCookiebot restores the original moment (T-53)", () => {
-  const CHOSEN_AN_HOUR_AGO = "2026-08-17T11:14:26.244Z";
-  const RESTAMPED_BY_COOKIEBOT = "2026-08-17T12:14:30.836Z";
+// AND IT IS TESTED THROUGH THE TWO REAL SUBSCRIPTIONS, IN PRODUCTION'S MOUNT
+// ORDER, because the repair IS an ordering: ConsentCookie subscribes first and
+// restamps, ConsentSync subscribes last and puts the moment back. A test that
+// calls the adopter by hand cannot tell a working order from a broken one — and
+// "asserts the decision, never the wiring" is the exact failure this file has
+// already paid for twice (T-43, and the first T-53 attempt).
+describe("adopting a platform choice does not restamp it (T-53)", () => {
+  afterEach(closeSubscriptions);
 
-  const adopted: ConsentPayload = {
+  const CHOSEN_AN_HOUR_AGO = "2026-08-17T11:14:26.244Z";
+  const LANDED_HERE_AT = "2026-08-17T12:14:26.000Z";
+
+  const platformGrant: ConsentPayload = {
     v: CONSENT_COOKIE_VERSION,
     t: CHOSEN_AN_HOUR_AGO,
     p: true,
@@ -2201,78 +2258,152 @@ describe("submitConsentToCookiebot restores the original moment (T-53)", () => {
   };
 
   /**
-   * Cookiebot as production actually behaves: accepting a programmatic choice
-   * DELETES our cookie on the way. A double that merely records the call would
-   * be green against the bug, which is the whole reason this one deletes.
+   * The visitor's arrival, wired exactly as `app/layout.tsx` wires it: the
+   * recorder first (ConsentCookie), the adopter last (ConsentSync). Returns the
+   * double so a test can drive uc.js's phases.
+   *
+   * Time is fixed, and that is not decoration: with `new Date()` the bug and the
+   * fix differ by milliseconds and an assertion on `t` proves nothing. An hour of
+   * distance is what makes the restamp visible — the same reason the production
+   * measurement planted a cookie with an hour-old moment instead of a fresh one.
    */
-  function cookiebotThatDeletesOurCookie(onSubmit?: () => void) {
-    vi.stubGlobal("window", {
-      location: { hostname: "letsdog.nl" },
-      Cookiebot: {
-        submitCustomConsent: () => {
-          document.cookie = `${CONSENT_COOKIE_NAME}=; Max-Age=0`;
-          onSubmit?.();
-        },
-      },
-    });
+  function visitorArrives(cookie: ConsentPayload | null) {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(LANDED_HERE_AT));
+    const jar = stubDomainCookieJar(
+      cookie
+        ? [{ name: CONSENT_COOKIE_NAME, value: serializeConsentPayload(cookie), domain: ".letsdog.nl" }]
+        : [],
+    );
+    const cookiebot = cookiebotDouble();
+    subscribe(createConsentRecorder("letsdog.nl"));
+    subscribe(createConsentAdopter("letsdog.nl"));
+    // uc.js lands and builds its API. Cookiebot holds no answer, so the adoption
+    // fires on the wait's first delivery.
+    cookiebot.constructs();
+    return { cookiebot, jar };
   }
 
-  it("puts the ORIGINAL moment back after Cookiebot wiped the cookie", () => {
+  // THE POSITIVE CONTROL, and it comes first on purpose. Everything below asserts
+  // that a timestamp did NOT move; an assertion like that is worth exactly as much
+  // as the proof that this rig can make it move. Without the adopter subscribed —
+  // i.e. the state production was in all morning — the same sequence restamps.
+  it("RIG CHECK: the same sequence restamps when nothing puts the moment back", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(LANDED_HERE_AT));
     stubDomainCookieJar([
-      { name: CONSENT_COOKIE_NAME, value: serializeConsentPayload(adopted), domain: ".letsdog.nl" },
+      {
+        name: CONSENT_COOKIE_NAME,
+        value: serializeConsentPayload(platformGrant),
+        domain: ".letsdog.nl",
+      },
     ]);
-    // …and our recorder rewrites it with Cookiebot's fresh stamp, exactly as on
-    // production, while still inside the submit call.
-    cookiebotThatDeletesOurCookie(() => {
-      document.cookie = buildConsentCookie({ ...adopted, t: RESTAMPED_BY_COOKIEBOT }, "letsdog.nl");
+    const cookiebot = cookiebotDouble();
+    subscribe(createConsentRecorder("letsdog.nl"));
+    // No adopter — so somebody has to ask for the adoption, and nobody restores.
+    subscribe((cb) => {
+      const cookie = readConsentCookie();
+      if (cookie && consentCookieSupersedes(cookie, cb)) submitConsentToCookiebot(cookie);
     });
+    cookiebot.constructs();
 
-    expect(submitConsentToCookiebot(adopted)).toBe(true);
+    vi.advanceTimersByTime(COOKIEBOT_EVENT_AFTER_MS + 100);
 
+    // An hour of distance, gone: the cookie now says the choice was made here,
+    // just now. Asserted as a RANGE because the fake clock advances with the
+    // timers — the exact millisecond is the rig's, the hour is production's.
+    const restamped = Date.parse(readConsentCookie()!.t);
+    expect(restamped).toBeGreaterThanOrEqual(Date.parse(LANDED_HERE_AT));
+    expect(restamped - Date.parse(CHOSEN_AN_HOUR_AGO)).toBeGreaterThan(59 * 60 * 1000);
+  });
+
+  it("keeps the platform's own moment through the delete-and-restamp", () => {
+    const { cookiebot } = visitorArrives(platformGrant);
+
+    vi.advanceTimersByTime(100);
+    expect(cookiebot.submitCustomConsent).toHaveBeenCalledWith(true, true, true);
+
+    // Long enough for all three of the measured steps: the submit, the deletions
+    // at ms 99, and the consent event at ms 995 that carries the fresh stamp.
+    vi.advanceTimersByTime(COOKIEBOT_EVENT_AFTER_MS + 100);
+
+    expect(readConsentCookie()).toEqual(platformGrant);
+  });
+
+  // The step that killed the first attempt, pinned as its own test so a repair
+  // that runs too early can never look right again. At ms 50 a restore has
+  // happened for all the rig knows — and it is about to be deleted anyway.
+  it("is not fooled by a cookie that is still intact when the submit returns", () => {
+    const { jar } = visitorArrives(platformGrant);
+
+    vi.advanceTimersByTime(50);
+    expect(readConsentCookie()?.t).toBe(CHOSEN_AN_HOUR_AGO);
+
+    // …and then Cookiebot's deletions land, exactly as measured: whatever was
+    // written before this point is gone.
+    vi.advanceTimersByTime(COOKIEBOT_DELETES_AFTER_MS);
+    expect(jar.entries().filter((e) => e.name === CONSENT_COOKIE_NAME)).toEqual([]);
+
+    vi.advanceTimersByTime(COOKIEBOT_EVENT_AFTER_MS);
+    expect(readConsentCookie()).toEqual(platformGrant);
+  });
+
+  // THE OUTBOUND LEG, which a fix that simply froze `t` would break. Nobody
+  // adopted anything here: the visitor answered the banner on this host, so the
+  // moment of the click is the right moment and the recorder's stamp must stand.
+  it("still stamps a choice made HERE at the moment of the click", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(LANDED_HERE_AT));
+    stubDomainCookieJar([]);
+    const cookiebot = cookiebotDouble();
+    subscribe(createConsentRecorder("letsdog.nl"));
+    subscribe(createConsentAdopter("letsdog.nl"));
+
+    cookiebot.constructs();
+    vi.advanceTimersByTime(100);
+    // No cookie to adopt, so nothing was submitted and nothing is armed.
+    expect(cookiebot.submitCustomConsent).not.toHaveBeenCalled();
+
+    // The visitor answers the banner. Cookiebot settles and fires; the recorder
+    // writes that choice with Cookiebot's own moment.
+    const clickedAt = "2026-08-17T12:20:00.000Z";
+    cookiebot.settles({ p: false, s: true, m: false, at: clickedAt });
+    cookiebot.fire("CookiebotOnAccept");
+
+    expect(readConsentCookie()).toEqual({ v: 1, t: clickedAt, p: false, s: true, m: false });
+  });
+
+  // The D-4 clamp, unchanged and re-checked here because the adopter now owns
+  // the branch that used to live in the component.
+  it("adopts nothing from an all-false cookie, so the banner still shows", () => {
+    const { cookiebot } = visitorArrives({ ...platformGrant, p: false, s: false, m: false });
+
+    vi.advanceTimersByTime(COOKIEBOT_EVENT_AFTER_MS + 100);
+
+    expect(cookiebot.submitCustomConsent).not.toHaveBeenCalled();
     expect(readConsentCookie()?.t).toBe(CHOSEN_AN_HOUR_AGO);
   });
 
-  it("restores the cookie when Cookiebot deleted it and nothing put it back", () => {
-    // The fragility the measurement exposed: without our recorder happening to
-    // run, the handover cookie would silently disappear on every consent change.
-    stubDomainCookieJar([
-      { name: CONSENT_COOKIE_NAME, value: serializeConsentPayload(adopted), domain: ".letsdog.nl" },
-    ]);
-    cookiebotThatDeletesOurCookie();
+  // A REAL LOCAL CHOICE AFTER AN ADOPTION DISARMS THE RESTORE. Otherwise the
+  // repair would become the very bug it fixes, one step further along: a visitor
+  // who changes their mind here would have their new answer dragged back to the
+  // platform's old moment on the next Cookiebot event.
+  it("lets go of the adopted moment once a different choice is recorded", () => {
+    const { cookiebot } = visitorArrives(platformGrant);
+    vi.advanceTimersByTime(COOKIEBOT_EVENT_AFTER_MS + 100);
+    expect(readConsentCookie()).toEqual(platformGrant);
 
-    submitConsentToCookiebot(adopted);
+    // The visitor opens the widget and takes marketing back. Recorder first,
+    // adopter after — the same two listeners, the same order.
+    const changedAt = "2026-08-17T12:30:00.000Z";
+    cookiebot.settles({ p: true, s: true, m: false, at: changedAt });
+    cookiebot.fire("CookiebotOnAccept");
 
-    expect(readConsentCookie()).toEqual(adopted);
-  });
+    expect(readConsentCookie()).toEqual({ v: 1, t: changedAt, p: true, s: true, m: false });
 
-  it("does NOT clobber a genuinely different choice that landed meanwhile", () => {
-    const somethingNewer: ConsentPayload = {
-      v: CONSENT_COOKIE_VERSION,
-      t: RESTAMPED_BY_COOKIEBOT,
-      p: false,
-      s: false,
-      m: false,
-    };
-    stubDomainCookieJar([
-      { name: CONSENT_COOKIE_NAME, value: serializeConsentPayload(adopted), domain: ".letsdog.nl" },
-    ]);
-    cookiebotThatDeletesOurCookie(() => {
-      document.cookie = buildConsentCookie(somethingNewer, "letsdog.nl");
-    });
-
-    submitConsentToCookiebot(adopted);
-
-    // Different categories, so it is not our restamp to undo — leave it.
-    expect(readConsentCookie()).toEqual(somethingNewer);
-  });
-
-  it("still reports false, and writes nothing, without a usable Cookiebot", () => {
-    stubDomainCookieJar([
-      { name: CONSENT_COOKIE_NAME, value: serializeConsentPayload(adopted), domain: ".letsdog.nl" },
-    ]);
-    vi.stubGlobal("window", { location: { hostname: "letsdog.nl" }, Cookiebot: undefined });
-
-    expect(submitConsentToCookiebot(adopted)).toBe(false);
-    expect(readConsentCookie()?.t).toBe(CHOSEN_AN_HOUR_AGO);
+    // And it stays let go: a later event does not drag the new answer back to
+    // the platform's old moment.
+    cookiebot.fire("CookiebotOnConsentReady");
+    expect(readConsentCookie()?.t).toBe(changedAt);
   });
 });

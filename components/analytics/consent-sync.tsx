@@ -21,22 +21,20 @@
 // (consentCookieSupersedes) — that is where the ping-pong with the write side is
 // prevented, not here.
 //
-// MOUNTED LAST of the consent components, deliberately. submitCustomConsent can
+// MOUNTED LAST of the consent components, deliberately, and since T-53 that
+// ordering carries a second job as well as the first. submitCustomConsent can
 // fire Cookiebot's consent events synchronously, and effects run in tree order,
 // so ConsentCookie and MetaPixel have to be subscribed before this one acts —
-// otherwise the very event this triggers would arrive before anyone is listening.
+// otherwise the very event this triggers would arrive before anyone is
+// listening. AND: because ConsentCookie subscribes first, its listener runs
+// first on every later event too, so this one is the only place that can put the
+// original moment back AFTER the recorder has restamped it. Move this component
+// up the tree and the adoption starts restamping again, silently.
 
-import { useEffect, useRef } from "react";
-import {
-  consentCookieSupersedes,
-  onCookiebotConsent,
-  readConsentCookie,
-  submitConsentToCookiebot,
-} from "@/lib/consent";
+import { useEffect } from "react";
+import { createConsentAdopter, onCookiebotConsent } from "@/lib/consent";
 
 export function ConsentSync() {
-  const synced = useRef(false);
-
   useEffect(() => {
     // Subscribing rather than reading once: Cookiebot settles a stored consent
     // within milliseconds of uc.js loading, which can happen either side of this
@@ -53,15 +51,14 @@ export function ConsentSync() {
     // fires here either. onCookiebotConsent now waits for the object and re-runs
     // the same read. Nothing in this component was ever wrong and nothing in it
     // changed; both repairs are in lib/consent.ts, next to the measurements.
-    return onCookiebotConsent((cookiebot) => {
-      if (synced.current) return;
-      const cookie = readConsentCookie();
-      if (!cookie || !consentCookieSupersedes(cookie, cookiebot)) return;
-      // Belt-and-braces: after a submit the categories match, so the predicate
-      // above says no by itself. The flag states the intent — adopt an outside
-      // choice at most once per page load — instead of leaning on that.
-      synced.current = submitConsentToCookiebot(cookie);
-    });
+    //
+    // ONE SUBSCRIPTION, ONE ADOPTER, for the same reason ConsentCookie makes one
+    // recorder per subscription: "adopt at most once, and then keep that
+    // choice's own moment" is a rule about the SEQUENCE of states Cookiebot
+    // reports, and the subscription's lifetime is what gives that sequence a
+    // boundary. The rule, and the production timeline it was measured against,
+    // are in lib/consent.ts next to the writers it governs.
+    return onCookiebotConsent(createConsentAdopter(window.location.hostname));
   }, []);
 
   return null;
