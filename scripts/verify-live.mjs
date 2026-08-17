@@ -342,6 +342,7 @@ async function newestProductionDeployment() {
 //   block-fbevents          aborts connect.facebook.net
 //   block-posthog           aborts *.i.posthog.com
 //   preset-attribution      plants a rival first touch before the tagged landing
+//   restamp-attribution     rewrites ld_attribution's `t` on the consent event
 
 const FAULTS = {
   "block-cookiebot": {
@@ -353,6 +354,10 @@ const FAULTS = {
     mapCookies: (cookies) =>
       cookies.map((k) => (k.name === CONSENT_COOKIE ? { ...k, value: k.value.replace("%22v%22%3A1", "%22v%22%3A2") } : k)),
   },
+  // BREAKS P2 AND NOT P8, WHICH WAS THE SURPRISE — see `restamp-adoption` below
+  // for the measurement. Both proofs assert an unmoved `t`, so this fault was
+  // expected to redden both; on the adoption path the site REPAIRS it before
+  // this proof looks, so only the un-adopted path stays red.
   "restamp-refusal": {
     breaks: "P2",
     afterSettle: async (page) => {
@@ -426,6 +431,71 @@ const FAULTS = {
       await page.waitForTimeout(1500);
     },
   },
+  // P8'S OWN FAULT, AND THE REASON IT EXISTS IS A MEASUREMENT THAT CAME OUT THE
+  // OTHER WAY. `restamp-refusal` above rewrites the same field on the same
+  // cookie, so it was expected to redden P8 too. It does not — and the run that
+  // showed it is worth keeping, because a fault that quietly fails to fire and a
+  // site that quietly repairs itself look identical from the report.
+  //
+  // Measured 2026-08-17 against build 5999405b3604, three runs:
+  //   --only P8 --fault restamp-refusal   → P8 GREEN, `t` back at the planted value
+  //   --only P2 --fault restamp-refusal   → P2 RED   (so the fault does fire)
+  //   --only P8 --fault restamp-adoption  → P8 RED
+  // The only difference between the first and the third is WHEN the rewrite
+  // lands: at the settle, or after this proof's own wait. So the site put the
+  // original moment back — which is the T-53 restore path (PR #97), running on
+  // production, doing exactly what it was built for.
+  //
+  // THAT CORRECTS THE NOTE IN LOOP T-55, and in the reassuring direction. It
+  // predicted this arm could no longer reach the restore code once T-54 stopped
+  // Cookiebot deleting `ld_consent` — the ordinary "same choice" gate would keep
+  // `t` in place on its own and the restore would never be needed. The pair of
+  // runs above shows the restore still fires and still wins. The caveat is worth
+  // keeping anyway, because it holds for the UNFAULTED run: a plain green P8
+  // proves the outcome, not that the restore is alive. `--fault restamp-refusal`
+  // is what proves the second, and it is now the cheapest way to ask.
+  "restamp-adoption": {
+    breaks: "P8",
+    afterAdoption: async (page) => {
+      await page.evaluate((name) => {
+        const raw = document.cookie
+          .split(";")
+          .map((s) => s.trim())
+          .find((s) => s.startsWith(`${name}=`))
+          ?.slice(name.length + 1);
+        if (!raw) return;
+        const payload = JSON.parse(decodeURIComponent(raw));
+        payload.t = new Date().toISOString();
+        const { v, t, p, s, m } = payload;
+        document.cookie = `${name}=${encodeURIComponent(JSON.stringify({ v, t, p, s, m }))}; Path=/; SameSite=Lax; Secure; Domain=.letsdog.nl; Max-Age=31536000`;
+      }, CONSENT_COOKIE);
+    },
+  },
+  // THE FAULT FOR THE T-58 HALF OF P7, and it fires later than every other one
+  // here because that is where the failure lived: not on the landing, not at the
+  // settle, but on the consent event that follows a deletion. It rewrites `t` to
+  // now on a record that already exists — the exact shape production had for six
+  // days, where a first touch quietly became a last touch.
+  //
+  // `afterWithdrawal` is invoked by P7 itself, the way P3 invokes
+  // `beforePlatformHop`: a hook that has to sit inside a proof's own sequence
+  // cannot be driven from openSession.
+  "restamp-attribution": {
+    breaks: "the T-58 half of P7",
+    afterWithdrawal: async (page) => {
+      await page.evaluate((name) => {
+        const raw = document.cookie
+          .split(";")
+          .map((s) => s.trim())
+          .find((s) => s.startsWith(`${name}=`))
+          ?.slice(name.length + 1);
+        if (!raw) return;
+        const payload = JSON.parse(decodeURIComponent(raw));
+        payload.t = new Date().toISOString();
+        document.cookie = `${name}=${encodeURIComponent(JSON.stringify(payload))}; Path=/; SameSite=Lax; Secure; Domain=.letsdog.nl; Max-Age=7776000`;
+      }, ATTRIBUTION_COOKIE);
+    },
+  },
   "preset-attribution": {
     breaks: "P7",
     mapCookies: (cookies) => [
@@ -457,6 +527,12 @@ const expect = {
   exactly: (n) => ({ describe: `exactly ${n}`, test: (got) => got === n }),
   json: (want) => ({ describe: JSON.stringify(want), test: (got) => JSON.stringify(got) === JSON.stringify(want) }),
   matches: (re) => ({ describe: `matching ${re}`, test: (got) => typeof got === "string" && re.test(got) }),
+  // ISO 8601 with Z sorts lexicographically, which both contracts already rely
+  // on for newest-wins — so a string compare is the comparison, not a shortcut.
+  atOrAfter: (iso) => ({
+    describe: `an ISO moment at or after ${iso}`,
+    test: (got) => typeof got === "string" && got >= iso,
+  }),
 };
 
 /**
@@ -546,6 +622,19 @@ async function openSession(run, { cookies = [], url = `${SITE_ORIGIN}/` } = {}) 
     },
     async cookieOn(name) {
       return (await context.cookies()).find((k) => k.name === name) ?? null;
+    },
+    /**
+     * How many cookies carry this name — the SECOND failure form for a handover
+     * record, and one `raw()` cannot see.
+     *
+     * `document.cookie` never reveals a Domain, so two copies (one host-only,
+     * one on `.letsdog.nl`) read as one string there and the writer that meant
+     * to correct the record has silently created a rival instead. Both contracts
+     * carry a duplicate-repair rule for exactly this; asking the browser's own
+     * jar is the only way to count them.
+     */
+    async cookieCount(name) {
+      return (await context.cookies()).filter((k) => k.name === name).length;
     },
     cmp() {
       return page.evaluate(() => {
@@ -994,7 +1083,7 @@ proof("P6", "PostHog — runs without an answer, STOPS on an explicit refusal of
 });
 
 // -----------------------------------------------------------------------------
-proof("P7", "ld_attribution — FIRST touch survives an untagged return", async (run, r) => {
+proof("P7", "ld_attribution — FIRST touch survives a return AND a mid-page deletion", async (run, r) => {
   // FIRST WINS HERE, THE EXACT INVERSE OF ld_consent. Copying the neighbouring
   // newest-wins rule would hand every conversion to whatever the visitor clicked
   // last — the silent kind of wrong: the columns fill up, the numbers look
@@ -1052,6 +1141,190 @@ proof("P7", "ld_attribution — FIRST touch survives an untagged return", async 
     );
   } finally {
     await session.close();
+  }
+
+  // ---------------------------------------------------------------------------
+  // THE SAME RULE ON THE ROUTE THAT ACTUALLY BROKE IT (loop T-58).
+  // ---------------------------------------------------------------------------
+  // The two returns above are the newest-wins trap, and they were green through
+  // all six days this was broken — because nothing above ever LOOKED at `t`.
+  // That is the finding, not the fix: a first-touch rule measured only by "which
+  // campaign is in the record" cannot see a first touch that has become a last
+  // touch, and the platform builds Meta's fbc from this very field as the click
+  // moment.
+  //
+  // The route is one page view, no navigation: land tagged, allow everything,
+  // then withdraw statistics. `ld_attribution` is a Statistics cookie at the CMP
+  // since T-57, so Cookiebot deletes it here — correctly — and our recorder runs
+  // on that same event, finds an empty jar, and captures the landing parameters
+  // again from a URL that still carries them.
+  //
+  // THE _ga CHECK IS NOT DECORATION, IT IS THE POSITIVE CONTROL. Deleted-and-
+  // recaptured and merely-narrowed end in the same shape ({t, fbclid}); only `t`
+  // tells them apart. So if Cookiebot's deletion routine did not run at all this
+  // run, an unchanged `t` is green for entirely the wrong reason. `_ga` is a
+  // known-Statistics cookie in the same sweep: it going away is the evidence the
+  // routine ran. A run where `_ga` survives has measured nothing here, which is
+  // why it is asserted rather than noted.
+  const withdrawal = await openSession(run, {
+    url: `${SITE_ORIGIN}/?utm_source=verify-live&utm_campaign=t55-p7b&gclid=verifylive.gclid&fbclid=verifylive.fbclid`,
+  });
+  try {
+    await clickBanner(withdrawal, BUTTON_ALLOW_ALL);
+    await withdrawal.page.waitForTimeout(2000);
+    const firstTouch = parseJsonCookie(await withdrawal.raw(ATTRIBUTION_COOKIE));
+    r.check(
+      "T-58 · tagged landing recorded, with a moment",
+      firstTouch?.t ?? null,
+      expect.matches(/^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/),
+      "everything below compares against this value, so a run that never stored one has proved nothing",
+    );
+
+    // Cookiebot's own API, driving a real category change — the state a visitor
+    // reaches through "Wijzig je toestemming". Marketing stays open on purpose:
+    // it is what keeps a record alive for `t` to be compared on at all.
+    await withdrawal.page.evaluate(() => window.Cookiebot?.submitCustomConsent(false, false, true));
+    await withdrawal.page.waitForTimeout(2500);
+    if (run.fault?.afterWithdrawal) await run.fault.afterWithdrawal(withdrawal.page);
+
+    const afterWithdrawal = parseJsonCookie(await withdrawal.raw(ATTRIBUTION_COOKIE));
+    const cookies = await withdrawal.cookieNames();
+
+    r.check(
+      "T-58 · the CMP's deletion sweep really ran",
+      cookies.includes(GA_COOKIE),
+      expect.eq(false),
+      "_ga is a known Statistics cookie: if it survives a statistics withdrawal the sweep did not run, " +
+        "and every 'unchanged' below is unchanged for the wrong reason",
+    );
+    r.check(
+      "T-58 · `t` survives delete-then-recapture",
+      afterWithdrawal?.t ?? null,
+      expect.eq(firstTouch?.t ?? null),
+      "a gate that closes later NARROWS the stored record, it does not restamp it — the platform reads " +
+        "this field as the click moment when it builds Meta's fbc, so a moved `t` is a wrong click moment",
+    );
+    r.check(
+      "T-58 · the withdrawn gate really closed",
+      afterWithdrawal?.utm_source ?? null,
+      expect.absent,
+      "keeping the moment must not become keeping the record: utm + gclid ride on STATISTICS and have to go",
+    );
+    r.check(
+      "T-58 · the gate still open kept its field",
+      afterWithdrawal?.fbclid ?? null,
+      expect.eq("verifylive.fbclid"),
+      "two gates, never one boolean — a visitor who keeps marketing keeps their click id",
+    );
+    r.check(
+      "T-58 · exactly one ld_attribution",
+      await withdrawal.cookieCount(ATTRIBUTION_COOKIE),
+      expect.exactly(1),
+      "a re-capture that writes on a different Domain than the record it replaced leaves two rivals, " +
+        "and document.cookie shows a writer only one of them (contract rule 6)",
+    );
+  } finally {
+    await withdrawal.close();
+  }
+});
+
+// -----------------------------------------------------------------------------
+proof("P8", "ld_consent — adopting the platform's choice does not move its moment", async (run, r) => {
+  // THE ARM THAT WAS MISSING WHILE T-53 RAN FOR MONTHS. Seven proofs measured
+  // this chain and all seven asked whether the CHOICE arrives; none compared a
+  // timestamp. So a return leg that adopted the platform's choice correctly and
+  // restamped it to `now` on the way was green every single time — while the
+  // platform, reading newest-wins, saw a fresh answer appear out of nowhere on
+  // every page view of ours.
+  //
+  // THE PLANTED `t` IS AN HOUR OLD, AND WITHOUT THAT THIS ARM IS WORTHLESS.
+  // Stamped with `new Date()`, the bug and the correct behaviour differ by
+  // milliseconds and a broken site reads as green — which is precisely how this
+  // stayed invisible in both repos. An hour cannot be mistaken for jitter.
+  //
+  // WHAT IT STILL GUARDS AFTER T-54, AND WHAT IT NO LONGER GUARDS — read this
+  // before treating a green here as "the restore works". Since `ld_consent` was
+  // registered with Cookiebot as a necessary cookie (T-54), the CMP no longer
+  // deletes it, so `writeConsentCookie` finds the record intact, its ordinary
+  // "same choice, nothing to write" gate stops the write, and `t` stays put
+  // WITHOUT the restore path being reached at all. This arm therefore still
+  // guards the OUTCOME the contract names (no restamp on adoption) and no longer
+  // guards the restore code itself. That is the right trade — the contract is
+  // what the platform depends on — but it means a green line here is not
+  // evidence that the restore lives. The restore has its own unit test, which
+  // goes red without it; that is where that code is watched.
+  const plantedAt = isoNow(-60 * 60 * 1000);
+  const planted = serializeConsent({ v: 1, t: plantedAt, p: true, s: true, m: true });
+  const adopted = await openSession(run, {
+    cookies: [platformConsentCookie({ p: true, s: true, m: true, t: plantedAt })],
+  });
+  try {
+    await adopted.page.waitForFunction(() => window.Cookiebot?.hasResponse === true, undefined, { timeout: CMP_TIMEOUT_MS }).catch(() => {});
+    await adopted.page.waitForTimeout(2500);
+    if (run.fault?.afterAdoption) await run.fault.afterAdoption(adopted.page);
+    const cmp = await adopted.cmp();
+    const raw = await adopted.raw(CONSENT_COOKIE);
+
+    // THE POSITIVE CONTROL FIRST. "`t` did not move" is trivially true on a page
+    // where the adoption never happened — a blocked CMP, a cookie nobody read.
+    // These two lines are what make the comparison below mean anything.
+    r.check(
+      "the adoption really happened",
+      cmp.hasResponse,
+      expect.eq(true),
+      "an unchanged `t` on a page that never adopted the choice measures nothing at all",
+    );
+    r.check(
+      "adopted the whole choice",
+      cmp.consent,
+      expect.json({ p: true, s: true, m: true }),
+      "D-4: a cookie allowing at least one category is adopted where Cookiebot holds no answer",
+    );
+
+    r.check(
+      "`t` is still the platform's, an hour old",
+      parseJsonCookie(raw)?.t ?? null,
+      expect.eq(plantedAt),
+      "newest-wins is what the platform reads: a `t` we moved to now makes our own adoption look like a " +
+        "newer choice than the one the visitor actually made, and it wins against it",
+    );
+    r.check(
+      "the record is byte-identical",
+      raw,
+      expect.eq(planted),
+      "a timestamp-only difference is never a change — a rewritten envelope is churn the platform must ignore",
+    );
+    r.check(
+      "exactly one ld_consent",
+      await adopted.cookieCount(CONSENT_COOKIE),
+      expect.exactly(1),
+      "the other way this fails: a restore that writes without the shared Domain leaves a host-only rival " +
+        "that document.cookie cannot tell apart from the real record (contract rule 6)",
+    );
+  } finally {
+    await adopted.close();
+  }
+
+  // AND THE OTHER DIRECTION — because a writer that never stamps is not fixed,
+  // it is frozen. A real choice made HERE must carry a fresh moment, or the
+  // platform can never learn that the visitor changed their mind.
+  const chosen = await openSession(run, { cookies: [] });
+  try {
+    const before = isoNow();
+    await clickBanner(chosen, BUTTON_ALLOW_ALL);
+    await chosen.page.waitForTimeout(2000);
+    const written = parseJsonCookie(await chosen.raw(CONSENT_COOKIE));
+    const why = "newest-wins cuts both ways: a genuine new answer has to be newer, or the platform keeps the stale one";
+
+    r.check("a choice made here is recorded", written?.s ?? null, expect.eq(true), why);
+    r.check(
+      "and stamped with a moment from THIS session",
+      written?.t ?? null,
+      expect.atOrAfter(before),
+      why,
+    );
+  } finally {
+    await chosen.close();
   }
 });
 
