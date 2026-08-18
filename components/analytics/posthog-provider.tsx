@@ -52,7 +52,31 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
       if (!posthog.__loaded) {
         posthog.init(key, {
           api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com",
-          defaults: "2026-01-30", // pinned — also enables history-based $pageview (covers App Router soft nav)
+          defaults: "2026-01-30", // pinned — see capture_pageview below, which this preset would otherwise decide
+          // THE PRESET WOULD OTHERWISE SILENCE THE LANDING PAGE, AND THAT IS
+          // T-62. `defaults: "2026-01-30"` resolves `capture_pageview` to
+          // "history_change" (posthog-js: `!t || "2025-05-24" > t ||
+          // "history_change"`), which fires a $pageview on a history change and
+          // NEVER on the initial load. A visitor who lands, reads, and leaves is
+          // then measured as nothing at all — no error, no warning.
+          //
+          // That is not a detail: it makes the published promise untrue. The
+          // cookie declaration and D-93 part C both say PostHog measures while
+          // the visitor has not answered, and the visitor who has not answered
+          // yet is, by definition, still on the page they landed on. Measured on
+          // production 2026-08-18: a no-answer session produced ZERO requests to
+          // the ingestion host — across a 3.5s window, 10s of dwell, a
+          // pushState+popstate, and a real cross-document unload — while GA4
+          // POSTed in the same page load and eu-assets answered four times, so
+          // the SDK had demonstrably initialised.
+          //
+          // `true` restores the initial capture and keeps the history-based one
+          // (posthog-js treats `true` as "both"), which App Router soft
+          // navigation still needs. Set explicitly rather than by moving the
+          // `defaults` pin, because the pin also governs rageclick, session
+          // recording, storage and the internal-user hostname — changing it to
+          // fix one field would silently change five.
+          capture_pageview: true,
           respect_dnt: true, // contract-mandated; note GA4 ignores DNT, so PostHog undercounts DNT users vs GA4
           disable_session_recording: true,
           persistence: "localStorage+cookie",
