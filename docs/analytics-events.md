@@ -149,3 +149,32 @@ Ads land on **both** `letsdog.nl` and the platform, and both now carry a Meta pi
   - **This is what made the Meta grant direction live.** `metaLoadGranted` can only subtract from Cookiebot's answer, so before D-4 a platform-recorded marketing consent never reached Cookiebot, `fbevents.js` was never fetched and the send gate had nothing to send through. Now it does load. A platform-recorded *refusal* still cannot load it — it is never adopted, and even if it were it carries `m:false`.
 
 Verifying any of this needs the real banner, and **Cookiebot's banner does not render on `*.pages.dev`** (that host is not in the domain group) — so a branch preview can show you the denied path but never the granted one.
+
+## A non-human source of these events: `npm run verify:live`
+
+Stated here because a source that produces visitor events and appears in no document forces the
+next person to work it out forensically — the same lesson as the Meta CAPI Gateway (loop T-56).
+
+`npm run verify:live` drives a real Chrome against **production**. Every run therefore adds real
+events to GA4, Meta and PostHog: roughly a dozen, across several fresh browser contexts, so they
+appear as a handful of separate `$device_id`s.
+
+**One part of it is actively misleading, not just extra.** The P6 refusal arm asserts that
+Cookiebot deletes `ph_<token>_posthog` when statistics are refused — the deletion *is* the
+assertion. Sessions from that arm therefore land in PostHog carrying a `$pageleave` with **no**
+`$pageview`. That signature reads like a lost-pageview bug rather than like noise, and on
+2026-08-17 it was read as exactly that: a "~14% of sessions lose their initial pageview" figure,
+built from a population that was two-thirds this instrument plus bot traffic, retracted the same
+evening (loop T-60, T-61).
+
+**So, before drawing any conclusion from PostHog data about `letsdog.nl`:**
+
+1. Exclude the `verify:live` run windows. Each run prints its UTC `from`/`to` and appends them to
+   `.verify-live-runs.log` (gitignored, local to whoever ran it); the ship checklist in
+   [`verify-live.md`](verify-live.md) requires pasting the window into the session LOG entry.
+2. Split per day **and per device** before trusting any rate. Eighteen distinct `$device_id`s
+   inside forty seconds is not organic traffic, and neither is a spike on a day someone was
+   testing.
+3. Existence claims survive contamination; **ratios and daily totals do not.** "Sessions exist
+   with exactly one pageview, so the initial pageview fires" holds even in dirty data. "N% of
+   sessions lose it" does not.

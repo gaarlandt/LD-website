@@ -61,6 +61,26 @@ handful of times and adds roughly a dozen real pageviews/events to GA4, Meta and
 one browser. That is the cost of measuring at the objects instead of at a mock. It is small
 enough to pay on a release day and too big to put on a timer.
 
+**And one part of what it leaves behind is misleading rather than merely noisy** — this is loop
+T-61, and it is the reason every run now prints its own window. P6's refusal arm asserts that
+Cookiebot deletes `ph_<token>_posthog`: **the deletion is the test, not a side effect.** So each
+run deposits sessions into PostHog carrying a `$pageleave` with no `$pageview`. Extra pageviews
+are noise anyone would suspect; that particular shape is not — it reads as a *finding*.
+
+It was read as one. On 2026-08-17 two sessions built a "~14% of sessions lose their initial
+pageview" figure out of a population that was two-thirds this instrument and bot traffic, and it
+only came apart because someone split it per day and per device. So:
+
+**Every run now prints the UTC window it occupied and appends it to `.verify-live-runs.log`**
+(gitignored). A PostHog query over `app='website'` must exclude those windows the way it excludes
+bots. The log is **local to the machine that ran it** — the durable, shared copy is the printed
+window, which the ship checklist tells you to paste into the session LOG entry.
+
+*Why a window and not a marker in the data:* tagging our own traffic (a super-property, a
+recognisable `$device_id`) would filter better, but it puts this runner inside the very channel P6
+measures — and P6 exists to prove that nothing sits in between. A timestamp range changes nothing
+about what the site sends, and therefore nothing about what the proofs see.
+
 ## The precondition: which build am I measuring?
 
 A check that passes against a stale bundle is the same failure in a new costume, and the
@@ -225,6 +245,36 @@ exact "fails silent" shape `CLAUDE.md` warns about for `NEXT_PUBLIC_POSTHOG_KEY`
 is demonstrably valid (its remote config resolves). The assertion is deliberately **not** softened
 to match: a checker rewritten to agree with the site is the failure this file exists to abolish.
 
+### Re-measured 2026-08-18 on build `c4031dc4ea19` — the red is REAL, and four explanations are dead
+
+Loop T-60 opened on the suspicion that P6 itself was at fault, because loop T-49 had been closed as
+*"refuted — PostHog does transmit from letsdog.nl"* on server-side counts. Five probes against
+production, each isolating one variable:
+
+| what was suspected | measured | verdict |
+|---|---|---|
+| P6's 3500 ms window closes before posthog-js flushes | 0 ingest after 3.5 s, after 10 s of dwell, **and** after a `pushState`+`popstate` | **refuted** |
+| an artefact of headless automation | headed real Chrome: identical, 0 | **refuted** |
+| posthog-js bot-filtering on `navigator.webdriver` | `webdriver` hidden vs not: identical, 0 | **refuted** |
+| P6 filters the wrong hostname (a proxy `api_host`) | every host the page contacts dumped: `eu-assets.i.posthog.com` ×4 and **no ingestion host at all** | **refuted** |
+| it only flushes at unload, via `sendBeacon` | real cross-document unload: still 0 | **refuted** |
+
+The positive controls in the same runs: GA4 `POST`s to `region1.google-analytics.com/g/collect`,
+`eu-assets.i.posthog.com` answers 4 times (so `init()` ran), the `ph_…` cookie is present, and
+`Cookiebot.hasResponse` is `false` — this *is* the no-answer branch.
+
+**A visitor who has not answered the banner therefore produces zero transmissions to PostHog.** That
+is precisely what D-93 part C promises does happen, and what the published cookie declaration rests
+on. `readConsentState()` → `absent` → `start(false)` is reached; `init()` demonstrably runs; nothing
+is sent.
+
+**What is NOT settled, and is stated as inference rather than measurement:** T-49's server-side
+counts are real too (389 `$pageview` with `app='website'`, sessions with exactly one pageview). The
+reconciliation that fits both is that those events come from sessions where a choice WAS recorded —
+a different population from the one P6 measures. That has not been verified, and it is the whole
+question, because it decides whether legitimate-interest measurement works at all. It is tracked as
+its own loop item rather than settled here, and the copy it affects is Jur's call.
+
 ## Ship checklist — analytics & consent
 
 Work through this on any release that touches `components/analytics/**`, `lib/consent.ts`,
@@ -238,6 +288,9 @@ Work through this on any release that touches `components/analytics/**`, `lib/co
 - [ ] `npm run verify:live` — all proofs PASS, and the printed commit is the one you shipped
 - [ ] record the build fingerprint the run printed, next to the release, so the next run can be
       pinned with `--build`
+- [ ] **paste the printed run window (`from` / `to`) into the session LOG entry** — it is how a
+      later PostHog query knows to exclude this run's traffic, and `.verify-live-runs.log` only
+      exists on the machine that ran it
 - [ ] **manual, not automatable here** — see below
 
 ### Manual steps this script cannot take
