@@ -245,6 +245,36 @@ exact "fails silent" shape `CLAUDE.md` warns about for `NEXT_PUBLIC_POSTHOG_KEY`
 is demonstrably valid (its remote config resolves). The assertion is deliberately **not** softened
 to match: a checker rewritten to agree with the site is the failure this file exists to abolish.
 
+### Re-measured 2026-08-18 on build `c4031dc4ea19` — the red is REAL, and four explanations are dead
+
+Loop T-60 opened on the suspicion that P6 itself was at fault, because loop T-49 had been closed as
+*"refuted — PostHog does transmit from letsdog.nl"* on server-side counts. Five probes against
+production, each isolating one variable:
+
+| what was suspected | measured | verdict |
+|---|---|---|
+| P6's 3500 ms window closes before posthog-js flushes | 0 ingest after 3.5 s, after 10 s of dwell, **and** after a `pushState`+`popstate` | **refuted** |
+| an artefact of headless automation | headed real Chrome: identical, 0 | **refuted** |
+| posthog-js bot-filtering on `navigator.webdriver` | `webdriver` hidden vs not: identical, 0 | **refuted** |
+| P6 filters the wrong hostname (a proxy `api_host`) | every host the page contacts dumped: `eu-assets.i.posthog.com` ×4 and **no ingestion host at all** | **refuted** |
+| it only flushes at unload, via `sendBeacon` | real cross-document unload: still 0 | **refuted** |
+
+The positive controls in the same runs: GA4 `POST`s to `region1.google-analytics.com/g/collect`,
+`eu-assets.i.posthog.com` answers 4 times (so `init()` ran), the `ph_…` cookie is present, and
+`Cookiebot.hasResponse` is `false` — this *is* the no-answer branch.
+
+**A visitor who has not answered the banner therefore produces zero transmissions to PostHog.** That
+is precisely what D-93 part C promises does happen, and what the published cookie declaration rests
+on. `readConsentState()` → `absent` → `start(false)` is reached; `init()` demonstrably runs; nothing
+is sent.
+
+**What is NOT settled, and is stated as inference rather than measurement:** T-49's server-side
+counts are real too (389 `$pageview` with `app='website'`, sessions with exactly one pageview). The
+reconciliation that fits both is that those events come from sessions where a choice WAS recorded —
+a different population from the one P6 measures. That has not been verified, and it is the whole
+question, because it decides whether legitimate-interest measurement works at all. It is tracked as
+its own loop item rather than settled here, and the copy it affects is Jur's call.
+
 ## Ship checklist — analytics & consent
 
 Work through this on any release that touches `components/analytics/**`, `lib/consent.ts`,
