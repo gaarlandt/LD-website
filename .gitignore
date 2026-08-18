@@ -38,3 +38,14 @@ next-env.d.ts
 
 # compound-engineering local config
 .compound-engineering/*.local.yaml
+
+# build worktrees (git worktree add .worktrees/<name>) — they are checkouts of
+# this same repo, and an un-ignored one gets committed as an embedded git repo
+# by any broad `git add`. That already happened once in the sister loop repo.
+.worktrees/
+
+# verify:live's own run log (T-61). Local by design: it records WHEN this
+# machine wrote into production, so a later PostHog query can exclude the
+# instrument's own traffic. Committing it would be pure churn — the durable
+# copy is the run window pasted into the session LOG entry.
+.verify-live-runs.log

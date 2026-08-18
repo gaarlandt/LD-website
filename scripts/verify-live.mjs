@@ -51,6 +51,7 @@
 // from one browser. That is the cost of measuring at the objects instead of at a
 // mock, and it is small enough to pay on a release day.
 
+import { appendFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -78,6 +79,34 @@ const SITE_ORIGIN = `https://${SITE_HOST}`;
 const PLATFORM_ORIGIN = "https://mijn.letsdog.nl";
 const PLATFORM_CHECKOUT = `${PLATFORM_ORIGIN}/checkout`;
 const PAGES_PROJECT = "website-letsdog";
+
+/**
+ * WHERE THIS RUN RECORDS THAT IT EXISTED (T-61).
+ *
+ * This script measures production by writing into production, and one of the
+ * things it writes is MISLEADING rather than merely noisy. P6's refusal arm
+ * asserts that Cookiebot deletes `ph_<token>_posthog` — the deletion IS the
+ * test — so every run leaves behind sessions whose PostHog signature is a
+ * `$pageleave` with no `$pageview`. That is not a shape anyone reads as noise;
+ * it is a shape people read as a FINDING, and on 2026-08-17 two sessions did
+ * exactly that and built a loss rate out of a denominator that was mostly
+ * themselves.
+ *
+ * So the run writes down when it ran. A later query over `app='website'` can
+ * then exclude these windows the way it excludes bot traffic, instead of
+ * reconstructing them forensically from device ids and timestamps.
+ *
+ * DELIBERATELY A WINDOW AND NOT A MARKER IN THE DATA. Tagging our own traffic
+ * (a super-property, a recognisable `$device_id`) would filter better, but it
+ * would put this runner inside the very channel P6 measures — and P6 exists
+ * precisely to prove nothing sits in between. A timestamp range changes nothing
+ * about what the site sends, and therefore nothing about what the proofs see.
+ *
+ * LOCAL BY DESIGN, AND THAT IS THE LIMIT: this file records what THIS machine
+ * did. The durable, shared copy is the run window printed at the end of the
+ * report, which the ship checklist says to paste into the session LOG entry.
+ */
+const RUN_LOG = new URL("../.verify-live-runs.log", import.meta.url).pathname;
 
 const CONSENT_COOKIE = "ld_consent";
 const ATTRIBUTION_COOKIE = "ld_attribution";
@@ -1370,6 +1399,48 @@ Chrome, and \`wrangler\` logged in. Every proof gets a clean cookie state.
 Faults: ${Object.keys(FAULTS).join(", ")}
 `;
 
+/**
+ * Print the run window and append it to RUN_LOG — see that constant for why.
+ *
+ * Printing matters as much as the file: the file is local to this machine, and
+ * whoever queries PostHog in a month may not be sitting at it. The printed
+ * block is what the ship checklist tells you to paste into the session LOG
+ * entry, which is where it becomes shared knowledge instead of a local artefact.
+ *
+ * A failure to write is reported and never thrown: this runs after every proof
+ * has already been measured, and losing a bookkeeping line must not turn a
+ * green run red or a red run into a crash.
+ */
+function recordRunWindow({ startedAt, endedAt, build, commit, fault, only, verdict }) {
+  const scope = only ? only.join("+") : "all";
+  const line =
+    `${startedAt}\t${endedAt}\tbuild=${build ?? "unknown"}\tcommit=${commit}` +
+    `\tproofs=${scope}\tfault=${fault ?? "none"}\t${verdict}`;
+
+  console.log(c.bold("\n  THIS RUN WROTE INTO PRODUCTION — record the window (T-61)"));
+  console.log(`  from  ${startedAt}`);
+  console.log(`  to    ${endedAt}`);
+  console.log(
+    c.dim("  A PostHog query over app='website' must EXCLUDE this range, the way it excludes bots:"),
+  );
+  console.log(
+    c.dim("  every run leaves sessions carrying a $pageleave with no $pageview, because deleting"),
+  );
+  console.log(
+    c.dim("  ph_<token>_posthog on a statistics refusal is P6's assertion. Paste this window into"),
+  );
+  console.log(c.dim("  the session LOG entry — this log file is local to this machine."));
+
+  try {
+    appendFileSync(RUN_LOG, `${line}\n`);
+    console.log(c.dim(`  appended to ${RUN_LOG}`));
+  } catch (error) {
+    console.log(c.yellow(`  could not append to ${RUN_LOG} — ${error.message}`));
+    console.log(c.yellow("  the printed window above is the record; nothing else was affected"));
+  }
+  console.log("");
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
@@ -1385,7 +1456,8 @@ async function main() {
   console.log(`  site        ${SITE_ORIGIN}`);
   console.log(`  platform    ${PLATFORM_ORIGIN}`);
   console.log(`  browser     system Chrome via playwright-core`);
-  console.log(`  started     ${new Date().toISOString()}`);
+  const startedAt = new Date().toISOString();
+  console.log(`  started     ${startedAt}`);
   if (args.fault) {
     console.log(
       c.yellow(`  FAULT       ${args.fault} — expected to turn ${FAULTS[args.fault].breaks} red. ` +
@@ -1549,7 +1621,16 @@ async function main() {
   if (args.fault) {
     console.log(c.yellow(`  fault ${args.fault} was injected — ${FAULTS[args.fault].breaks} were expected to be red`));
   }
-  console.log("");
+
+  recordRunWindow({
+    startedAt,
+    endedAt: new Date().toISOString(),
+    build: liveFingerprint,
+    commit: provenance,
+    fault: args.fault,
+    only: args.only,
+    verdict: `${passed.length} passed / ${failed.length} failed / ${notRun.length} not run`,
+  });
 
   return failed.length === 0 && notRun.length === 0 ? 0 : 1;
 }
