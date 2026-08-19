@@ -702,6 +702,143 @@ describe("more than one ld_consent cookie (contract rule 6)", () => {
   });
 });
 
+describe("more than one SURVIVING ld_consent — newest wins, never position (T-48)", () => {
+  // CONTRACT `cross-host-consent-handover.md` LINE 144: "The reader may not
+  // prefer a copy by position", with "newest wins" one line above it. Rule 6
+  // (tested above) decides which COPY is real by deleting the host-only one;
+  // this decides which RECORD governs when more than one survives that.
+  //
+  // EVERY COPY HERE IS ON THE SHARED PARENT DOMAIN ON PURPOSE. The repair's
+  // deletion carries no Domain, so it cannot reach either of them — which is
+  // exactly the state this rule is about and the state `hijacked()` above is
+  // NOT. Two shared copies are a real configuration: this site and the platform
+  // both write on `.letsdog.nl`.
+  //
+  // NO SHARED FIXTURE VECTOR FOR ANY OF THIS, deliberately. `fixtures/README.md`
+  // puts duplicates outside the verdict: the vectors are single VALUES rather
+  // than headers, and the two repos resolve duplicates by different mechanisms
+  // (they in-header, we by deleting the host-only copy and re-reading). "Both
+  // repos keep their own tests for it" — this is ours.
+
+  /** A day apart, not a millisecond: a comparison test whose two values sit next
+   *  to each other passes just as happily on `>=`, on `<`, or on a stray sort. */
+  const older: ConsentPayload = { v: 1, t: "2026-08-12T10:00:00.000Z", p: false, s: false, m: false };
+  const newer: ConsentPayload = { v: 1, t: "2026-08-13T09:00:00.000Z", p: true, s: true, m: true };
+  const olderValue = serializeConsentPayload(older);
+  const newerValue = serializeConsentPayload(newer);
+
+  it("THE REGRESSION: an OLDER copy handed over first no longer wins", () => {
+    // This is the assertion the old reader fails. `readFirstParseableCookie`
+    // returns the first PARSEABLE record, so with the older copy in front it
+    // narrated a refusal the visitor had already replaced with a grant.
+    stubConsoleReports();
+    stubDomainCookieJar([sharedCopy(olderValue), sharedCopy(newerValue)]);
+
+    expect(readConsentCookie()).toEqual(newer);
+    expect(readConsentState()).toEqual({ source: "cookie", payload: newer });
+  });
+
+  it("and the same two copies the other way round give the same answer", () => {
+    // The control the previous test needs. Alone it would also pass on a reader
+    // that had simply started taking the LAST copy, which is position again with
+    // the sign flipped. Same records, opposite order, same winner.
+    stubConsoleReports();
+    stubDomainCookieJar([sharedCopy(newerValue), sharedCopy(olderValue)]);
+
+    expect(readConsentCookie()).toEqual(newer);
+    expect(readConsentState()).toEqual({ source: "cookie", payload: newer });
+  });
+
+  it("BRANCH 1 — an unknown version anywhere refuses the WHOLE read", () => {
+    // Not "skip it and use the readable one". Unknown means the other repo wrote
+    // something we do not know, so possibly something NEWER; choosing the v1 next
+    // to it would narrate an older choice while a newer one lies beside it,
+    // invisibly. The readable copy is deliberately FIRST here, because that is
+    // the order in which the old reader answered with it.
+    stubConsoleReports();
+    const unknown = encodeURIComponent(JSON.stringify({ v: 2, t: newer.t, p: true, s: true, m: true }));
+    stubDomainCookieJar([sharedCopy(olderValue), sharedCopy(unknown)]);
+
+    expect(readConsentCookie()).toBeNull();
+    expect(readConsentState()).toEqual({ source: "unreadable", payload: null });
+  });
+
+  it("BRANCH 3 — same moment, contradicting categories, so everything closes", () => {
+    // THE BRANCH THAT LOOKS REMOVABLE AND IS THE DEFENCE. Newest-wins does not
+    // protect against a planted copy, because the planter picks the moment:
+    // copying the real record's `t` and flipping only the switches is the
+    // cheapest attack on a newest-wins reader. With no newest there is nothing to
+    // choose, so nothing is chosen — and `unreadable` is what stops PostHog.
+    stubConsoleReports();
+    const rival = serializeConsentPayload({ ...older, p: true, s: true, m: true });
+    stubDomainCookieJar([sharedCopy(olderValue), sharedCopy(rival)]);
+
+    expect(readConsentCookie()).toBeNull();
+    expect(readConsentState()).toEqual({ source: "unreadable", payload: null });
+  });
+
+  it("same moment and the SAME categories is not a conflict", () => {
+    // The other half of branch 3, and the one that stops it from swallowing the
+    // ordinary case: two copies of one answer (both hosts wrote it) agree, so the
+    // read succeeds. Without this an equality test could be inverted and every
+    // test above would still pass.
+    stubConsoleReports();
+    stubDomainCookieJar([sharedCopy(olderValue), sharedCopy(olderValue)]);
+
+    expect(readConsentCookie()).toEqual(older);
+    expect(readConsentState()).toEqual({ source: "cookie", payload: older });
+  });
+
+  it("BRANCH 4 — nothing readable is a refusal, whichever unreadable copy is first", () => {
+    // WHAT THIS TEST DOES NOT COVER, stated because the alternative is a title
+    // that promises more than it delivers. The platform's branch 4 RANKS its
+    // candidates (empty last, so the least informative cause cannot win on
+    // position). That ranking is unfalsifiable here and it was measured, not
+    // assumed: replacing it with `copies[0]` leaves the whole suite green,
+    // because this side surfaces no problem-kind and every outcome in that branch
+    // is the same refusal. So this pins only the refusal itself, in both orders;
+    // the ranking is mirrored in the code and marked there as untested.
+    stubConsoleReports();
+    stubDomainCookieJar([sharedCopy(""), sharedCopy("%7Bnope")]);
+    expect(readConsentCookie()).toBeNull();
+    expect(readConsentState()).toEqual({ source: "unreadable", payload: null });
+
+    stubDomainCookieJar([sharedCopy("%7Bnope"), sharedCopy("")]);
+    expect(readConsentCookie()).toBeNull();
+    expect(readConsentState()).toEqual({ source: "unreadable", payload: null });
+  });
+
+  it("A LONE copy at an unknown version is still handed to the caller", () => {
+    // The single-copy bypass, and it is not an optimisation: `readConsentCookie`
+    // publishes "the first PARSEABLE record, VERSION left to the caller" and the
+    // shared contract fixtures pin that. Only when there is something to compare
+    // WITH does an unknown version refuse the read. `readConsentState` still
+    // calls it unreadable, because that one does enforce the version — the two
+    // are answering different questions about the same bytes, as they always did.
+    stubConsoleReports();
+    const unknown = encodeURIComponent(JSON.stringify({ v: 2, t: newer.t, p: true, s: true, m: true }));
+    stubDomainCookieJar([sharedCopy(unknown)]);
+
+    expect(readConsentCookie()?.v).toBe(2);
+    expect(readConsentState()).toEqual({ source: "unreadable", payload: null });
+  });
+
+  it("the winner survives the rule-6 repair rather than replacing it", () => {
+    // The two rules compose: a planted HOST-ONLY grant is deleted by rule 6, and
+    // whatever is left then goes through newest-wins. Here the plant is also the
+    // newest, so a reader that ran newest-wins WITHOUT the repair would adopt it
+    // — which is the failure T-41 exists to prevent, and this proves T-48 did not
+    // undo it.
+    stubConsoleReports();
+    const { entries } = stubDomainCookieJar([hostOnlyCopy(newerValue), sharedCopy(olderValue)]);
+
+    expect(readConsentCookie()).toEqual(older);
+    expect(entries().filter((entry) => entry.name === CONSENT_COOKIE_NAME)).toEqual([
+      sharedCopy(olderValue),
+    ]);
+  });
+});
+
 describe("writeConsentCookie", () => {
   it("writes the choice, then stays silent when nothing changed", () => {
     const { writes } = stubCookieJar();
