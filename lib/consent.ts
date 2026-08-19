@@ -262,35 +262,51 @@ export function readFirstParseableCookie<T>(
 // `ld_attribution`. The repair only decides which COPY is real.
 
 /**
- * How many copies of `name` does this header carry — contract rule 6, and the
- * platform's `countAttributionCookies` generalised to a name.
+ * EVERY value this header carries under `name`, in the order the browser handed
+ * them over — contract rule 6's raw material, and since T-48 the raw material of
+ * the duplicate RESOLUTION as well.
  *
  * ALL of them, parseable or not. The question is deliberately not "is there a
- * valid record" (`readFirstParseableCookie` answers that) but "did MORE THAN ONE
- * assignment with this name arrive", because that count is the only hint
- * `document.cookie` gives. The Domain attribute is not among the things it hands
- * back, which is precisely why the repair below is a host-only delete and a
- * re-read rather than a comparison on domain.
+ * valid record" (`readFirstParseableCookie` answers that) but "which assignments
+ * with this name arrived", because that list is the only hint `document.cookie`
+ * gives. The Domain attribute is not among the things it hands back, which is
+ * precisely why the repair below is a host-only delete and a re-read rather than
+ * a comparison on domain.
  *
  * Exact name match on the FIRST `=`, the same discipline as
  * `readFirstParseableCookie`: the value is URL-encoded JSON and may carry an `=`
  * of its own, and a cookie called `old_ld_consent` must never be counted as one
  * of ours — a miscount here fabricates a duplicate and makes the repair delete a
  * record that was alone and correct.
+ *
+ * `countCookiesNamed` is its length and nothing else. ONE derivation of "what is
+ * in this header under this name", because the count and the resolution must
+ * never be able to disagree about how many copies there are: a resolver working
+ * on three copies while the repair thinks there is one is the silent-divergence
+ * shape the platform documents in
+ * `derived-active-state-recomputed-in-two-places-diverges.md`.
  */
+export function cookieValuesNamed(
+  cookieHeader: string | null | undefined,
+  name: string,
+): string[] {
+  if (!cookieHeader) return [];
+  const values: string[] = [];
+  for (const part of cookieHeader.split(";")) {
+    const trimmed = part.trim();
+    const separator = trimmed.indexOf("=");
+    if (separator === -1) continue;
+    if (trimmed.slice(0, separator) !== name) continue;
+    values.push(trimmed.slice(separator + 1));
+  }
+  return values;
+}
+
 export function countCookiesNamed(
   cookieHeader: string | null | undefined,
   name: string,
 ): number {
-  if (!cookieHeader) return 0;
-  let found = 0;
-  for (const part of cookieHeader.split(";")) {
-    const separator = part.indexOf("=");
-    if (separator === -1) continue;
-    if (part.slice(0, separator).trim() !== name) continue;
-    found += 1;
-  }
-  return found;
+  return cookieValuesNamed(cookieHeader, name).length;
 }
 
 /**
@@ -878,12 +894,162 @@ export function onCookiebotConsent(
  * Placing the repair here covers all of them and leaves no second path to
  * remember; add a raw-value reader later and it needs the repair too.
  */
+// =============================================================================
+// THE POSITION RULE: WHICH SURVIVING COPY GOVERNS (T-48)
+// =============================================================================
+// `cross-host-consent-handover.md` line 144 — "The reader may not prefer a copy
+// by position" — with the conflict rule stated one line above it: NEWEST WINS.
+// Rule 6 (the repair above) decides which copy is REAL by deleting the host-only
+// one; this decides which RECORD governs when more than one copy survives that.
+// Two different rules, and T-41 only built the first.
+//
+// MORE THAN ONE CAN SURVIVE, which is what makes this reachable rather than
+// theoretical. The repair's deletion carries no Domain and `Path=/`, so it
+// reaches exactly the host-only copy at the root path. Two copies written on the
+// shared `.letsdog.nl` domain — this site and the platform are both writers —
+// survive it untouched, and so does a host-only copy set at a deeper path. The
+// Sentry rule `handover_cookie.duplicate_repaired` fired on REAL visitors on
+// 2026-08-17, so duplicates are not hypothetical; whether any of those left more
+// than one copy standing is a different signal
+// (`handover_cookie.duplicate_persists`) and is not claimed here.
+//
+// MIRRORED FROM `packages/core/src/consent.ts` (`resolveConsentDuplicates`),
+// read from the platform source on 2026-08-19 rather than from our own quotation
+// of it — the line number in this repo's task file had already moved from 554 to
+// 623, and branch 4 had changed underneath it. All four branches, in this order,
+// and the ORDER IS LOAD-BEARING.
+
+/** What a single surviving copy turned out to be. */
+type ConsentCopyKind = "governing" | "unknown_version" | "empty" | "corrupt" | "conflict";
+
+type ConsentCookieCopy = {
+  /** The record this copy yields, and ONLY when it governs the read. */
+  payload: ConsentPayload | null;
+  kind: ConsentCopyKind;
+};
+
+/**
+ * One raw cookie value, classified. Deliberately keeps `payload` for a copy at an
+ * unknown VERSION: whether that refuses the read depends on whether it stands
+ * alone, and that is the selector's call rather than the parser's.
+ */
+function classifyConsentCopy(raw: string): ConsentCookieCopy {
+  if (raw === "") return { payload: null, kind: "empty" };
+  const parsed = parseConsentPayload(raw);
+  if (parsed === null) return { payload: null, kind: "corrupt" };
+  return {
+    payload: parsed,
+    kind: parsed.v === CONSENT_COOKIE_VERSION ? "governing" : "unknown_version",
+  };
+}
+
+/** The moment of the choice, as a number. Only ever called on a governing copy. */
+function consentMoment(copy: ConsentCookieCopy): number {
+  return Date.parse(copy.payload?.t ?? "");
+}
+
+/** The same three switches? Used to see whether two equally-old copies disagree. */
+function sameCategories(a: ConsentPayload, b: ConsentPayload): boolean {
+  return a.p === b.p && a.s === b.s && a.m === b.m;
+}
+
+function resolveConsentDuplicates(copies: ConsentCookieCopy[]): ConsentCookieCopy {
+  // 1. AN UNKNOWN VERSION ANYWHERE IN THE ROW REFUSES THE WHOLE READ. Unknown
+  //    means the other repo wrote something this reader does not know, so
+  //    possibly something NEWER, and the honest answer is that we cannot compare.
+  //    Choosing a readable v1 next to it would narrate an OLDER choice while a
+  //    newer one lies beside it, invisibly. It also keeps the unknown-version
+  //    signal alive, and that signal is how we learn the two repos have drifted.
+  const divergent = copies.find((copy) => copy.kind === "unknown_version");
+  if (divergent !== undefined) return { payload: null, kind: "unknown_version" };
+
+  const governing = copies.filter((copy) => copy.kind === "governing");
+
+  // 4. NOTHING READABLE — keep the outcome of the first NON-EMPTY copy, and only
+  //    if they are all empty the first. Every answer here is a refusal, so this
+  //    changes no measurement; what it preserves is WHICH problem is reported,
+  //    and since the platform's T-664 that carries weight. `empty` is the one
+  //    kind of unreadability where the platform reopens the consent question (an
+  //    empty value holds no choice and no timestamp, so no newer choice can be
+  //    destroyed by asking again). Preferring "empty" on nothing but position
+  //    would reopen the question next to a copy that MIGHT hold a newer choice we
+  //    simply cannot read. Least informative, so it goes last.
+  //
+  //    NOTE — this branch reads as position-based and is not: it ranks by KIND
+  //    first and only falls back to order inside one kind, where every outcome is
+  //    identical anyway. The platform has the same residue in branch 1 and told
+  //    us so unprompted rather than letting us find it and wonder who was wrong.
+  //
+  //    AND THE RANKING IS CURRENTLY UNFALSIFIABLE ON THIS SIDE — measured, not
+  //    assumed: replacing the whole expression with `copies[0]` (the pre-T-664
+  //    platform form) leaves all 438 tests green. Nothing here surfaces a problem
+  //    KIND out of the reader, so every outcome in this branch is the same
+  //    refusal and no test can tell the orderings apart. It is mirrored anyway,
+  //    because the cost is one `find` and the day a cause is surfaced the two
+  //    repos must already agree — but it is written down as an untested line
+  //    rather than left to look covered. A test asserting this today would assert
+  //    nothing while its title promised otherwise, which is worse than the gap.
+  if (governing.length === 0) {
+    return copies.find((copy) => copy.kind !== "empty") ?? copies[0]!;
+  }
+
+  // 2. OTHERWISE THE READABLE COPY WITH THE NEWEST MOMENT WINS — contract rule 1.
+  let newest = governing[0]!;
+  for (const copy of governing) {
+    if (consentMoment(copy) > consentMoment(newest)) newest = copy;
+  }
+
+  // 3. SAME MOMENT, CONTRADICTING CATEGORIES → EVERYTHING CLOSED. This is the
+  //    branch that looks removable and is the defence. Newest-wins does NOT
+  //    protect against a planted copy, because the planter chooses the moment:
+  //    copying the real cookie's `t` and flipping only the switches is the
+  //    cheapest possible attack on a newest-wins reader. With no newest there is
+  //    nothing to choose, so we choose nothing — the same instinct as contract
+  //    rule 1 read from the other side ("rather do nothing than act on a
+  //    comparison that could not be made").
+  const tied = governing.filter((copy) => consentMoment(copy) === consentMoment(newest));
+  const contradicted = tied.some(
+    (copy) => !sameCategories(copy.payload!, newest.payload!),
+  );
+  if (!contradicted) return newest;
+  return { payload: null, kind: "conflict" };
+}
+
+/**
+ * Which copy governs this header, or null when the cookie is absent entirely.
+ *
+ * ONE COPY BYPASSES THE DUPLICATE RULE ALTOGETHER, and that is not an
+ * optimisation — it is what keeps `readConsentCookie`'s published contract
+ * ("the first PARSEABLE record; the VERSION is the caller's to enforce") intact,
+ * which is the behaviour the shared contract fixtures pin. A lone copy at an
+ * unknown version is still handed back for the caller to judge; only when there
+ * is something to compare it WITH does an unknown version refuse the read. The
+ * platform's `selectConsentCookie` takes the same shortcut for its own reason,
+ * stated there: on localhost and on preview hosts this bundle writes the cookie
+ * host-only, so the host-only copy is the only one and the real one.
+ *
+ * THE SINGLE SEAM, for the same reason the platform gives for having one. Both
+ * public readers below go through this, so they cannot answer differently about
+ * the same bytes; two loops would let a fix on one make the planted copy win on
+ * the other.
+ */
+function selectConsentCookie(cookieHeader: string): ConsentCookieCopy | null {
+  const values = cookieValuesNamed(cookieHeader, CONSENT_COOKIE_NAME);
+  if (values.length === 0) return null;
+  if (values.length === 1) return classifyConsentCopy(values[0]!);
+  return resolveConsentDuplicates(values.map(classifyConsentCopy));
+}
+
 export function readConsentCookie(): ConsentPayload | null {
   if (typeof document === "undefined") return null;
   repairDuplicateConsentCookies();
   // Read AFTER the repair: `document.cookie` is a different string once the
   // host-only copy is gone, and reading the old one would defeat the point.
-  return readFirstParseableCookie(document.cookie, CONSENT_COOKIE_NAME, parseConsentPayload);
+  //
+  // AND SINCE T-48 THE CHOICE AMONG SURVIVORS IS NEWEST-WINS, not first-in-line.
+  // With one copy this still resolves to "the parseable record, version left to
+  // the caller"; with more than one, position no longer decides.
+  return selectConsentCookie(document.cookie)?.payload ?? null;
 }
 
 /**
@@ -944,14 +1110,19 @@ export function readConsentState(): ConsentCookieState {
   // Rule 6 first, for the same reason `readConsentCookie` does it: a planted
   // host-only copy must not decide which of the three states we report.
   repairDuplicateConsentCookies();
-  const header = document.cookie;
-  const parsed = readFirstParseableCookie(header, CONSENT_COOKIE_NAME, parseConsentPayload);
-  const governing = parsed !== null && parsed.v === CONSENT_COOKIE_VERSION ? parsed : null;
-  if (governing !== null) return { source: "cookie", payload: governing };
-  return {
-    source: countCookiesNamed(header, CONSENT_COOKIE_NAME) > 0 ? "unreadable" : "absent",
-    payload: null,
-  };
+  // The SAME selector `readConsentCookie` uses (T-48), so the two cannot disagree
+  // about the same bytes. Everything the selector refuses — an unknown version, a
+  // same-moment contradiction between copies, bytes we cannot parse — lands in
+  // `unreadable`, which is the state that stops PostHog. That is the safe side by
+  // design: those causes are almost always OUR drift, and reading our own defect
+  // as "nobody answered, carry on measuring" would let a bug widen what we
+  // collect.
+  const selected = selectConsentCookie(document.cookie);
+  if (selected === null) return { source: "absent", payload: null };
+  if (selected.kind === "governing" && selected.payload !== null) {
+    return { source: "cookie", payload: selected.payload };
+  }
+  return { source: "unreadable", payload: null };
 }
 
 /**
