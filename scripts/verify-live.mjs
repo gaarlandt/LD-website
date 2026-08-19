@@ -370,6 +370,8 @@ async function newestProductionDeployment() {
 //   swallow-consent-update  drops `consent update` on its way into the dataLayer
 //   block-fbevents          aborts connect.facebook.net
 //   block-posthog           aborts *.i.posthog.com
+//   bot-probe               restores navigator.webdriver, so posthog-js
+//                          discards this runner's events as a bot's
 //   preset-attribution      plants a rival first touch before the tagged landing
 //   restamp-attribution     rewrites ld_attribution's `t` on the consent event
 
@@ -434,6 +436,20 @@ const FAULTS = {
   "block-posthog": {
     breaks: "P6",
     route: async (ctx) => ctx.route("**i.posthog.com/**", (r) => r.abort()),
+  },
+  // THE FAULT THAT GUARDS THE GUARD. `openSession` hides `navigator.webdriver`
+  // so posthog-js does not classify this runner as a bot and silently discard
+  // every event; this fault puts it back, which is the only way to show that the
+  // hiding is what makes P6's positive half able to pass at all. Without it the
+  // mask is an unexplained line that a later cleanup deletes, and P6 goes red
+  // against a working site again — which is exactly what happened for the four
+  // days before 2026-08-19.
+  "bot-probe": {
+    breaks: "the POSITIVE half of P6 (posthog-js discards a bot's events)",
+    init: (ctx) =>
+      ctx.addInitScript(() => {
+        Object.defineProperty(Navigator.prototype, "webdriver", { get: () => true, configurable: true });
+      }),
   },
   // THE ONE THAT ATTACKS THE NEGATIVES. Every other fault above breaks something
   // a proof expects to see; this one makes something happen that four proofs
@@ -571,8 +587,52 @@ const expect = {
  * the same class of mistake as measuring a stale build.
  */
 async function openSession(run, { cookies = [], url = `${SITE_ORIGIN}/` } = {}) {
-  const context = await run.browser.newContext();
+  const context = await run.browser.newContext(run.userAgent ? { userAgent: run.userAgent } : {});
   const fault = run.fault;
+
+  // NAVIGATOR.WEBDRIVER IS HIDDEN, AND WITHOUT THIS LINE P6 CANNOT GO GREEN NO
+  // MATTER WHAT THE SITE DOES. This is not a softened assertion — it is the
+  // opposite, and the distinction is the whole comment.
+  //
+  // posthog-js drops every captured event when it thinks it is talking to a bot,
+  // and it decides that with `!!navigator.webdriver` (plus a UA blocklist that
+  // contains "headlesschrome"). Playwright sets `navigator.webdriver` on every
+  // context it creates and cannot be told not to, so EVERY probe this runner has
+  // ever fired was classified as a bot and had its events discarded inside the
+  // SDK — before any request was made, with no error and no console line. The
+  // drop is silent by construction:
+  //
+  //     var l = !this.config.opt_out_useragent_filter && this._is_bot();
+  //     if (!l || this.config.__preview_capture_bot_pageviews) { …send… }
+  //
+  // MEASURED 2026-08-19 on production build 8cb1e07debc8, two sessions differing
+  // in this one property and nothing else, with the SDK's own state read out of a
+  // patched bundle:
+  //   webdriver visible → _is_bot() true  → 0 requests to the ingestion host
+  //   webdriver hidden  → _is_bot() false → POST eu.i.posthog.com/e/
+  // Every other gate was already open in both (capture_pageview true, consent
+  // isOptedIn true, is_capturing true, visibilityState visible).
+  //
+  // WHAT THIS COST US, and it is the reason to state it here rather than in a
+  // commit message: the bot filter made BOTH halves of P6 unfalsifiable at once.
+  // The positive half stayed red against a working site — which is how T-62 came
+  // to be diagnosed twice — and the negative half ("statistics refused · any
+  // request to i.posthog.com" = 0) stayed green by construction, because a probe
+  // whose events are discarded sends zero whether the stop works or not. An
+  // assertion that cannot discriminate is worse than a missing one; its title
+  // promises exactly what it does not deliver.
+  //
+  // THE PRICE OF THE FIX IS REAL AND ALREADY MITIGATED. The bot filter was
+  // incidentally keeping this runner's traffic out of the product data; hiding
+  // webdriver means our synthetic sessions now land in PostHog looking like
+  // visitors. That is what the run window printed at the end of every run is for
+  // (T-61) — exclude it in any query over app='website'.
+  //
+  // Overridable by a fault on purpose: `bot-probe` puts webdriver back, which is
+  // what proves this line is load-bearing rather than decorative.
+  await context.addInitScript(() => {
+    Object.defineProperty(Navigator.prototype, "webdriver", { get: () => false, configurable: true });
+  });
 
   if (fault?.route) await fault.route(context);
   if (fault?.init) await fault.init(context);
@@ -1559,7 +1619,27 @@ async function main() {
   // ---- proofs -------------------------------------------------------------
   const report = new Report();
   const browser = await chromium.launch({ channel: "chrome", headless: !args.headed });
-  const run = { browser, fault: args.fault ? FAULTS[args.fault] : null };
+  // THE HEADLESS MARKER COMES OUT OF THE USER AGENT — the second half of the
+  // bot problem documented at length in `openSession`. Chrome's headless mode
+  // ships a UA containing "HeadlessChrome", and "headlesschrome" is a literal
+  // entry in posthog-js's blocked-user-agent list, so the UA alone is enough to
+  // have every event discarded even once `navigator.webdriver` is hidden.
+  //
+  // Derived from the real UA rather than hard-coded: pinning a version string
+  // here would drift from the browser actually driving the run, and a stale UA
+  // is its own quiet lie about what was measured. Only the marker is removed —
+  // the version, platform and engine stay exactly as this Chrome reports them.
+  const defaultUserAgent = await (async () => {
+    const probe = await browser.newContext();
+    try {
+      const page = await probe.newPage();
+      return await page.evaluate(() => navigator.userAgent);
+    } finally {
+      await probe.close();
+    }
+  })();
+  const userAgent = defaultUserAgent.replace(/HeadlessChrome/g, "Chrome");
+  const run = { browser, userAgent, fault: args.fault ? FAULTS[args.fault] : null };
 
   try {
     // The consent chain has to be PRESENT on this build before any proof can
