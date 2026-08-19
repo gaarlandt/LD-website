@@ -1,12 +1,10 @@
 ---
 title: Privacybeleid
 description: Hoe Let's dog omgaat met je persoonsgegevens, je rechten en onze beveiligingsmaatregelen.
-lead: Laatst bijgewerkt op 12 augustus 2026.
+lead: Laatst bijgewerkt op 18 augustus 2026.
 ---
 
 Voor website, webapp, iOS-app, Android-app en platformomgeving.
-
-Laatst bijgewerkt: 12 augustus 2026
 
 Let's dog B.V. verwerkt persoonsgegevens van gebruikers van de website letsdog.nl, de webapplicatie, de mobiele apps, de community, de academy, de shop en daarmee samenhangende diensten. In dit privacybeleid leggen wij uit welke gegevens wij verwerken, waarom wij dat doen, met wie wij gegevens delen, hoe lang wij gegevens bewaren en welke rechten gebruikers hebben.
 
@@ -16,10 +14,14 @@ Dit document is bedoeld als geconsolideerde versie voor publicatie op de website
 
 Let's dog B.V. is de verwerkingsverantwoordelijke voor de persoonsgegevens die via de Let's dog-dienst worden verwerkt.
 
-Naam: Let's dog B.V.  
-Adres: Amsterdamsestraatweg 5, 1411 AW Naarden, Nederland  
-KvK-nummer: 98271814  
-E-mail: [support@letsdog.nl](mailto:support@letsdog.nl)  
+Naam: Let's dog B.V.
+
+Adres: Amsterdamsestraatweg 5, 1411 AW Naarden, Nederland
+
+KvK-nummer: 98271814
+
+E-mail: support@letsdog.nl
+
 Website: letsdog.nl
 
 ## 2. Op welke diensten ziet dit privacybeleid?
@@ -132,6 +134,7 @@ De iOS-app verwerkt User ID, naam, e-mailadres of telefoonnummer niet voor track
 - het tonen van cursuscontent en het opslaan van voortgang;
 - het aanbieden, beheren en modereren van communityfuncties;
 - het personaliseren van content, tips, cursusonderdelen en algemene adviezen;
+- het afstemmen van onze e-mail op waar je in het programma zit;
 - het verwerken van bestellingen, abonnementen en betalingen via de webomgeving;
 - klantenservice, support en communicatie;
 - beveiliging, fraudepreventie en technische monitoring;
@@ -140,6 +143,8 @@ De iOS-app verwerkt User ID, naam, e-mailadres of telefoonnummer niet voor track
 - het voldoen aan wettelijke verplichtingen.
 
 De gegevens worden binnen de iOS-app niet verwerkt met als doel gebruikers te tracken over apps of websites van andere bedrijven. Er vindt geen verkoop van persoonsgegevens plaats en geen doorgifte aan databrokers.
+
+Wij gebruiken gegevens over jou en je hond ook om onze e-mail af te stemmen op waar je in het programma zit. Denk aan de naam en de leeftijd van je hond, de fase waarin hij zit en hoever je bent, zodat een bericht aansluit bij wat er die week speelt. Voor mail die hoort bij je account, je betaling en je abonnement doen wij dat omdat het nodig is voor de uitvoering van de overeenkomst. Voor mail met tips en aanmoediging doen wij dat op grond van ons gerechtvaardigd belang om je goed te helpen met de training. Je kunt je voor die tweede groep altijd afmelden, met de afmeldlink onderaan zo'n bericht.
 
 ## 6. Grondslagen voor verwerking
 
@@ -163,8 +168,9 @@ Wij delen persoonsgegevens alleen als dat nodig is voor de werking van de dienst
 - betaal- en e-commercedienstverleners voor aankopen via de webomgeving;
 - bezorg- of fulfilmentpartners indien fysieke producten worden verkocht;
 - support- en communicatieleveranciers;
+- ons e-mailplatform, dat de berichten rond je account, je abonnement en je voortgang verstuurt;
 - AI- of automatiseringsleveranciers voor zover Let's dog AI-functionaliteit aanbiedt;
-- advertentie- en analyseplatforms die wij informeren over een geslaagde aankoop, ook zonder cookie: wij sturen daarvoor versleutelde gegevens vanaf onze eigen server naar Meta en Google, uitsluitend om te meten welke advertentie tot een aankoop leidde;
+- advertentie- en analyseplatforms die wij informeren over een geslaagde aankoop, uitsluitend voor conversie- en effectmeting. Dit gebeurt alleen nadat je daarvoor toestemming hebt gegeven. Naar Meta sturen wij daarbij je e-mailadres in versleutelde vorm; naar Google sturen wij geen e-mailadres en geen advertentie-klikgegevens;
 - bevoegde instanties indien wij daartoe wettelijk verplicht zijn.
 
 Wij verkopen geen persoonsgegevens aan derden. Wij delen User ID, naam, telefoonnummer of e-mailadres niet met derden om gebruikers te tracken en wij delen deze gegevens niet met databrokers. Leveranciers mogen persoonsgegevens alleen verwerken voor de afgesproken dienst, zoals werking, beveiliging, support, foutanalyse, betaling, fulfilment of verbetering van de app en webomgeving.
@@ -181,7 +187,7 @@ Voor verbetering van AI-functionaliteit gebruikt Let's dog bij voorkeur geanonim
 
 Indien persoonsgegevens buiten de Europese Economische Ruimte worden verwerkt, zorgen wij voor passende waarborgen, zoals standaardcontractbepalingen, aanvullende beveiligingsmaatregelen of vergelijkbare beschermingsmaatregelen.
 
-Concreet gaat het om doorgifte naar de Verenigde Staten. Dat gebeurt bij de conversiemeting die in hoofdstuk 7 is beschreven: wij informeren Meta Platforms en Google over een geslaagde aankoop. Voor die doorgifte baseren wij ons op standaardcontractbepalingen en, waar de partij daarvoor gecertificeerd is, op het EU-US Data Privacy Framework. Onze gebruiksmeting (PostHog) en onze hostingpartij draaien op Europese servers.
+Concreet gaat het om doorgifte naar de Verenigde Staten. Dat gebeurt op twee plaatsen. Ten eerste bij de conversiemeting die in hoofdstuk 7 is beschreven: nadat je daarvoor toestemming hebt gegeven, informeren wij Meta Platforms en Google over een geslaagde aankoop. Ten tweede bij ons e-mailplatform Loops (Astrodon, Inc.), dat de mail rond je account en je abonnement verstuurt en daarvoor je e-mailadres, je naam, gegevens over je abonnement en gegevens over je hond en je voortgang verwerkt. Voor beide doorgiften baseren wij ons op standaardcontractbepalingen en, waar de partij daarvoor gecertificeerd is, op het EU-US Data Privacy Framework. Onze gebruiksmeting (PostHog) en onze hostingpartij draaien op Europese servers.
 
 ## 10. Bewaartermijnen
 
@@ -194,6 +200,7 @@ Wij bewaren persoonsgegevens niet langer dan noodzakelijk voor de doeleinden waa
 - factuur- en administratieve gegevens: zolang wettelijk vereist, in de regel 7 jaar;
 - analyticsgegevens: volgens de ingestelde bewaartermijn van de gebruikte tool en niet langer dan noodzakelijk;
 - cookie- en consentgegevens: volgens de cookieverklaring en instellingen van de consenttool.
+- gegevens bij ons e-mailplatform: als je je afmeldt of je account op non-actief zet, blijven de gegevens die wij daar eerder hebben bijgewerkt staan; bij een definitieve accountverwijdering worden ze daar gewist.
 
 ## 11. Beveiliging
 
@@ -227,7 +234,7 @@ Gebruikers hebben, voor zover wettelijk van toepassing, recht op:
 - dataportabiliteit;
 - intrekking van toestemming, voor zover verwerking op toestemming is gebaseerd.
 
-Verzoeken kunnen worden ingediend via [support@letsdog.nl](mailto:support@letsdog.nl). Wij kunnen vragen om aanvullende informatie om de identiteit van de verzoeker te controleren.
+Verzoeken kunnen worden ingediend via support@letsdog.nl. Wij kunnen vragen om aanvullende informatie om de identiteit van de verzoeker te controleren.
 
 ## 14. Accountverwijdering
 
@@ -247,4 +254,4 @@ Wij kunnen dit privacybeleid aanpassen. De meest actuele versie is beschikbaar v
 
 ## 17. Contact en klachten
 
-Voor vragen over dit privacybeleid of de verwerking van persoonsgegevens kan contact worden opgenomen via [support@letsdog.nl](mailto:support@letsdog.nl). Gebruikers hebben daarnaast het recht om een klacht in te dienen bij de Autoriteit Persoonsgegevens.
+Voor vragen over dit privacybeleid of de verwerking van persoonsgegevens kan contact worden opgenomen via support@letsdog.nl. Gebruikers hebben daarnaast het recht om een klacht in te dienen bij de Autoriteit Persoonsgegevens.

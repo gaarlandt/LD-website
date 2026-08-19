@@ -1,7 +1,7 @@
 ---
 title: Cookieverklaring
 description: Welke cookies Let's dog gebruikt op letsdog.nl en mijn.letsdog.nl, waarom, en hoe je je keuze op elk moment weer omzet.
-lead: Laatst bijgewerkt op 17 augustus 2026.
+lead: Laatst bijgewerkt op 18 augustus 2026.
 ---
 
 Deze verklaring legt uit welke cookies en vergelijkbare technieken Let's dog gebruikt, waarom, en hoe je je keuze op elk moment weer omzet. Hij hoort bij het [Privacybeleid](/privacybeleid).
@@ -44,13 +44,15 @@ Kleine instellingen die het gebruik prettiger maken: je taal, en of je licht of 
 
 Hiermee meten we hoe de site en je eigen omgeving gebruikt worden, zodat we zien waar mensen vastlopen.
 
-| Wie | Wat | Grondslag | Hoe lang |
-|---|---|---|---|
-| PostHog | Productgebruik: welke schermen, waar het misgaat | Gerechtvaardigd belang | 1 jaar |
-| Google Analytics | Bezoek en verkeer (`_ga`, `_ga_0FCGXJHMMY`) | Jouw toestemming | 400 dagen |
-| `ld_attribution` | Via welke campagne je binnenkwam: de `utm_`-velden en het Google-klik-id `gclid` | Jouw toestemming | 90 dagen |
+| Cookie of gegeven | Wie | Waarvoor | Grondslag | Hoe lang |
+|---|---|---|---|---|
+| `ph_…_posthog` | PostHog | Productgebruik: welke schermen, waar het misgaat | Gerechtvaardigd belang | 1 jaar |
+| `_ga`, `_ga_0FCGXJHMMY` | Google Analytics | Bezoek en verkeer | Jouw toestemming | 400 dagen |
+| `ld_attribution` | Let's dog | Via welke campagne je binnenkwam: de `utm_`-velden en het Google-klik-id `gclid` | Jouw toestemming | 90 dagen |
 
-**PostHog werkt anders dan al het andere hier, en dat zeggen we met opzet hardop.** Hij meet door zolang je niets kiest, omdat we hem alleen gebruiken om het product te verbeteren en niet om te adverteren. Zeg je nee tegen statistiek, dan stopt hij meteen. Je gegevens staan op Europese servers en we nemen geen schermopnames. Normaal koppelen we je gebruik aan een willekeurig nummer; vul je zelf een formulier in, dan koppelen we je e-mailadres eraan, zodat we je vraag kunnen terugvinden bij wat je op de site deed.
+**PostHog werkt anders dan al het andere hier, en dat zeggen we met opzet hardop.** Hij meet door zolang je niets kiest, omdat we hem alleen gebruiken om het product te verbeteren en niet om te adverteren. Zeg je nee tegen statistiek, dan stopt hij meteen. Zegt de bewaarde keuze iets wat wij niet kunnen lezen, dan stoppen we ook: dat is geen stilte maar een antwoord dat wij niet begrijpen, en dan kiezen we de veilige kant. Je gegevens staan op Europese servers en we nemen geen schermopnames.
+
+**Je gebruik hangt altijd aan een willekeurig nummer, nooit aan je e-mailadres.** Dat nummer verzint je eigen browser en het zegt op zichzelf niets over wie je bent. Vul je een formulier in, dan bewaren we je e-mailadres als kenmerk bíj dat nummer, zodat we je vraag kunnen terugvinden bij wat je op de site deed — en dat doen we **alleen als je ja hebt gezegd tegen statistiek**. Zeg je nee, of heb je nog niets gekozen, dan blijft je adres buiten de meting. Je adres wordt dus nooit het label waaronder je gemeten wordt.
 
 ### 3.4 Marketing
 
@@ -62,6 +64,8 @@ Hiermee zien we welke advertentie of pagina je naar ons bracht, zodat we ons gel
 | Klik-id `fbclid` in `ld_attribution` | Let's dog, voor Meta | Onthouden dat je via een Meta-advertentie binnenkwam | 90 dagen |
 
 **Let op waar de grens ligt, want die loopt niet waar je hem verwacht.** Van de campagnegegevens hierboven hangt alleen het Meta-klik-id aan je marketing-keuze. Waar je vandaan kwam volgens de `utm_`-velden en het Google-klik-id `gclid` hoort bij statistiek, en staat daarom in de tabel hierboven. Zeg je nee tegen marketing maar ja tegen statistiek, dan bewaren we dus nog wel via welke campagne je binnenkwam, maar niet het Meta-klik-id.
+
+Die Meta-gegevens gaan niet rechtstreeks naar Meta, maar eerst langs een doorgeefluik op onze eigen server (`capig.datah04.com`). Dat verandert niets aan wat er verstuurd wordt en aan wie; het staat hier omdat je die naam in je browser kunt tegenkomen en je dan moet kunnen opzoeken van wie hij is.
 
 Koop je een abonnement, dan sturen we Meta een gehashte versie van je e-mailadres, zodat zij die aankoop aan de juiste advertentie kunnen koppelen. Gehasht betekent: omgezet in een vaste reeks tekens waar je adres zelf niet meer uit te halen is, en die Meta alleen kan matchen met een adres dat zij al hebben. Ook dat gebeurt alleen als je marketing hebt toegestaan.
 
