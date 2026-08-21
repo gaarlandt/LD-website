@@ -28,7 +28,7 @@ export function PartnersHero() {
             <Button variant="peach" pill asChild>
               <a href="#manieren">Ambassadeur worden</a>
             </Button>
-            <Button variant="secondary" pill asChild>
+            <Button variant="brand" pill asChild>
               <a href="#manieren">UGC-maker worden</a>
             </Button>
           </div>

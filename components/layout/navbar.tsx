@@ -26,6 +26,11 @@ export function Navbar() {
   // Only the homepage opens on the photo hero — every other page opens on a
   // plain beige section, where the default dark icon/logo already reads fine.
   const whiteHeader = pathname === "/" && !scrolled;
+  // "Start vandaag" wijst naar /prijzen. Staat de bezoeker daar al, dan doet de knop
+  // zichtbaar niets — dat leverde klachten op. Weglaten in plaats van uitschakelen: een
+  // disabled CTA in een navigatiebalk is nog verwarrender dan een die verdwijnt.
+  // `trailingSlash: true` staat aan, dus beide vormen afvangen.
+  const opPrijzen = pathname === "/prijzen" || pathname === "/prijzen/";
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 16);
@@ -128,9 +133,11 @@ export function Navbar() {
               Inloggen
             </a>
           </Button>
-          <Button variant="brand" pill asChild>
-            <Link href="/prijzen">Start vandaag</Link>
-          </Button>
+          {!opPrijzen && (
+            <Button variant="brand" pill asChild>
+              <Link href="/prijzen">Start vandaag</Link>
+            </Button>
+          )}
         </div>
 
         {/* Mobile menu button — order-1 pins it to the far left on mobile */}
@@ -191,11 +198,13 @@ export function Navbar() {
               </li>
             ))}
           </ul>
-          <Button variant="brand" pill block asChild>
-            <Link href="/prijzen" onClick={() => setOpen(false)}>
-              Start vandaag
-            </Link>
-          </Button>
+          {!opPrijzen && (
+            <Button variant="brand" pill block asChild>
+              <Link href="/prijzen" onClick={() => setOpen(false)}>
+                Start vandaag
+              </Link>
+            </Button>
+          )}
         </div>
       )}
     </header>
