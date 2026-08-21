@@ -67,7 +67,7 @@ Hiermee zien we welke advertentie of pagina je naar ons bracht, zodat we ons gel
 
 Die Meta-gegevens gaan niet rechtstreeks naar Meta, maar eerst langs een doorgeefluik op onze eigen server (`capig.datah04.com`). Dat verandert niets aan wat er verstuurd wordt en aan wie; het staat hier omdat je die naam in je browser kunt tegenkomen en je dan moet kunnen opzoeken van wie hij is.
 
-Koop je een abonnement, dan sturen we Meta een gehashte versie van je e-mailadres, zodat zij die aankoop aan de juiste advertentie kunnen koppelen. Gehasht betekent: omgezet in een vaste reeks tekens waar je adres zelf niet meer uit te halen is, en die Meta alleen kan matchen met een adres dat zij al hebben. Ook dat gebeurt alleen als je marketing hebt toegestaan.
+Start je een proefperiode of koop je een abonnement, dan sturen we Meta een gehashte versie van je e-mailadres, zodat zij dat aan de juiste advertentie kunnen koppelen. Bij een proefperiode doen we dat pas nadat je bank of je kaartverstrekker de betaling heeft goedgekeurd, dus niet al op het moment dat je het formulier invult. Gehasht betekent: omgezet in een vaste reeks tekens waar je adres zelf niet meer uit te halen is, en die Meta alleen kan matchen met een adres dat zij al hebben. Ook dit gebeurt alleen als je marketing hebt toegestaan.
 
 ## 4. Waar je je keuze maakt, en waarom je hem maar één keer ziet
 
