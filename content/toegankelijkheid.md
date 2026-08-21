@@ -10,13 +10,14 @@ We schrijven dit op met de gemeten waarden erbij. Dat is eerlijker dan een algem
 
 ## Waar deze verklaring over gaat
 
-Deze verklaring gaat over **mijn.letsdog.nl**, de omgeving waarin je je lessen volgt, je hond beheert en je abonnement regelt.
+Deze verklaring gaat over twee plekken, en die zijn allebei doorgemeten:
 
-**Deze website — letsdog.nl — is nog niet op hetzelfde niveau doorgemeten.** Dat werk loopt. Zodra het klaar is groeit deze pagina mee en krijgt de tabel hieronder ook de regels van de website erbij.
+- **mijn.letsdog.nl** — de omgeving waarin je je lessen volgt, je hond beheert en je abonnement regelt.
+- **letsdog.nl** — deze website, waar je ons leert kennen en een lidmaatschap afsluit.
 
-Eén punt van de website weten we nu al, omdat we het gemeten hebben. De website gebruikt hetzelfde merkgroen, dus witte tekst daarop komt ook hier uit op 3,86:1. In de app gaat dat cijfer over knoppen en navigatie, en die hebben aan 3:1 genoeg. Op de website staat er ook gewone tekst op dat groen, en daarvoor vraagt de norm 4,5:1 — dat halen we daar dus niet. Op vier plekken was die tekst bovendien nog extra gedimd, tot 2,74:1; dat is op 21 augustus 2026 rechtgezet naar 3,86:1. En anders dan de app heeft deze website geen donkere modus waarin dit vanzelf beter wordt.
+Ze delen dezelfde huisstijl, maar het zijn twee verschillende programma's die apart zijn gemeten. Daarom staan hieronder twee lijsten met tekortkomingen: één per plek. Waar een cijfer op allebei slaat, zeggen we dat erbij.
 
-Dat is niet het enige punt dat de website heeft. Het is het punt waarvan we nu al zeker weten dat het er is, omdat het over dezelfde kleur gaat als de tabel hieronder. De volledige lijst volgt zodra de doormeting klaar is.
+Nog niet doorgemeten is **keuzehulp.letsdog.nl**, de rassenkeuzehulp die je vanaf deze website kunt gebruiken. Die staat op de lijst.
 
 ## De norm die we aanhouden
 
@@ -31,12 +32,21 @@ Dat is niet het enige punt dat de website heeft. Het is het punt waarvan we nu a
 - **Koppen zijn echte koppen.** Een schermlezer kan daardoor van kop naar kop springen in plaats van de hele pagina door te lopen.
 - **Invoervelden vertellen waarvoor ze dienen**, ook als het label alleen op het scherm staat.
 - **Knoppen zijn groot genoeg om aan te raken**, ook op een telefoon.
-- **Donkere modus**, die de kleuren omzet in plaats van ze alleen te dimmen.
 - **Tekst blijft leesbaar als je hem vergroot** in je browser of telefooninstellingen.
+- **Donkere modus** in de app, die de kleuren omzet in plaats van ze alleen te dimmen. Deze website heeft die niet — daar komen we hieronder op terug.
+
+Voor deze website hebben we die punten op 21 augustus 2026 stuk voor stuk nagemeten, op alle achttien pagina's en op drie schermbreedtes. Wat daaruit kwam:
+
+- **Geen enkel invoerveld zonder naam, geen kop in de verkeerde volgorde, geen link zonder tekst, geen afbeelding zonder alternatief.** Op de hele website was contrast het enige punt dat overbleef.
+- **Elke plek waar je met de tabtoets komt, is zichtbaar gemarkeerd** en heeft een naam die een schermlezer voorleest.
+- **Op een scherm van 320 pixels breed hoef je nergens zijwaarts te scrollen** om een pagina te lezen. Op de twee pagina's met een brede tabel schuift alleen die tabel, in zijn eigen kader, en dat kader is ook met het toetsenbord te bedienen.
+- **Tekst op 200% vergroten kapt nergens iets af.**
 
 ## Waar we de norm nog niet halen
 
 De norm vraagt voor gewone tekst een contrast van 4,5:1 en voor iconen en bedieningselementen 3:1. Dit zijn de plekken waar we daar onder zitten. Bij elke plek staat of het een keuze is of werk dat nog moet gebeuren.
+
+### In de app (mijn.letsdog.nl)
 
 | Waar | Gemeten | Waarom het zo is |
 |---|---|---|
@@ -48,13 +58,28 @@ De norm vraagt voor gewone tekst een contrast van 4,5:1 en voor iconen en bedien
 
 Verder halen een paar iconen (het doel-icoontje in een les, sommige chevrons en laadindicatoren) de strengere drempel van 4,5:1 niet, maar wel de 3:1 die de norm voor iconen vraagt. Ze staan op onze eigen controlelijst omdat we alles tegen de strengste drempel meten.
 
+### Op deze website (letsdog.nl)
+
+| Waar | Gemeten | Waarom het zo is |
+|---|---|---|
+| **De accentkleur perzik als tekst.** Het bedrag **€59** op de prijzenpagina en op de homepage, de gekleurde woorden in een paar koppen, en de nummers bij de veelgestelde vragen. | 1,58 tot 1,91:1 | Dit is de laagste waarde op deze website en hij is niet opgelost. Perzik werkt wél als vlak: donkere tekst óp perzik haalt 9,60:1, en zo zijn onze knoppen gemaakt. Als losse letters haalt de kleur de norm niet, ook niet de soepeler drempel van 3:1 die voor grote tekst geldt. Wij hebben ervoor gekozen de kleur te houden en het hier te melden in plaats van het weg te laten. |
+| **De Login-knop op een telefoon.** Rechtsboven in de balk, over de foto van de pagina heen. | 1,35 tot 3,06:1 | Dit staat op onze lijst om te repareren. De waarde verschilt per pagina omdat de knop doorschijnend is en dus leent van de foto eronder; boven een lichte foto is hij het slechtst. Je kunt overal ook via de menuknop inloggen. |
+| **Merkgroen als tekstkleur.** De kleine kopjes boven een sectie, de links in onze juridische pagina's — waaronder het e-mailadres onderaan deze pagina — en de voetregels van kaarten. | 3,18 tot 3,85:1 | Een bewuste keuze: dezelfde merkkleur als hierboven, nu als letters op een lichte achtergrond. Voor knoppen en andere bedieningselementen is 3:1 genoeg en dat halen we; voor lopende tekst vraagt de norm 4,5:1 en dat halen we niet. |
+| **Witte tekst op ons merkgroen.** De knoppen, de groene kopbanden en de prijzensectie — en op deze website staat er ook lopende tekst op dat groen. | 3,86:1 | Dezelfde bewuste keuze als in de app. Eén verschil dat we niet willen verzwijgen: **deze website heeft geen donkere modus**, dus de oplossing van 9,56:1 die daar in de app tegenover staat, bestaat hier niet. |
+| **Lichtgroene tekst op merkgroen.** Eén regel op de partnerspagina. | 3,19:1 | Een bewuste keuze binnen dezelfde kleurenfamilie. |
+
+Op de homepage staat achter elke fasekaart een groot, licht volgnummer. Dat halen we bewust niet donkerder: het is versiering die de volgorde van de kaarten herhaalt, het staat er ook als gewone kop, en het is voor schermlezers verborgen zodat het je voorlezing niet in de weg zit.
+
+**Wat er op 21 augustus 2026 aan deze website is gerepareerd**, zodat je weet wat er beweegt: op vier plekken was witte tekst op groen extra gedimd tot 2,74:1, op de menubalk zat tekst op 3,73:1 en in de voettekst op 3,64:1, en de gedempte grijstint in kaarten en formulierhints stond op 2,85 tot 3,45:1. Die staan nu allemaal op of boven de waarde die hierboven als keuze is opgeschreven. In totaal daalde het aantal plekken onder de norm die dag met ruim 40 procent.
+
 ## Waar we aan werken
 
-- De grijze hint in invoervelden krijgt een donkerdere tint.
-- De focusring wordt op elk bedieningselement even zichtbaar, ook op een telefoon en ook in onderdelen die zijwaarts schuiven.
-- Zoekvelden krijgen een naam die je schermlezer voorleest.
+- De Login-knop op een telefoon krijgt een dichter achtergrondvlak, zodat zijn leesbaarheid niet meer afhangt van de foto eronder.
+- De grijze hint in invoervelden van de app krijgt een donkerdere tint.
+- De focusring wordt in de app op elk bedieningselement even zichtbaar, ook op een telefoon en ook in onderdelen die zijwaarts schuiven.
+- Zoekvelden in de app krijgen een naam die je schermlezer voorleest.
 - We schrijven op wat er in donkere modus nog afwijkt en repareren wat geen merkkeuze raakt.
-- We meten deze website (letsdog.nl) op hetzelfde niveau door en zetten de uitkomst in de tabel hierboven.
+- We meten keuzehulp.letsdog.nl op hetzelfde niveau door en zetten de uitkomst hierboven.
 
 ## Loop je ergens tegenaan?
 
@@ -68,4 +93,4 @@ Kom je er met ons niet uit, dan kun je een klacht indienen bij de Autoriteit Con
 
 Deze verklaring gaat over de diensten van Let's dog B.V., Amsterdamsestraatweg 5, 1411 AW Naarden, KvK 98271814.
 
-Opgesteld op 21 augustus 2026. De metingen van mijn.letsdog.nl komen uit onze eigen contrastcontrole, die bij elke wijziging aan het ontwerp automatisch draait. We werken deze pagina bij zodra een van de punten hierboven verandert.
+Opgesteld op 21 augustus 2026 en diezelfde dag uitgebreid met de metingen van deze website. De waarden voor mijn.letsdog.nl komen uit onze eigen contrastcontrole, die bij elke wijziging aan het ontwerp automatisch draait. De waarden voor letsdog.nl komen uit een controle van alle achttien pagina's op drie schermbreedtes, met een standaard toegankelijkheidscontrole aangevuld met eigen metingen op de gerenderde pagina. We werken deze pagina bij zodra een van de punten hierboven verandert.
