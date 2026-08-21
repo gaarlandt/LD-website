@@ -113,7 +113,7 @@ export function Navbar() {
             <li key={link.href}>
               <Link
                 href={link.href}
-                className="relative text-[15px] text-[var(--ld-text)]/80 hover:text-[var(--ld-text)] transition-colors duration-200 font-medium after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-[var(--ld-green)] after:transition-all after:duration-300 hover:after:w-full"
+                className="relative text-[15px] text-[var(--ld-text)] transition-colors duration-200 font-medium after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-[var(--ld-green)] after:transition-all after:duration-300 hover:after:w-full"
               >
                 {link.label}
               </Link>

@@ -109,7 +109,7 @@ export function PuppyAgendaTeaser() {
               <div className="w-11 h-11 rounded-xl bg-[var(--ld-beige)] flex items-center justify-center">
                 <PhaseIcon size={20} className="text-[var(--ld-green)]" />
               </div>
-              <span className="font-heading font-bold text-lg text-[var(--ld-text)]/15">{number}</span>
+              <span aria-hidden="true" className="font-heading font-bold text-lg text-[var(--ld-text)]/15">{number}</span>
             </div>
             <h3 className="font-heading font-bold text-lg text-[var(--ld-text)] mb-1 leading-snug">{title}</h3>
             <p className="text-[var(--ld-text-muted)] text-[14px] leading-relaxed flex-grow pb-4 mb-4 border-b border-[var(--ld-border)]">
