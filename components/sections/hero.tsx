@@ -54,7 +54,7 @@ export function Hero() {
           </h1>
 
           {/* Subtext — empathie eerst */}
-          <p className="text-lg lg:text-2xl text-[var(--ld-on-green)]/85 leading-relaxed mb-12 max-w-xl">
+          <p className="text-lg lg:text-2xl text-[var(--ld-on-green)] leading-relaxed mb-12 max-w-xl">
             Een puppy in huis. Geweldig, maar zonder de juiste begeleiding en training gooit hij zo het hele huishouden overhoop. In onze online puppycursus leer je alle basiscommando&apos;s en krijg je antwoord op al jouw puppyvragen.
           </p>
 
@@ -86,7 +86,7 @@ export function Hero() {
                 )
               )}
             </div>
-            <p className="text-sm text-[var(--ld-on-green)]/70">
+            <p className="text-sm text-[var(--ld-on-green)]">
               Al meer dan <strong className="text-[var(--ld-on-green)]">500 puppy&apos;s</strong> op weg geholpen
             </p>
           </div>
