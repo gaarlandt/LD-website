@@ -170,7 +170,7 @@ Wij delen persoonsgegevens alleen als dat nodig is voor de werking van de dienst
 - support- en communicatieleveranciers;
 - ons e-mailplatform, dat de berichten rond je account, je abonnement en je voortgang verstuurt;
 - AI- of automatiseringsleveranciers voor zover Let's dog AI-functionaliteit aanbiedt;
-- advertentie- en analyseplatforms die wij informeren over een geslaagde aankoop, uitsluitend voor conversie- en effectmeting. Dit gebeurt alleen nadat je daarvoor toestemming hebt gegeven. Naar Meta sturen wij daarbij je e-mailadres in versleutelde vorm; naar Google sturen wij geen e-mailadres en geen advertentie-klikgegevens;
+- advertentie- en analyseplatforms die wij informeren over het starten van een proefperiode en over een geslaagde aankoop, uitsluitend voor conversie- en effectmeting. Een proefperiode melden wij pas nadat de betaling is goedgekeurd door je bank of je kaartverstrekker, niet al bij het invullen van het formulier. Aan Google melden wij daarnaast een verlenging en een terugbetaling. Dit alles gebeurt alleen nadat je daarvoor toestemming hebt gegeven. Naar Meta sturen wij daarbij je e-mailadres in versleutelde vorm; naar Google sturen wij geen e-mailadres en geen advertentie-klikgegevens;
 - bevoegde instanties indien wij daartoe wettelijk verplicht zijn.
 
 Wij verkopen geen persoonsgegevens aan derden. Wij delen User ID, naam, telefoonnummer of e-mailadres niet met derden om gebruikers te tracken en wij delen deze gegevens niet met databrokers. Leveranciers mogen persoonsgegevens alleen verwerken voor de afgesproken dienst, zoals werking, beveiliging, support, foutanalyse, betaling, fulfilment of verbetering van de app en webomgeving.
@@ -187,7 +187,7 @@ Voor verbetering van AI-functionaliteit gebruikt Let's dog bij voorkeur geanonim
 
 Indien persoonsgegevens buiten de Europese Economische Ruimte worden verwerkt, zorgen wij voor passende waarborgen, zoals standaardcontractbepalingen, aanvullende beveiligingsmaatregelen of vergelijkbare beschermingsmaatregelen.
 
-Concreet gaat het om doorgifte naar de Verenigde Staten. Dat gebeurt op twee plaatsen. Ten eerste bij de conversiemeting die in hoofdstuk 7 is beschreven: nadat je daarvoor toestemming hebt gegeven, informeren wij Meta Platforms en Google over een geslaagde aankoop. Ten tweede bij ons e-mailplatform Loops (Astrodon, Inc.), dat de mail rond je account en je abonnement verstuurt en daarvoor je e-mailadres, je naam, gegevens over je abonnement en gegevens over je hond en je voortgang verwerkt. Voor beide doorgiften baseren wij ons op standaardcontractbepalingen en, waar de partij daarvoor gecertificeerd is, op het EU-US Data Privacy Framework. Onze gebruiksmeting (PostHog) en onze hostingpartij draaien op Europese servers.
+Concreet gaat het om doorgifte naar de Verenigde Staten. Dat gebeurt op twee plaatsen. Ten eerste bij de conversiemeting die in hoofdstuk 7 is beschreven: nadat je daarvoor toestemming hebt gegeven, informeren wij Meta Platforms en Google over het starten van een proefperiode en over een geslaagde aankoop. Ten tweede bij ons e-mailplatform Loops (Astrodon, Inc.), dat de mail rond je account en je abonnement verstuurt en daarvoor je e-mailadres, je naam, gegevens over je abonnement en gegevens over je hond en je voortgang verwerkt. Voor beide doorgiften baseren wij ons op standaardcontractbepalingen en, waar de partij daarvoor gecertificeerd is, op het EU-US Data Privacy Framework. Onze gebruiksmeting (PostHog) en onze hostingpartij draaien op Europese servers.
 
 ## 10. Bewaartermijnen
 
