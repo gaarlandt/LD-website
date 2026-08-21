@@ -29,7 +29,7 @@ export function Pricing() {
             <br />
             met Let&apos;s dog
           </h2>
-          <p className="text-[var(--ld-on-green)]/75 text-lg max-w-2xl mx-auto leading-relaxed">
+          <p className="text-[var(--ld-on-green)] text-lg max-w-2xl mx-auto leading-relaxed">
             Krijg direct toegang tot de volledige puppycursus, praktische video&apos;s, audiolessen en checklists. Alles stap voor stap, zodat je weet wat je pup nodig heeft in elke fase.
           </p>
         </div>
@@ -40,7 +40,7 @@ export function Pricing() {
         {/* Trust bar */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-14 max-w-2xl mx-auto">
           {trustItems.map(({ icon: Icon, label }) => (
-            <div key={label} className="flex items-center justify-center gap-3 text-[var(--ld-on-green)]/85">
+            <div key={label} className="flex items-center justify-center gap-3 text-[var(--ld-on-green)]">
               <span className="w-9 h-9 rounded-full bg-[var(--ld-on-green)]/15 flex items-center justify-center flex-shrink-0">
                 <Icon size={16} />
               </span>
