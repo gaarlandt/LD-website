@@ -71,11 +71,24 @@ export function LegalPageLayout({ data, content, children }: LegalPageLayoutProp
                   {children}
                 </code>
               ),
+              // The card keeps its padding fixed; only the table scrolls inside it.
+              // Below ~320px a three-column prose table cannot compress further, so
+              // without this the whole PAGE scrolls sideways — a WCAG 1.4.10 failure
+              // measured on /cookieverklaring/ (553px wide at a 320px viewport) and
+              // /toegankelijkheid/ (369px). 1.4.10 explicitly exempts content that
+              // needs two-dimensional layout, and a data table is the canonical case,
+              // so scrolling the table in its own box is the sanctioned answer rather
+              // than a dodge. `min-w` stops the other failure mode: at 375px the third
+              // column had squeezed to 75px, about two words per line. `tabIndex` is
+              // required, not decorative — a scrollable region that only a mouse can
+              // reach fails 2.1.1.
               table: ({ children }) => (
                 <div className="bg-[var(--ld-beige)] rounded-[var(--ld-r-md)] p-6 my-4">
-                  <table className="w-full text-[15px] border-collapse">
-                    {children}
-                  </table>
+                  <div className="overflow-x-auto" tabIndex={0}>
+                    <table className="w-full min-w-[32rem] text-[15px] border-collapse">
+                      {children}
+                    </table>
+                  </div>
                 </div>
               ),
               thead: ({ children }) => <thead>{children}</thead>,
