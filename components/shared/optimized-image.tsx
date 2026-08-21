@@ -11,7 +11,7 @@ import { asset } from "@/lib/utils";
 //
 // `src` is the RAW path, e.g. "/images/hero.jpeg" (asset() is applied here).
 
-const VARIANT_WIDTHS = [384, 512, 768, 1280];
+const VARIANT_WIDTHS = [64, 128, 384, 512, 768, 1280];
 
 type OptimizedImageProps = {
   src: string;
