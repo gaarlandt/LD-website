@@ -13,7 +13,7 @@ export function PaClosingCta() {
           <h2 className="font-heading text-[clamp(28px,3.2vw,40px)] font-bold leading-[1.1] tracking-tight text-white">
             Begin vandaag met je puppyagenda
           </h2>
-          <p className="mt-3.5 text-[18px] leading-[1.6] text-white/90">
+          <p className="mt-3.5 text-[18px] leading-[1.6] text-white">
             Week voor week weet je precies wat je met je pup doet. Kies het abonnement dat bij je past en begin
             direct.
           </p>
