@@ -160,7 +160,7 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="border-t border-[var(--ld-on-forest)]/10 pt-6">
-          <p className="text-xs text-[var(--ld-on-forest)]/40">
+          <p className="text-xs text-[var(--ld-on-forest)]/60">
             © {new Date().getFullYear()}{" "}Let&apos;s dog. Alle rechten voorbehouden.
           </p>
         </div>
