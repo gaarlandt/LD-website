@@ -24,7 +24,7 @@ export function PartnersWays() {
           <h3 className="font-heading font-bold text-2xl mb-3 leading-snug">
             Deel je eigen code
           </h3>
-          <p className="text-[17px] leading-relaxed opacity-95">
+          <p className="text-[17px] leading-relaxed">
             Jij hebt een community die je vertrouwt. Deel je persoonlijke
             Let&apos;s dog-code, inspireer je volgers en verdien mee voor
             iedereen die aanhaakt. En help zoveel mogelijk honden een mooi leven te krijgen!
