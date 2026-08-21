@@ -77,7 +77,7 @@ export const tiers: Tier[] = [
       "Weekplan op de leeftijd van je pup",
       "Early Member status",
     ],
-    ctaLabel: "Claim Early Member Prijs",
+    ctaLabel: "Start Early Member Jaar",
     ctaHref: "https://mijn.letsdog.nl/checkout?plan=yearly",
     footerNote: "Pas na 7 dagen betalen · eerste jaar €59",
     highlighted: true,
