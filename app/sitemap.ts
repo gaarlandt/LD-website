@@ -28,6 +28,7 @@ const ROUTES = [
   "/modelformulier-herroeping/",
   "/veiligheidsdisclaimer/",
   "/ip-overdrachtsverklaring/",
+  "/toegankelijkheid/",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
