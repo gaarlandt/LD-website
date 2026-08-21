@@ -17,7 +17,7 @@ const SRC_DIR = path.join(ROOT, "public", "images");
 const OUT_DIR = path.join(SRC_DIR, "optimized");
 mkdirSync(OUT_DIR, { recursive: true });
 
-const WIDTHS = [384, 512, 768, 1280];
+const WIDTHS = [64, 128, 384, 512, 768, 1280];
 const FORMATS = [
   ["avif", { quality: 50 }],
   ["webp", { quality: 78 }],
