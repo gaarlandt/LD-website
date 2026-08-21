@@ -28,6 +28,7 @@ const beleidLinks = [
   { href: "/retour", label: "Retour- en herroepingsbeleid" },
   { href: "/modelformulier-herroeping", label: "Modelformulier herroeping" },
   { href: "/veiligheidsdisclaimer", label: "Veiligheidsdisclaimer" },
+  { href: "/toegankelijkheid", label: "Toegankelijkheid" },
 ];
 
 export function Footer() {
