@@ -1,7 +1,7 @@
 ---
 title: Cookieverklaring
 description: Welke cookies Let's dog gebruikt op letsdog.nl en mijn.letsdog.nl, waarom, en hoe je je keuze op elk moment weer omzet.
-lead: Laatst bijgewerkt op 18 augustus 2026.
+lead: Laatst bijgewerkt op 24 augustus 2026.
 ---
 
 Deze verklaring legt uit welke cookies en vergelijkbare technieken Let's dog gebruikt, waarom, en hoe je je keuze op elk moment weer omzet. Hij hoort bij het [Privacybeleid](/privacybeleid).
@@ -63,7 +63,11 @@ Hiermee zien we welke advertentie of pagina je naar ons bracht, zodat we ons gel
 | `_fbp`, `_fbc` | Meta (Facebook en Instagram) | Herkennen dat een advertentieklik tot een aanmelding leidde | 90 dagen |
 | Klik-id `fbclid` in `ld_attribution` | Let's dog, voor Meta | Onthouden dat je via een Meta-advertentie binnenkwam | 90 dagen |
 
+**De campagnegegevens reizen sinds 24 augustus 2026 langs twee wegen, en dat verandert niets aan wat we bewaren.** Klik je op een advertentie die op letsdog.nl landt en ga je daarna door naar de omgeving waar je afrekent, dan zetten we de campagnenamen uit de advertentielink ook achter de link waarmee je daarheen gaat. Dat is nodig omdat we ze anders kwijt zijn bij iedereen die het cookievenster niet beantwoordt: zonder een antwoord mogen we niets opslaan, en dan is er ook geen cookie om ze in mee te geven. In de link staan is geen opslag, en ook op die tweede pagina wordt er pas iets bewaard nadat je daar ja hebt gezegd. Zeg je nee, dan gaan ze niet mee.
+
 **Let op waar de grens ligt, want die loopt niet waar je hem verwacht.** Van de campagnegegevens hierboven hangt alleen het Meta-klik-id aan je marketing-keuze. Waar je vandaan kwam volgens de `utm_`-velden en het Google-klik-id `gclid` hoort bij statistiek, en staat daarom in de tabel hierboven. Zeg je nee tegen marketing maar ja tegen statistiek, dan bewaren we dus nog wel via welke campagne je binnenkwam, maar niet het Meta-klik-id.
+
+**Naast je e-mailadres gaat ook je IP-adres en je browsergegevens mee.** Sinds 23 augustus 2026 sturen we die twee mee met de meldingen die van onze server naar Meta gaan: wanneer je je e-mailadres achterlaat in de keuzehulp, wanneer je een proefperiode start en wanneer een betaling rondkomt. Meta gebruikt ze om de melding aan de juiste advertentieklik te koppelen; zonder die gegevens komt een deel van de meldingen bij niemand terecht. Het gaat om het IP-adres waarmee jij op dat moment op onze site was en om de naam en versie van je browser, precies wat elke website sowieso te zien krijgt als je hem opent. Ook dit gebeurt alleen als je marketing hebt toegestaan.
 
 Die Meta-gegevens gaan niet rechtstreeks naar Meta, maar eerst langs een doorgeefluik op onze eigen server (`capig.datah04.com`). Dat verandert niets aan wat er verstuurd wordt en aan wie; het staat hier omdat je die naam in je browser kunt tegenkomen en je dan moet kunnen opzoeken van wie hij is.
 
