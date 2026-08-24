@@ -13,6 +13,11 @@ export function RassenkeuzeEmbed() {
   const [src, setSrc] = useState<string | null>(null);
 
   useEffect(() => {
+    // Deliberate, and the comment on `src` above says why: on a static export the
+    // query string only exists client-side, and both the server HTML and the first
+    // client render must show the placeholder or hydration mismatches. Setting it
+    // after mount IS the fix for that, not a cascade to avoid.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSrc(buildEmbedUrl(window.location.search));
   }, []);
 

@@ -222,8 +222,16 @@ function validateAttributionExpectation(where: string, raw: unknown): Attributio
  * over-sized record is precisely the switch that turns that erasure path off.
  * Both repos answer it with `buildAttributionCookie(...).fits`.
  */
-function attributionVerdict(raw: string): AttributionExpectation {
-  stubDomainCookieJar([{ name: ATTRIBUTION_COOKIE_NAME, value: raw, domain: ".letsdog.nl" }]);
+function attributionVerdict(raw: string | null): AttributionExpectation {
+  // `null` = no cookie of this name at all, so the jar gets no entry — the same
+  // rule `consentVerdict` follows, and for the same reason: a vector is bytes,
+  // and "no cookie" has none. No attribution vector uses it today (measured
+  // 2026-08-24: 0 of 18 in the hub file), but the vectors are SHARED with the
+  // platform repo, whose adapter has taken `string | null` all along. Narrowing
+  // it here is what made this file the odd one out and the gate permanently red.
+  stubDomainCookieJar(
+    raw === null ? [] : [{ name: ATTRIBUTION_COOKIE_NAME, value: raw, domain: ".letsdog.nl" }],
+  );
   try {
     const stored = readAttributionCookie();
     if (stored === null) return { recordExists: false };
@@ -342,7 +350,7 @@ describe("ld_attribution — shared contract vectors", () => {
 
 function runVectors<Expectation>(
   vectors: Vector<Expectation>[],
-  verdict: (raw: string) => Expectation,
+  verdict: (raw: string | null) => Expectation,
 ) {
   it.each(vectors.map((vector) => [vector.name, vector] as const))("%s", (_name, vector) => {
     const mismatch = describeMismatch(vector.expect, verdict(vector.raw));
@@ -370,7 +378,7 @@ function runVectors<Expectation>(
  */
 function assertEveryCorruptionIsCaught<Expectation>(
   vectors: Vector<Expectation>[],
-  verdict: (raw: string) => Expectation,
+  verdict: (raw: string | null) => Expectation,
   corrupt: (expectation: Expectation) => { label: string; expect: Expectation }[],
 ) {
   let checked = 0;

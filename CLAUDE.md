@@ -42,7 +42,11 @@ Marketing website for Let's Dog, a puppy training platform. Built as a static Ne
 ```bash
 npm run dev             # Start dev server (Turbopack)
 npm run build           # Static export to ./out
-npm run lint            # ESLint (no config committed yet — pre-existing, don't block on it)
+npm run lint            # ESLint 9 flat config (eslint.config.mjs). --max-warnings=0: an
+                        # unused eslint-disable is a WARNING, and that is how a stale
+                        # suppression announces itself instead of rotting.
+npm run typecheck:test  # tsc over the test surface (tsconfig.test.json). NOT run by
+                        # `next build` — see Testing below for why they are separate.
 npm test                # Vitest unit tests (Node env; contact Function + pure helpers)
 npm run optimize:images # Regenerate AVIF/WebP variants after adding/changing a photo
 npm run assets          # optimize:images + regenerate favicons + og image
@@ -173,7 +177,7 @@ Defined in `components/layout/navbar.tsx` (desktop + mobile) and `components/lay
 
 ## Deployment
 
-**Cloudflare Pages, Git-integrated. There is no `.github/workflows/` directory and no GitHub Actions at all — Cloudflare handles deploys directly from GitHub pushes.** The old Firebase deploy workflows were removed at the Cloudflare migration (May 2026). Consequence worth knowing when CI looks stuck: the **only** check on a PR here is "Cloudflare Pages", so a GitHub Actions outage cannot affect this repo. The GitHub dependency is the push webhook that tells Cloudflare to build — if that fails the check sits `pending` rather than failing, which looks identical to "still building". (Verified 2026-08-07: `gh run list` shows nothing since 2026-05-28.)
+**Cloudflare Pages, Git-integrated — Cloudflare handles DEPLOYS directly from GitHub pushes, and no GitHub Actions workflow deploys anything.** The old Firebase deploy workflows were removed at the Cloudflare migration (May 2026). **Since 2026-08-24 there is one Actions workflow again** (`.github/workflows/gates.yml`), but it only runs lint/typecheck/test — it never builds and never deploys, so an Actions outage still cannot stop a deploy. That means a PR now carries **two** checks: "Cloudflare Pages" (the build + preview) and "gates". The GitHub dependency for deploys is unchanged: the push webhook tells Cloudflare to build, and if that fails the check sits `pending` rather than failing, which looks identical to "still building". (This paragraph said "no GitHub Actions at all" until 2026-08-24; it was true when written and the gates workflow made it false.)
 
 - **Production**: Merge to `main` → Cloudflare auto-builds + deploys → live on `website-letsdog.pages.dev`, custom domains `www.letsdog.nl` + `letsdog.nl` (after Phase 5 cutover, see `docs/CUTOVER.md`)
 - **Preview**: Push to any non-main branch → Cloudflare auto-builds → preview URL at `<branch-slug>.website-letsdog.pages.dev`
@@ -230,6 +234,36 @@ Brought up to [The Website Specification](https://specification.website) on 2026
 **Convention — post-cutover checklist discipline:** after any change touching SEO / security / headers / canonical, update the "Spec compliance — post-cutover" checklist in `docs/CUTOVER.md`.
 
 ## Feature Development Workflow
+
+**Three gates are green before a merge, and CI now says so.** `.github/workflows/gates.yml`
+runs `lint`, `typecheck:test` and `test` on every PR and on every push to `main`. It does NOT run
+`next build` — Cloudflare Pages already builds every push and every PR preview, so repeating it
+would buy nothing. The three it does run are precisely the ones the Pages build never looks at.
+
+Why this exists rather than being obvious: **both of these gates were dead on `main` and nobody
+noticed, for the two opposite reasons a gate can die.** `typecheck:test` was permanently RED from
+2026-08-19 to 2026-08-24 (two TS2345 in `lib/contract-fixtures.test.ts`), and a gate that is always
+red cannot report anything new. `lint` had never run at ALL — the repo moved to ESLint 9 without an
+`eslint.config.*`, so `npm run lint` exited 2 on a config error, and the line in this very file said
+"no config committed yet — pre-existing, don't block on it". A gate nobody runs and a gate that is
+always red are the same gate: one that cannot say no. Run them locally before you push; CI is the
+backstop, not the first time you find out.
+
+**Run the gates against the tree the lockfile pins, not the one you happen to have.** This bit
+on the very PR that added CI: `npm run lint` was green locally and red in CI, and the diff was
+not the code but `node_modules` — locally `eslint-plugin-react-hooks` had drifted to **7.1.1**
+while the lockfile pins **7.0.1**. The newer plugin raises `react-hooks/set-state-in-effect` on
+the two Turnstile modals; the pinned one does not. Everything downstream of that was wrong in
+both directions: two suppressions written for findings CI cannot see, which `--max-warnings=0`
+then failed on as *unused*. `npm run verify:lockfile` does not catch this — it asks whether
+`npm ci` would ACCEPT the lockfile, not whether your installed tree MATCHES it. Before you trust
+a local gate result, `npm ci` (under Node 20). A finding measured on a drifted tree is a property
+of your laptop, not of the code.
+
+Actions minutes are free here because `gaarlandt/LD-website` is a **public** repo. The
+CI-zuinigheid rule in the platform loop is about a private repo on the free plan; it does not
+apply to this one.
+
 Use the `/new-feature` skill for all new features. This handles branch creation, implementation, and PR workflow. The branch will get a preview build at `<branch-slug>.website-letsdog.pages.dev` — verify there before merging.
 
 **Merge with a merge commit, not squash (decided 2026-05-31, codified 2026-08-03 as T-7).**
@@ -258,6 +292,13 @@ This project uses the **compound-engineering** harness (`harness: compound-engin
 | About to open a PR, want a second look | `/ce-code-review` (recommended on diffs ≥50 lines OR touching `components/analytics/**`, auth, or payments paths) |
 | Just solved a non-trivial problem worth saving | `/ce-compound` (writes to `docs/solutions/`) |
 | Want to find documented past solutions before starting | grep `docs/solutions/` by `tags:` or `module:` in YAML frontmatter |
+
+**Cross-model peer: codex, and he is READ-ONLY.** `.compound-engineering/config.yaml` pins
+`cross_model_peer: codex`, so `/ce-code-review` and `/ce-doc-review` always take the same
+non-Anthropic second reader instead of "first available". He runs on Jur's ChatGPT subscription
+(CLI inside ChatGPT.app). **He reads and advises; Claude makes the changes** — the read-only guard
+lives globally at `~/.claude/hooks/guard-codex-readonly.sh` and therefore already covers this repo.
+Manual run: `codex-review --base main`. Carried over from the platform repo (D-112) on 2026-08-24.
 
 **Knowledge store**: `docs/solutions/` contains learnings from past sessions, organized by category. Check it before debugging something that smells familiar, or before deciding architecture in a documented area. Each file has YAML frontmatter (`title`, `tags`, `module`, `problem_type`) that makes it searchable.
 

@@ -14,15 +14,18 @@ import {
 import { faqCategories } from "./faq-data";
 
 export function FaqContent() {
-  // Filter empty categories, then compute the starting global index for each
-  let _offset = 0;
-  const categoriesWithOffsets = faqCategories
-    .filter((c) => c.faqs.length > 0)
-    .map((cat) => {
-      const start = _offset;
-      _offset += cat.faqs.length;
-      return { ...cat, start };
-    });
+  // Filter empty categories, then compute the starting global index for each.
+  // Each `start` is derived from the categories BEFORE it rather than from a
+  // running `let` the map mutates: reassigning across a render is what
+  // react-hooks/immutability flags, and the list is a handful of categories, so
+  // recomputing the prefix sum costs nothing measurable.
+  const visibleCategories = faqCategories.filter((c) => c.faqs.length > 0);
+  const categoriesWithOffsets = visibleCategories.map((cat, index) => ({
+    ...cat,
+    start: visibleCategories
+      .slice(0, index)
+      .reduce((total, previous) => total + previous.faqs.length, 0),
+  }));
 
   return (
     <>

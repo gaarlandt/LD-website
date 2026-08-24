@@ -1,0 +1,16 @@
+# Compound-engineering checkout-config (gelezen door /ce-code-review en /ce-doc-review).
+# Laag eronder: .compound-engineering/config.local.yaml (niet gecommit) wint van dit bestand.
+
+# Vaste cross-model peer voor de adversarial-pas. Codex draait op Jurs ChatGPT-abonnement
+# (CLI zit in ChatGPT.app; de skill vindt hem daar zelf) en is de enige niet-Anthropic
+# route die hier geauthenticeerd is. Zonder deze regel kiest de skill hem ook meestal,
+# maar dan als eerste-beschikbare in codex -> claude -> grok -> composer; nu is het vast.
+#
+# HIJ LEEST EN ADVISEERT; WIJZIGEN DOET CLAUDE. De read-only-guard staat globaal
+# (~/.claude/hooks/guard-codex-readonly.sh) en geldt dus ook hier, zonder dat deze repo
+# er iets voor hoeft te doen. Overgenomen uit de LDplatform-repo (D-112) op 2026-08-24.
+cross_model_peer: codex
+
+# Model en effort bewust NIET gepind: de skill draait codex op zijn gebenchmarkte keuze
+# (gpt-5.6-luna @ xhigh). Pinnen kan met cross_model_model / cross_model_effort; een
+# waarde die de route niet accepteert laat de pas hard falen, niet stilletjes terugvallen.
