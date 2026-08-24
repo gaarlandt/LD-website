@@ -85,13 +85,14 @@ export function CreatorFormModal({
   useEffect(() => {
     if (!formVisible) return;
     let cancelled = false;
-    // KNOWN FINDING, tracked as T-78 in the loop repo. Clearing a stale error when
+    // KNOWN FINDING, tracked as T-78 in the loop repo: clearing a stale error when
     // the dialog reopens is correct behaviour, but doing it synchronously in the
-    // effect body costs an extra render; moving it to the open handler changes WHEN
-    // the reset lands and needs a browser check on a live form, so it is registered
-    // rather than done blind here. When T-78 lands, ESLint reports this directive as
-    // unused and `--max-warnings=0` fails the gate — the suppression cannot rot.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // effect body costs an extra render. NOT suppressed, because on the toolchain
+    // this repo pins it is not reported: measured 2026-08-24, eslint-plugin-react-
+    // hooks 7.0.1 (the lockfile) stays silent here while 7.1.1 raises
+    // react-hooks/set-state-in-effect. Bumping the plugin turns this into a real
+    // lint error, and T-78 is the fix — moving the reset changes WHEN it lands, so
+    // it wants a browser check on a live form rather than a blind edit.
     setTurnstileError(false);
     loadTurnstile()
       .then(() => {

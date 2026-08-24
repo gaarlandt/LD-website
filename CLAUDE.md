@@ -249,6 +249,17 @@ red cannot report anything new. `lint` had never run at ALL — the repo moved t
 always red are the same gate: one that cannot say no. Run them locally before you push; CI is the
 backstop, not the first time you find out.
 
+**Run the gates against the tree the lockfile pins, not the one you happen to have.** This bit
+on the very PR that added CI: `npm run lint` was green locally and red in CI, and the diff was
+not the code but `node_modules` — locally `eslint-plugin-react-hooks` had drifted to **7.1.1**
+while the lockfile pins **7.0.1**. The newer plugin raises `react-hooks/set-state-in-effect` on
+the two Turnstile modals; the pinned one does not. Everything downstream of that was wrong in
+both directions: two suppressions written for findings CI cannot see, which `--max-warnings=0`
+then failed on as *unused*. `npm run verify:lockfile` does not catch this — it asks whether
+`npm ci` would ACCEPT the lockfile, not whether your installed tree MATCHES it. Before you trust
+a local gate result, `npm ci` (under Node 20). A finding measured on a drifted tree is a property
+of your laptop, not of the code.
+
 Actions minutes are free here because `gaarlandt/LD-website` is a **public** repo. The
 CI-zuinigheid rule in the platform loop is about a private repo on the free plan; it does not
 apply to this one.
