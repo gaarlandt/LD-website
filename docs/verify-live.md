@@ -2,8 +2,9 @@
 
 A deliberate, on-demand check that runs a real Chrome against the **deployed** site and
 measures the consent and attribution chain **at the objects**, not at the bundle. It is not CI:
-this repo has no GitHub Actions at all (Cloudflare Pages builds straight from pushes, and the
-only PR check is "Cloudflare Pages"). You run it on purpose and tick it off the ship checklist
+this repo runs no GitHub Actions that BUILD or DEPLOY (Cloudflare Pages builds straight from
+pushes; `.github/workflows/gates.yml` only runs lint/typecheck/test since 2026-08-24, so a PR
+carries two checks: "Cloudflare Pages" and "gates" — neither of which measures the LIVE site). You run it on purpose and tick it off the ship checklist
 below.
 
 ## Why it exists
