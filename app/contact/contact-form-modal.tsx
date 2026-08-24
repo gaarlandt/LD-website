@@ -113,6 +113,13 @@ export function ContactFormModal({
   useEffect(() => {
     if (!formVisible) return;
     let cancelled = false;
+    // KNOWN FINDING, tracked as T-78 in the loop repo. Clearing a stale error when
+    // the dialog reopens is correct behaviour, but doing it synchronously in the
+    // effect body costs an extra render; moving it to the open handler changes WHEN
+    // the reset lands and needs a browser check on a live form, so it is registered
+    // rather than done blind here. When T-78 lands, ESLint reports this directive as
+    // unused and `--max-warnings=0` fails the gate — the suppression cannot rot.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTurnstileError(false);
     loadTurnstile()
       .then(() => {

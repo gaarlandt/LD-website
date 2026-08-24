@@ -31,6 +31,17 @@ export default defineConfig({
     // failure that belonged to neither. The inflation is the worse half: a
     // sibling's green tests pad the count that a session reads as "my suite
     // passed".
-    exclude: [...configDefaults.exclude, "**/.claude/worktrees/**"],
+    // LD_SKIP_HUB_TESTS is for CI and ONLY for CI. lib/contract-fixtures.test.ts
+    // reads the shared vectors from the cross-knowledge hub, which is a PRIVATE
+    // repo; a GitHub runner checking out this PUBLIC repo cannot see it, and the
+    // loader throws rather than skips (deliberately — see findHubFixtures). So the
+    // contract vectors are measured LOCALLY and on pre-push, never in CI, and the
+    // CI step is named to say so. Setting this locally would buy you a green run
+    // that never asked the one question the file exists to ask.
+    exclude: [
+      ...configDefaults.exclude,
+      "**/.claude/worktrees/**",
+      ...(process.env.LD_SKIP_HUB_TESTS ? ["lib/contract-fixtures.test.ts"] : []),
+    ],
   },
 });

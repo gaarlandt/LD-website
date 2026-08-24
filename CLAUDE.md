@@ -42,7 +42,11 @@ Marketing website for Let's Dog, a puppy training platform. Built as a static Ne
 ```bash
 npm run dev             # Start dev server (Turbopack)
 npm run build           # Static export to ./out
-npm run lint            # ESLint (no config committed yet — pre-existing, don't block on it)
+npm run lint            # ESLint 9 flat config (eslint.config.mjs). --max-warnings=0: an
+                        # unused eslint-disable is a WARNING, and that is how a stale
+                        # suppression announces itself instead of rotting.
+npm run typecheck:test  # tsc over the test surface (tsconfig.test.json). NOT run by
+                        # `next build` — see Testing below for why they are separate.
 npm test                # Vitest unit tests (Node env; contact Function + pure helpers)
 npm run optimize:images # Regenerate AVIF/WebP variants after adding/changing a photo
 npm run assets          # optimize:images + regenerate favicons + og image
@@ -230,6 +234,25 @@ Brought up to [The Website Specification](https://specification.website) on 2026
 **Convention — post-cutover checklist discipline:** after any change touching SEO / security / headers / canonical, update the "Spec compliance — post-cutover" checklist in `docs/CUTOVER.md`.
 
 ## Feature Development Workflow
+
+**Three gates are green before a merge, and CI now says so.** `.github/workflows/gates.yml`
+runs `lint`, `typecheck:test` and `test` on every PR and on every push to `main`. It does NOT run
+`next build` — Cloudflare Pages already builds every push and every PR preview, so repeating it
+would buy nothing. The three it does run are precisely the ones the Pages build never looks at.
+
+Why this exists rather than being obvious: **both of these gates were dead on `main` and nobody
+noticed, for the two opposite reasons a gate can die.** `typecheck:test` was permanently RED from
+2026-08-19 to 2026-08-24 (two TS2345 in `lib/contract-fixtures.test.ts`), and a gate that is always
+red cannot report anything new. `lint` had never run at ALL — the repo moved to ESLint 9 without an
+`eslint.config.*`, so `npm run lint` exited 2 on a config error, and the line in this very file said
+"no config committed yet — pre-existing, don't block on it". A gate nobody runs and a gate that is
+always red are the same gate: one that cannot say no. Run them locally before you push; CI is the
+backstop, not the first time you find out.
+
+Actions minutes are free here because `gaarlandt/LD-website` is a **public** repo. The
+CI-zuinigheid rule in the platform loop is about a private repo on the free plan; it does not
+apply to this one.
+
 Use the `/new-feature` skill for all new features. This handles branch creation, implementation, and PR workflow. The branch will get a preview build at `<branch-slug>.website-letsdog.pages.dev` — verify there before merging.
 
 **Merge with a merge commit, not squash (decided 2026-05-31, codified 2026-08-03 as T-7).**
@@ -258,6 +281,13 @@ This project uses the **compound-engineering** harness (`harness: compound-engin
 | About to open a PR, want a second look | `/ce-code-review` (recommended on diffs ≥50 lines OR touching `components/analytics/**`, auth, or payments paths) |
 | Just solved a non-trivial problem worth saving | `/ce-compound` (writes to `docs/solutions/`) |
 | Want to find documented past solutions before starting | grep `docs/solutions/` by `tags:` or `module:` in YAML frontmatter |
+
+**Cross-model peer: codex, and he is READ-ONLY.** `.compound-engineering/config.yaml` pins
+`cross_model_peer: codex`, so `/ce-code-review` and `/ce-doc-review` always take the same
+non-Anthropic second reader instead of "first available". He runs on Jur's ChatGPT subscription
+(CLI inside ChatGPT.app). **He reads and advises; Claude makes the changes** — the read-only guard
+lives globally at `~/.claude/hooks/guard-codex-readonly.sh` and therefore already covers this repo.
+Manual run: `codex-review --base main`. Carried over from the platform repo (D-112) on 2026-08-24.
 
 **Knowledge store**: `docs/solutions/` contains learnings from past sessions, organized by category. Check it before debugging something that smells familiar, or before deciding architecture in a documented area. Each file has YAML frontmatter (`title`, `tags`, `module`, `problem_type`) that makes it searchable.
 

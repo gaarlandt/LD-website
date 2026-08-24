@@ -1,0 +1,64 @@
+# The three gates that Cloudflare Pages does NOT run.
+#
+# Pages builds every push and every PR, so `next build` is already gated by the
+# preview deploy — repeating it here would buy nothing. What the Pages build
+# never looks at is the lint config, the test-only TypeScript project, and the
+# test suite itself, and all three of those can rot unnoticed. Two of them had:
+# `typecheck:test` sat red on main from 2026-08-19 to 2026-08-24 (two TS2345 in
+# lib/contract-fixtures.test.ts), and `lint` had never run at all because the
+# repo moved to ESLint 9 without an eslint.config.* file. A gate nobody runs and
+# a gate that is permanently red are the same gate: one that cannot say no.
+#
+# Free of charge: gaarlandt/LD-website is a PUBLIC repo, and GitHub Actions
+# minutes are not billed for public repositories. The CI-zuinigheid rule in the
+# platform repo is about a private repo on the free plan and does not apply here.
+name: gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 20 because that is the major Cloudflare Pages builds with. Testing
+      # on a different major measures a runtime nobody deploys — the same reason
+      # scripts/verify-lockfile.mjs refuses to give a verdict off-major.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Each gate runs even if an earlier one failed: one red gate should not
+      # hide the state of the other two, or fixing them becomes a guessing game
+      # one push at a time.
+      - name: lint
+        if: '!cancelled()'
+        run: npm run lint
+
+      - name: typecheck:test
+        if: '!cancelled()'
+        run: npm run typecheck:test
+
+      # NAMED so the omission is visible in the checks list rather than buried.
+      # lib/contract-fixtures.test.ts reads the shared contract vectors from the
+      # cross-knowledge hub, and that hub is a PRIVATE repo while this one is
+      # PUBLIC — a runner cannot see it, and the loader throws rather than skips.
+      # Those vectors are measured locally and on pre-push. Giving CI hub access
+      # would mean a read token for a private repo inside a public repo's
+      # workflow, which is a decision for Jur and not a default (D-97).
+      #
+      # A NEW hub-dependent test file is NOT covered by this exclusion and will
+      # fail CI loudly. That is intended: it forces the question to be answered
+      # again rather than silently inheriting this one's answer.
+      - name: test (zonder de hub-contractvectoren — zie CLAUDE.md)
+        if: '!cancelled()'
+        env:
+          LD_SKIP_HUB_TESTS: "1"
+        run: npm test
