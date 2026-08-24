@@ -13,6 +13,7 @@ import { ConsentCookie } from "@/components/analytics/consent-cookie";
 import { ConsentSync } from "@/components/analytics/consent-sync";
 import { GA4 } from "@/components/analytics/ga4";
 import { AttributionCapture } from "@/components/analytics/attribution-capture";
+import { PlatformHandoverLinks } from "@/components/analytics/platform-handover-links";
 import { MetaPixel } from "@/components/analytics/meta-pixel";
 import { MetaPixelPageView } from "@/components/analytics/meta-pixel-pageview";
 import { CTATracker } from "@/components/analytics/cta-tracker";
@@ -110,6 +111,12 @@ export default function RootLayout({
           <ConsentCookie />
           <MetaPixel />
           <AttributionCapture />
+          {/* NA AttributionCapture en VOOR ConsentSync, en die volgorde is dezelfde
+              regel als hierboven: dit is ook een abonnee op de toestemming, dus
+              hij moet luisteren voordat ConsentSync een keuze kan veroorzaken.
+              Hij leest bovendien het record dat AttributionCapture net kan
+              hebben geschreven. */}
+          <PlatformHandoverLinks />
           <ConsentSync />
           <GA4 />
           <JsonLd data={siteGraph} />
