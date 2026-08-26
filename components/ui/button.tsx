@@ -8,6 +8,13 @@ import { cn } from '@/lib/utils';
  * Primary is INK, never green. On a green surface use variant="onGreen".
  * Accent-as-background (variant="peach", ink text) is allowed for the single
  * highest-emphasis CTA per screen — use sparingly, never for routine buttons.
+ *
+ * Eén vastgelegde uitzondering (2026-08-26, met Jur besloten op een gemeten mockup):
+ * de CTA in de navigatiebalk is óók peach, dus de homepage draagt er twee boven de
+ * vouw. De kop-CTA telt hier niet als "tweede CTA op het scherm" maar als de
+ * permanente snelkoppeling die op élke pagina meereist; de reden dat juist die knop
+ * peach moet zijn is meetbaar en niet esthetisch — de doorzichtige voorganger leende
+ * zijn contrast van de foto eronder (1,36–3,13:1, T-72), ink-op-peach is 9,6:1 vast.
  */
 const buttonVariants = cva('ld-btn', {
   variants: {

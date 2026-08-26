@@ -47,14 +47,19 @@ export function Hero() {
           </Eyebrow>
 
           {/* H1 */}
-          <h1 className="font-heading font-bold text-5xl md:text-7xl lg:text-[length:var(--ld-fs-80)] text-[var(--ld-on-green)] leading-[1.02] tracking-tight mb-10">
+          {/* text-4xl (i.p.v. 5xl) geldt alleen onder md. De winst zit niet in de punten
+              maar in het REGELAANTAL: 40,8px brak deze kop in vijf regels, 30,6px in drie,
+              en dat tilt de CTA 129px omhoog. Samen met de krappere marges hieronder staat
+              de knop op een iPhone 13 (vouw 659px) met 24px lucht in beeld; daarvoor stond
+              hij er 133px onder. Desktop is expliciet ongemoeid via de md:-varianten. */}
+          <h1 className="font-heading font-bold text-4xl md:text-7xl lg:text-[length:var(--ld-fs-80)] text-[var(--ld-on-green)] leading-[1.02] tracking-tight mb-6 md:mb-10">
             Train en leer samen.
             <br />
             <span className="text-[var(--ld-lime)]">Duidelijke video&apos;s, op jullie eigen tempo.</span>
           </h1>
 
           {/* Subtext — empathie eerst */}
-          <p className="text-lg lg:text-2xl text-[var(--ld-on-green)] leading-relaxed mb-12 max-w-xl">
+          <p className="text-lg lg:text-2xl text-[var(--ld-on-green)] leading-relaxed mb-8 md:mb-12 max-w-xl">
             Een puppy in huis. Geweldig, maar zonder de juiste begeleiding en training gooit hij zo het hele huishouden overhoop. In onze online puppycursus leer je alle basiscommando&apos;s en krijg je antwoord op al jouw puppyvragen.
           </p>
 

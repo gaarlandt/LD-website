@@ -2,6 +2,13 @@
 // (1200×630). Brand hero photo, cover-cropped, with a bottom legibility
 // gradient and the white Let's Dog wordmark. Re-run when the hero changes:
 //   node scripts/generate-og-image.mjs
+//
+// HERO_SRC MOET hetzelfde bestand zijn als `components/sections/hero.tsx`
+// rendert. Die koppeling is niet afdwingbaar vanuit een .mjs-script en is dan
+// ook al een keer stilletjes gebroken: de hero ging naar family.jpeg terwijl
+// dit script op hero.jpeg bleef staan, waardoor iedereen die de site deelde
+// maandenlang een foto kreeg die nergens meer op de site voorkwam. Verander je
+// de hero, verander dan deze regel en draai het script opnieuw.
 import sharp from "sharp";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
@@ -12,7 +19,8 @@ mkdirSync(OUT_DIR, { recursive: true });
 
 const W = 1200;
 const H = 630;
-const heroPath = path.join(ROOT, "public", "images", "hero.jpeg");
+const HERO_SRC = "family.jpeg"; // spiegelt components/sections/hero.tsx
+const heroPath = path.join(ROOT, "public", "images", HERO_SRC);
 const logoPath = path.join(ROOT, "public", "images", "logo-white.svg");
 const outPath = path.join(OUT_DIR, "og-default.jpg");
 
