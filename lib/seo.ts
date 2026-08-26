@@ -8,13 +8,15 @@ import type { Metadata } from "next";
 export const SITE_URL = "https://letsdog.nl";
 export const SITE_NAME = "Let's dog";
 
-// Default social-share image (1200×630). Lives in /public/og/. Wired into
+// Default social-share image (1200×630). Lives in /public/og/, gegenereerd door
+// scripts/generate-og-image.mjs uit de HERO-foto van de homepage. Wired into
 // every page's openGraph + twitter so shares never fall back to nothing.
+// De alt beschrijft de foto zelf (en volgt dus de hero) in plaats van de merkbelofte.
 export const OG_IMAGE = {
   url: "/og/og-default.jpg",
   width: 1200,
   height: 630,
-  alt: "Let's dog — puppytraining die werkt",
+  alt: "Gezin met hun puppy op een houten brug — Let's dog",
 };
 
 /**
