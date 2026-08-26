@@ -235,7 +235,7 @@ export default function OverOns() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="brand" pill asChild>
-              <Link href="/prijzen">Start vandaag</Link>
+              <Link href="/prijzen">Start gratis proef</Link>
             </Button>
             {/* Hidden while the offer is off — see lib/feature-flags.ts. Gated on
                 the URL as well as the flag: the old app.letsdog.nl link died at

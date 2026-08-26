@@ -26,10 +26,12 @@ export function Navbar() {
   // Only the homepage opens on the photo hero — every other page opens on a
   // plain beige section, where the default dark icon/logo already reads fine.
   const whiteHeader = pathname === "/" && !scrolled;
-  // "Start vandaag" wijst naar /prijzen. Staat de bezoeker daar al, dan doet de knop
+  // De verkoop-CTA wijst naar /prijzen. Staat de bezoeker daar al, dan doet de knop
   // zichtbaar niets — dat leverde klachten op. Weglaten in plaats van uitschakelen: een
   // disabled CTA in een navigatiebalk is nog verwarrender dan een die verdwijnt.
   // `trailingSlash: true` staat aan, dus beide vormen afvangen.
+  // Op mobiel is dit óók de schakelaar voor de ENE pil rechtsboven: overal de verkoop-CTA,
+  // op /prijzen de Login-pil. Het menu draagt Login dan niet nog eens — zie beide plekken.
   const opPrijzen = pathname === "/prijzen" || pathname === "/prijzen/";
 
   useEffect(() => {
@@ -134,8 +136,8 @@ export function Navbar() {
             </a>
           </Button>
           {!opPrijzen && (
-            <Button variant="brand" pill asChild>
-              <Link href="/prijzen">Start vandaag</Link>
+            <Button variant="peach" pill asChild>
+              <Link href="/prijzen">Start gratis proef</Link>
             </Button>
           )}
         </div>
@@ -156,23 +158,43 @@ export function Navbar() {
           {open ? <X size={24} aria-hidden="true" /> : <List size={24} aria-hidden="true" />}
         </button>
 
-        {/* Mobile spacer — absorbs the free space so the login pill pins right */}
+        {/* Mobile spacer — absorbs the free space so the header pill pins right */}
         <div className="order-3 flex-1 md:hidden" aria-hidden="true" />
 
-        {/* Mobile login pill — glass fill flips with scrolled, not whiteHeader: it
-            needs to render on every route, not just the homepage's photo hero. */}
-        <a
-          href="https://mijn.letsdog.nl"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`order-4 md:hidden inline-flex items-center justify-center rounded-full px-[15px] py-2 text-[12.5px] font-semibold transition-colors duration-200 ${
-            scrolled
-              ? "bg-[var(--ld-text)]/[0.07] text-[var(--ld-text)] border border-[var(--ld-text)]/[0.14]"
-              : "bg-black/[0.34] text-white border border-white/[0.18] backdrop-blur-[6px]"
-          }`}
-        >
-          Login
-        </a>
+        {/* Mobile header action — precies ÉÉN pil, en welke dat is hangt van de pagina af:
+            overal de verkoop-CTA, op /prijzen (waar die knop naar de huidige pagina zou
+            wijzen) de Login-pil. Het menu draagt Login dan niet nog eens.
+
+            De peach-vulling is DEKKEND en flipt daarom niet mee met `scrolled`. Dat is het
+            punt en geen slordigheid: de vorige doorzichtige pil leende zijn contrast van de
+            foto eronder en haalde daardoor 1,36 tot 3,13:1, gemeten over zeven pagina's
+            (T-72). Ink op peach is een vast getal — 9,6:1 — ongeacht wat erachter zit.
+
+            De Login-variant hieronder mag wél de lichte vulling houden: /prijzen opent niet
+            op een foto (alleen de homepage doet dat, zie `whiteHeader`), dus daar is de
+            ondergrond altijd beige en het contrast dus even deterministisch. */}
+        {opPrijzen ? (
+          <a
+            href="https://mijn.letsdog.nl"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="order-4 md:hidden inline-flex items-center justify-center rounded-full border border-[var(--ld-text)]/[0.14] bg-[var(--ld-text)]/[0.07] px-[15px] py-2 text-[12.5px] font-semibold text-[var(--ld-text)] transition-colors duration-200"
+          >
+            Login
+          </a>
+        ) : (
+          <Link
+            href="/prijzen"
+            // Navbar hangt in de root-layout, dus client-navigatie reset `open` NIET. Zonder
+            // deze regel landt een bezoeker die het menu opent en dan deze knop tikt op
+            // /prijzen mét het aria-modal menu nog open — en daar is het leeg, want de
+            // Login-knop erin hangt aan !opPrijzen. Gereproduceerd voor het is gerepareerd.
+            onClick={() => setOpen(false)}
+            className="order-4 md:hidden inline-flex items-center justify-center rounded-full border border-transparent bg-[var(--ld-peach)] px-[15px] py-2 text-[12.5px] font-semibold text-[var(--ld-ink)] transition-colors duration-200 hover:bg-[var(--ld-peach-deep)]"
+          >
+            Start gratis proef
+          </Link>
+        )}
       </nav>
 
       {/* Mobile menu */}
@@ -198,11 +220,18 @@ export function Navbar() {
               </li>
             ))}
           </ul>
+          {/* Login staat hier alleen wanneer de pil in de kop de verkoop-CTA toont; op
+              /prijzen staat Login al in die pil en zou dit een tweede zijn. */}
           {!opPrijzen && (
-            <Button variant="brand" pill block asChild>
-              <Link href="/prijzen" onClick={() => setOpen(false)}>
-                Start vandaag
-              </Link>
+            <Button variant="ghost" pill block asChild>
+              <a
+                href="https://mijn.letsdog.nl"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+              >
+                Login
+              </a>
             </Button>
           )}
         </div>

@@ -55,7 +55,7 @@ export function resolveCtaDestination(
     destination = "checkout";
   }
 
-  // Same-site links into pricing — the "Start vandaag" CTAs (→ /prijzen) and
+  // Same-site links into pricing — the "Start gratis proef" CTAs (→ /prijzen) and
   // the homepage #prijzen anchor.
   if (
     !destination &&
