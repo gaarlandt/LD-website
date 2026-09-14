@@ -147,7 +147,7 @@ export function PricingToggleCard() {
         </ul>
 
         {/* CTA — reuses PlanCTA: peach for the highlighted (yearly) plan,
-            secondary for monthly; fires begin_checkout with the active tier's
+            secondary for monthly; fires add_to_cart with the active tier's
             itemId / priceValueExVat / billingPeriod. */}
         <PlanCTA tier={tier} />
 

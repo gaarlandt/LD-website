@@ -62,7 +62,7 @@ function stubBrowser({ cookiebot = null, cookie = null, gtag }: Stubs): unknown[
   return calls;
 }
 
-// One real mapped event, with the shape plan-cta.tsx actually emits.
+// One real mapped event, with the shape plan-cta-event.ts actually emits.
 const CHECKOUT = {
   currency: "EUR",
   value: 48.76,
@@ -85,7 +85,7 @@ describe("the Meta sink reads BOTH consent writers, not Cookiebot alone", () => 
       cookiebot: { t: EARLIER, m: true },
       cookie: cookieFor(LATER, false),
     });
-    trackEvent("begin_checkout", CHECKOUT);
+    trackEvent("add_to_cart", CHECKOUT);
     expect(calls).toEqual([]);
   });
 
@@ -104,7 +104,7 @@ describe("the Meta sink reads BOTH consent writers, not Cookiebot alone", () => 
       cookiebot: { t: LATER, m: true },
       cookie: cookieFor(EARLIER, false),
     });
-    trackEvent("begin_checkout", CHECKOUT);
+    trackEvent("add_to_cart", CHECKOUT);
     expect(calls).toHaveLength(1);
     expect(calls[0][0]).toBe("track");
     expect(calls[0][1]).toBe("AddToCart");
@@ -112,7 +112,7 @@ describe("the Meta sink reads BOTH consent writers, not Cookiebot alone", () => 
 
   it("keeps the unchanged happy path intact", () => {
     const calls = stubBrowser({ cookiebot: { t: EARLIER, m: true } });
-    trackEvent("begin_checkout", CHECKOUT);
+    trackEvent("add_to_cart", CHECKOUT);
     trackMetaPageView();
     expect(calls).toEqual([
       [
@@ -133,14 +133,14 @@ describe("the Meta sink reads BOTH consent writers, not Cookiebot alone", () => 
 
   it("sends nothing on a refusal recorded here", () => {
     const calls = stubBrowser({ cookiebot: { t: EARLIER, m: false } });
-    trackEvent("begin_checkout", CHECKOUT);
+    trackEvent("add_to_cart", CHECKOUT);
     trackMetaPageView();
     expect(calls).toEqual([]);
   });
 
   it("sends nothing when nobody has answered anywhere", () => {
     const calls = stubBrowser({});
-    trackEvent("begin_checkout", CHECKOUT);
+    trackEvent("add_to_cart", CHECKOUT);
     trackMetaPageView();
     expect(calls).toEqual([]);
   });
@@ -156,7 +156,7 @@ describe("the Meta sink reads BOTH consent writers, not Cookiebot alone", () => 
 describe("the grant direction the merge also opens (D-4, owner's call)", () => {
   it("sends on a platform grant while Cookiebot here is still silent", () => {
     const calls = stubBrowser({ cookiebot: null, cookie: cookieFor(LATER, true) });
-    trackEvent("begin_checkout", CHECKOUT);
+    trackEvent("add_to_cart", CHECKOUT);
     expect(calls).toHaveLength(1);
     expect(calls[0][1]).toBe("AddToCart");
   });
@@ -181,8 +181,8 @@ describe("the other sinks stay independent of the Meta gate", () => {
       cookie: cookieFor(LATER, false),
       gtag,
     });
-    trackEvent("begin_checkout", CHECKOUT);
-    expect(gtag).toHaveBeenCalledWith("event", "begin_checkout", CHECKOUT);
+    trackEvent("add_to_cart", CHECKOUT);
+    expect(gtag).toHaveBeenCalledWith("event", "add_to_cart", CHECKOUT);
     expect(calls).toEqual([]);
   });
 

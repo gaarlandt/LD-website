@@ -19,12 +19,13 @@
 // click loses its attribution the moment the new links go live.
 //
 // NOTE: the pricing tier CTAs are the only links to the checkout path, and they
-// ALSO fire `begin_checkout` (see components/sections/plan-cta.tsx) — so a
+// ALSO fire `add_to_cart` (see components/sections/plan-cta-event.ts) — so a
 // pricing click emits BOTH cta_clicked(destination:"checkout") and
-// begin_checkout. This is intentional: cta_clicked carries navbar/body +
-// link_text attribution, begin_checkout carries the plan + value. Build the
-// GA4/PostHog checkout funnel on begin_checkout (not cta_clicked) so the single
-// click isn't counted as two funnel steps.
+// add_to_cart. This is intentional: cta_clicked carries navbar/body +
+// link_text attribution, add_to_cart carries the plan + value. Build the
+// GA4/PostHog checkout funnel on add_to_cart (not cta_clicked) so the single
+// click isn't counted as two funnel steps; the next step, begin_checkout, is
+// the platform's, fired on arrival at its checkout (LDplatform D-473).
 export const TRACKED_HOSTS: Record<string, "app" | "keuzehulp" | "agenda"> = {
   "mijn.letsdog.nl": "app",
   "app.letsdog.nl": "app",

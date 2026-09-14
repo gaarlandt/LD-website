@@ -9,17 +9,17 @@ describe("toMetaEvent", () => {
     expect(toMetaEvent("some_future_event")).toBeNull();
   });
 
-  it("maps begin_checkout to AddToCart with value and content ids", () => {
-    const result = toMetaEvent("begin_checkout", {
+  it("maps add_to_cart to AddToCart with value and content ids", () => {
+    const result = toMetaEvent("add_to_cart", {
       currency: "EUR",
-      value: 59,
+      value: 48.76,
       billing_period: "yearly",
       items: [
         {
-          item_id: "2233",
-          item_name: "Jaarlidmaatschap",
-          item_category: "membership",
-          price: 59,
+          item_id: "ld_jaar",
+          item_name: "Jaarabonnement",
+          item_category: "abonnement",
+          price: 48.76,
           quantity: 1,
         },
       ],
@@ -29,13 +29,21 @@ describe("toMetaEvent", () => {
       name: "AddToCart",
       params: {
         currency: "EUR",
-        value: 59,
+        value: 48.76,
         content_type: "product",
-        content_ids: ["2233"],
-        contents: [{ id: "2233", quantity: 1, item_price: 59 }],
+        content_ids: ["ld_jaar"],
+        contents: [{ id: "ld_jaar", quantity: 1, item_price: 48.76 }],
         num_items: 1,
       },
     });
+  });
+
+  it("no longer maps begin_checkout: that name is the platform's since D-473", () => {
+    // The pricing click was begin_checkout until 2026-09-14. The platform sends
+    // begin_checkout on checkout arrival, and Meta's counterpart there is
+    // InitiateCheckout — which D-101 gives to the platform. Mapping the old name
+    // here would be a second AddToCart source waiting for someone to call it.
+    expect(toMetaEvent("begin_checkout", { items: [{ item_id: "ld_jaar" }] })).toBeNull();
   });
 
   it("emits only the events D-101 gives this host", () => {
@@ -55,7 +63,7 @@ describe("toMetaEvent", () => {
   });
 
   it("coerces a numeric item_id to a string so catalogue matching still works", () => {
-    const result = toMetaEvent("begin_checkout", {
+    const result = toMetaEvent("add_to_cart", {
       currency: "EUR",
       value: 59,
       items: [{ item_id: 2234, price: 59, quantity: 1 }],
@@ -64,8 +72,8 @@ describe("toMetaEvent", () => {
     expect(result?.params.content_ids).toEqual(["2234"]);
   });
 
-  it("survives begin_checkout without an items array", () => {
-    const result = toMetaEvent("begin_checkout", { currency: "EUR", value: 59 });
+  it("survives add_to_cart without an items array", () => {
+    const result = toMetaEvent("add_to_cart", { currency: "EUR", value: 59 });
 
     expect(result?.name).toBe("AddToCart");
     expect(result?.params.content_ids).toEqual([]);
@@ -100,7 +108,7 @@ describe("toMetaEvent", () => {
   it("keeps content_ids and contents describing the same line items", () => {
     // An item with no id must drop out of BOTH arrays, not just content_ids —
     // mismatched lengths read as a malformed payload on Meta's side.
-    const result = toMetaEvent("begin_checkout", {
+    const result = toMetaEvent("add_to_cart", {
       currency: "EUR",
       value: 59,
       items: [
@@ -115,7 +123,7 @@ describe("toMetaEvent", () => {
   });
 
   it("survives a malformed items array instead of throwing on the checkout click", () => {
-    const result = toMetaEvent("begin_checkout", {
+    const result = toMetaEvent("add_to_cart", {
       currency: "EUR",
       value: 59,
       items: [null, "nonsense", { item_id: "2234", price: 59, quantity: 2 }],
@@ -126,7 +134,7 @@ describe("toMetaEvent", () => {
   });
 
   it("defaults a non-numeric quantity and omits a non-numeric price", () => {
-    const result = toMetaEvent("begin_checkout", {
+    const result = toMetaEvent("add_to_cart", {
       currency: "EUR",
       value: 59,
       items: [{ item_id: "2233", price: "59,00", quantity: "one" }],
