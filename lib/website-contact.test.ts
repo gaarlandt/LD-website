@@ -4,11 +4,14 @@ vi.mock("./error-sink", () => ({ reportRuleBreach: vi.fn() }));
 
 import { reportRuleBreach } from "./error-sink";
 import {
+  formActionFor,
   readOutcome,
   reportOutcome,
   reportUnreachable,
   submitWebsiteForm,
+  unreachableCause,
   WEBSITE_CONTACT_URL,
+  type ContactOutcome,
   type WebsiteFormPayload,
 } from "./website-contact";
 
@@ -109,7 +112,13 @@ describe("readOutcome — one row per answer in the contract", () => {
 
   it("reduces an off-contract error text to 'unexpected' so it cannot carry an address", async () => {
     // This code goes to Sentry. An upstream free-text field is exactly where a
-    // submitter's address could ride along, so only a snake_case word passes.
+    // submitter's address could ride along, so only the contract's own codes
+    // pass — an exact list, because a shape check lets a name through.
+    expect(await readOutcome(answer(500, { ok: false, error: "anna_de_vries" }))).toEqual({
+      kind: "failed",
+      status: 500,
+      code: "unexpected",
+    });
     expect(
       await readOutcome(answer(502, { ok: false, error: "delivery to anna@example.com failed" })),
     ).toEqual({ kind: "failed", status: 502, code: "unexpected" });
@@ -120,8 +129,20 @@ describe("readOutcome — one row per answer in the contract", () => {
     });
   });
 
-  it("hands an abort during the body read to the caller instead of classifying it", async () => {
+  it("counts an abort during the body of a 2xx as delivered", async () => {
+    // The platform stores the message before it answers, and its only 2xx is
+    // ok:true. Cutting off those bytes (dialog closed, our 10s timer) must not
+    // tell the visitor a sent message failed, or leave it in the form for a
+    // second send. Found in the T-83 review.
     const res = answer(200, { ok: true });
+    const abort = Object.assign(new Error("aborted"), { name: "AbortError" });
+    vi.spyOn(res, "json").mockRejectedValue(abort);
+    expect(await readOutcome(res)).toEqual({ kind: "ok" });
+  });
+
+  it("hands an abort during the body of anything else to the caller", async () => {
+    // Only the caller knows whether the dialog closed or the timer fired.
+    const res = answer(500, { ok: false, error: "unavailable" });
     const abort = Object.assign(new Error("aborted"), { name: "AbortError" });
     vi.spyOn(res, "json").mockRejectedValue(abort);
     await expect(readOutcome(res)).rejects.toBe(abort);
@@ -149,10 +170,81 @@ describe("what gets reported, and what never does", () => {
     expect(reported).not.toHaveBeenCalled();
   });
 
-  it("reports an unreachable platform with its cause", () => {
-    reportUnreachable("TypeError: Failed to fetch");
-    expect(reported).toHaveBeenCalledWith("contact.platform_unreachable", {
-      cause: "TypeError: Failed to fetch",
+  it("reports an unreachable platform with a cause from a fixed vocabulary", () => {
+    reportUnreachable(new TypeError("Failed to fetch"), false);
+    expect(reported).toHaveBeenCalledWith("contact.platform_unreachable", { cause: "network" });
+  });
+});
+
+describe("unreachableCause — never the error's message", () => {
+  it("names our own timer, whatever the error says", () => {
+    expect(unreachableCause(new DOMException("aborted", "AbortError"), true)).toBe("timeout");
+  });
+
+  it("calls every browser's network or CORS TypeError 'network'", () => {
+    // Chrome says "Failed to fetch", Safari "Load failed", Firefox "NetworkError
+    // when attempting to fetch resource." — the message adds nothing but risk.
+    expect(unreachableCause(new TypeError("Failed to fetch"), false)).toBe("network");
+    expect(unreachableCause(new TypeError("Load failed"), false)).toBe("network");
+  });
+
+  it("keeps only a plain error name, and drops any message text", () => {
+    const leaky = Object.assign(new Error("could not send for anna@example.com"), {
+      name: "SecurityError",
+    });
+    expect(unreachableCause(leaky, false)).toBe("error:SecurityError");
+    expect(unreachableCause({ name: "anna@example.com" }, false)).toBe("error");
+    expect(unreachableCause("a thrown string", false)).toBe("error");
+    expect(unreachableCause(null, false)).toBe("error");
+  });
+});
+
+describe("formActionFor — the form's half of the contract's table", () => {
+  const CONTACT = ["name", "email", "message"] as const;
+  const CREATOR = ["name", "email", "message", "collaboration"] as const;
+
+  it("shows the confirmation only on ok", () => {
+    expect(formActionFor({ kind: "ok" }, CONTACT)).toEqual({ type: "success" });
+    const others: ContactOutcome[] = [
+      { kind: "field", field: "email" },
+      { kind: "captcha" },
+      { kind: "rate_limited" },
+      { kind: "failed", status: 500, code: "unavailable" },
+    ];
+    for (const outcome of others) {
+      expect(formActionFor(outcome, CONTACT).type).not.toBe("success");
+    }
+  });
+
+  it("puts a field refusal on a field the form has", () => {
+    expect(formActionFor({ kind: "field", field: "message" }, CONTACT)).toEqual({
+      type: "field",
+      field: "message",
+    });
+    expect(formActionFor({ kind: "field", field: "collaboration" }, CREATOR)).toEqual({
+      type: "field",
+      field: "collaboration",
+    });
+  });
+
+  it("shows the generic banner for a field this form does not have", () => {
+    // collaboration on the contact form can only be a client out of step with
+    // the contract; there is no field to put it on.
+    expect(formActionFor({ kind: "field", field: "collaboration" }, CONTACT)).toEqual({
+      type: "banner",
+      kind: "generic",
+    });
+  });
+
+  it("picks the captcha, rate-limit and generic banners", () => {
+    expect(formActionFor({ kind: "captcha" }, CONTACT)).toEqual({ type: "banner", kind: "captcha" });
+    expect(formActionFor({ kind: "rate_limited" }, CONTACT)).toEqual({
+      type: "banner",
+      kind: "rate_limited",
+    });
+    expect(formActionFor({ kind: "failed", status: 403, code: "forbidden" }, CREATOR)).toEqual({
+      type: "banner",
+      kind: "generic",
     });
   });
 });

@@ -60,20 +60,32 @@ export type ContactOutcome =
   /** 429 — "try again later". */
   | { kind: "rate_limited" }
   /**
-   * Anything else: 403 `forbidden` (an Origin the platform does not allow),
-   * 400 `invalid_json`/`invalid_request` (a client that sent what the contract
-   * does not describe — that client is us), 500 `unavailable`, or a status or
-   * body the contract does not name at all.
+   * Anything else: 400 `invalid_json`/`invalid_request` (a client that sent
+   * what the contract does not describe — that client is us), 500
+   * `unavailable`, 403 `forbidden`, or a status or body the contract does not
+   * name at all. (A browser never sees the 403 in practice: an Origin the
+   * platform does not allow already fails the CORS preflight, so fetch rejects
+   * and the report is contact.platform_unreachable. Only a non-browser caller
+   * reaches that row.)
    */
   | { kind: "failed"; status: number; code: string };
 
 const FIELD_CODES: readonly string[] = ["name", "email", "message", "collaboration"];
 
-// The platform's codes are a closed set of snake_case words. Anything else in
-// `error` — a gateway's HTML, a message we never agreed on — is summarised as
-// "unexpected" rather than forwarded: it goes to Sentry, and an upstream
-// free-text field is exactly where a submitter's address could ride along.
-const CODE_SHAPE = /^[a-z_]{1,40}$/;
+// Every `error` the contract names. `code` goes to Sentry as a measurement, so
+// anything outside this list — a gateway's HTML, a code we never agreed on,
+// a snake_case word that happens to be a name — is reported as "unexpected"
+// rather than forwarded. An exact list, not a shape: a shape check would let
+// `anna_de_vries` through, and the sink is ungated.
+const CONTRACT_CODES: readonly string[] = [
+  ...FIELD_CODES,
+  "captcha",
+  "invalid_json",
+  "invalid_request",
+  "forbidden",
+  "rate_limited",
+  "unavailable",
+];
 
 async function readBody(res: Response): Promise<{ ok?: unknown; error?: unknown }> {
   try {
@@ -90,9 +102,27 @@ async function readBody(res: Response): Promise<{ ok?: unknown; error?: unknown 
   }
 }
 
-/** Map one answer onto what the form does with it. Throws only on an abort. */
+/**
+ * Map one answer onto what the form does with it. Throws only on an abort, and
+ * only when the answer was not a 2xx.
+ *
+ * AN ABORT DURING THE BODY OF A 2XX IS A DELIVERED MESSAGE. The platform stores
+ * the message before it answers, and its only 2xx is `{ ok: true }` — so once
+ * the status says 2xx, cutting off the eleven bytes after it (the dialog
+ * closing, our 10s timer) does not undo anything. Treating it as a failure
+ * would tell the visitor a sent message failed, keep it in the form for a
+ * second send, and file a false contact.platform_unreachable. Found in review
+ * (2026-09-14): the retired Function's client never read the body on success,
+ * so this window did not exist before.
+ */
 export async function readOutcome(res: Response): Promise<ContactOutcome> {
-  const body = await readBody(res);
+  let body: { ok?: unknown; error?: unknown };
+  try {
+    body = await readBody(res);
+  } catch (err) {
+    if (res.ok) return { kind: "ok" };
+    throw err;
+  }
   // `ok` in the BODY, not the status alone: the contract says to read it, and a
   // 200 that does not say ok:true is not a confirmation we can show.
   if (res.ok && body.ok === true) return { kind: "ok" };
@@ -103,7 +133,55 @@ export async function readOutcome(res: Response): Promise<ContactOutcome> {
   }
   if (res.status === 400 && code === "captcha") return { kind: "captcha" };
   if (res.status === 429) return { kind: "rate_limited" };
-  return { kind: "failed", status: res.status, code: CODE_SHAPE.test(code) ? code : "unexpected" };
+  return {
+    kind: "failed",
+    status: res.status,
+    code: CONTRACT_CODES.includes(code) ? code : "unexpected",
+  };
+}
+
+/** Which banner an unsuccessful answer shows. The copy per kind is the form's own. */
+export type ErrorKind = "generic" | "captcha" | "rate_limited";
+
+/** What a form does with an answer: its whole half of the contract's table. */
+export type FormAction<F extends FieldCode = FieldCode> =
+  | { type: "success" }
+  | { type: "field"; field: F }
+  | { type: "banner"; kind: ErrorKind };
+
+function isOneOf<F extends string>(value: string, set: readonly F[]): value is F {
+  return (set as readonly string[]).includes(value);
+}
+
+/**
+ * One answer, as the form must act on it. Shared by both modals so the table
+ * lives in one place and under a test (lib/website-contact.test.ts); the modals
+ * only render. `fields` are the fields THIS form has: a field refusal for one
+ * it does not show (collaboration on the contact form) can only be a client
+ * out of step with the contract, so it gets the generic banner.
+ *
+ * Every action except `success` also means: reset the Turnstile widget. The
+ * contract says a token is spent after any refusal, and a stale token is the
+ * one input the visitor cannot fix.
+ */
+export function formActionFor<F extends FieldCode>(
+  outcome: ContactOutcome,
+  fields: readonly F[],
+): FormAction<F> {
+  switch (outcome.kind) {
+    case "ok":
+      return { type: "success" };
+    case "field":
+      return isOneOf(outcome.field, fields)
+        ? { type: "field", field: outcome.field }
+        : { type: "banner", kind: "generic" };
+    case "captcha":
+      return { type: "banner", kind: "captcha" };
+    case "rate_limited":
+      return { type: "banner", kind: "rate_limited" };
+    case "failed":
+      return { type: "banner", kind: "generic" };
+  }
 }
 
 /**
@@ -128,14 +206,27 @@ export function reportOutcome(outcome: ContactOutcome): void {
 }
 
 /**
- * The request never got an answer: a network error, a CORS refusal, or our own
- * timeout. The one failure the platform cannot see at all, because nothing
- * arrived — so this side is the only witness. `cause` is `String(err)` for a
- * throw (a CORS refusal reads as a bare "TypeError: Failed to fetch") or
- * "timeout" when our AbortController fired.
+ * The `cause` of an unreachable platform, from a FIXED vocabulary: "timeout"
+ * when our own timer fired, "network" for the TypeError every browser throws
+ * on a network or CORS refusal, and `error:<Name>` for anything else. Never the
+ * error's message: the sink is ungated, the message is text we do not control
+ * (an extension, a service worker), and the name alone says which branch broke.
  */
-export function reportUnreachable(cause: string): void {
-  reportRuleBreach("contact.platform_unreachable", { cause });
+export function unreachableCause(err: unknown, timedOut: boolean): string {
+  if (timedOut) return "timeout";
+  if (err instanceof TypeError) return "network";
+  const name = (err as { name?: unknown } | null)?.name;
+  return typeof name === "string" && /^[A-Za-z]{1,40}$/.test(name) ? `error:${name}` : "error";
+}
+
+/**
+ * The request never got an answer: a network error, a CORS refusal (including
+ * an Origin missing from the platform's list — see ContactOutcome), or our own
+ * timeout. The one failure the platform cannot see at all, because nothing
+ * arrived — so this side is the only witness.
+ */
+export function reportUnreachable(err: unknown, timedOut: boolean): void {
+  reportRuleBreach("contact.platform_unreachable", { cause: unreachableCause(err, timedOut) });
 }
 
 /**

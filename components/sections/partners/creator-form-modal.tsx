@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { flushSync } from "react-dom";
 import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
 import {
   Dialog,
@@ -14,7 +15,14 @@ import {
 } from "@/components/ui";
 import { trackEvent, identifyLead } from "@/lib/analytics";
 import { TURNSTILE_SITE_KEY, loadTurnstile } from "@/components/shared/turnstile";
-import { reportUnreachable, submitWebsiteForm } from "@/lib/website-contact";
+import {
+  formActionFor,
+  reportUnreachable,
+  submitWebsiteForm,
+  type ContactOutcome,
+  type ErrorKind,
+  type FieldCode,
+} from "@/lib/website-contact";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -42,17 +50,18 @@ const COLLABORATION_OPTIONS = [
 // returns { ok:false, error:"name"|"email"|"message"|"collaboration" } with 400
 // when a field fails its stricter checks — surface those on the matching field
 // instead of the generic banner.
-const FIELD_ERROR_COPY: Record<string, string> = {
+// The fields this form shows — all four the platform can refuse.
+const CREATOR_FIELDS = ["name", "email", "message", "collaboration"] as const satisfies readonly FieldCode[];
+
+const FIELD_ERROR_COPY: Record<(typeof CREATOR_FIELDS)[number], string> = {
   name: "Controleer je naam.",
   email: "Vul een geldig e-mailadres in.",
   message: "Je tekst is te lang.",
   collaboration: "Kies hoe je wilt samenwerken.",
 };
 
-// Which banner an "error" shows, and its copy. `generic` is the old text
-// unchanged; the other two are the platform's own answers (hub contract
-// websiteformulier-ingang.md). Same kinds as the contact modal.
-type ErrorKind = "generic" | "captcha" | "rate_limited";
+// The banner per ErrorKind. `generic` is the old text unchanged; the other two
+// are the platform's own answers (hub contract websiteformulier-ingang.md).
 const ERROR_COPY: Record<ErrorKind, string> = {
   generic:
     "Er ging iets mis bij het versturen. Probeer het opnieuw, of mail ons op creators@letsdog.nl.",
@@ -203,34 +212,12 @@ export function CreatorFormModal({
       timedOut = true;
       controller.abort();
     }, 10000);
+    let outcome: ContactOutcome;
     try {
-      const outcome = await submitWebsiteForm(
+      outcome = await submitWebsiteForm(
         { ...form, kind: "creator", channels, turnstileToken: token },
         controller.signal,
       );
-      if (outcome.kind === "ok") {
-        trackEvent("creator_form_submitted", { collaboration: form.collaboration });
-        // Same identify as the contact form — on the anonymous $device_id,
-        // never on the address (see lib/analytics.ts, T-46).
-        identifyLead(form.email);
-        setForm(EMPTY);
-        setChannels([]);
-        setStatus("success");
-        return;
-      }
-      // Anything but ok leaves the token spent, a field refusal included: the
-      // platform's contract says to reset the widget after every other answer.
-      resetTurnstile();
-      if (outcome.kind === "field") {
-        setErrors({ [outcome.field]: FIELD_ERROR_COPY[outcome.field] });
-        setStatus("idle");
-        document.getElementById(`crf-${outcome.field}`)?.focus();
-        return;
-      }
-      setErrorKind(
-        outcome.kind === "captcha" || outcome.kind === "rate_limited" ? outcome.kind : "generic",
-      );
-      setStatus("error");
     } catch (err) {
       // A close-initiated abort (not the timeout) is benign: the dialog is gone
       // and handleOpenChange already reset it — settle to idle so a fast reopen
@@ -241,14 +228,44 @@ export function CreatorFormModal({
       }
       // No answer at all — the one failure the platform cannot see, because
       // nothing reached it. A CORS refusal lands here too.
-      reportUnreachable(timedOut ? "timeout" : String(err));
+      reportUnreachable(err, timedOut);
       setErrorKind("generic");
       setStatus("error");
       resetTurnstile();
+      return;
     } finally {
       window.clearTimeout(timeout);
       if (abortRef.current === controller) abortRef.current = null;
     }
+
+    // Outside the try on purpose: nothing below may be reported as an
+    // unreachable platform, and an analytics sink that throws must not turn a
+    // delivered application into an error banner.
+    const action = formActionFor(outcome, CREATOR_FIELDS);
+    if (action.type === "success") {
+      const collaboration = form.collaboration;
+      setForm(EMPTY);
+      setChannels([]);
+      setStatus("success");
+      trackEvent("creator_form_submitted", { collaboration });
+      // Same identify as the contact form — on the anonymous $device_id,
+      // never on the address (see lib/analytics.ts, T-46).
+      identifyLead(form.email);
+      return;
+    }
+    resetTurnstile();
+    if (action.type === "field") {
+      // flushSync so the input is no longer `disabled` when focus() runs (same
+      // pre-existing bug as the contact modal, found in the T-83 review).
+      flushSync(() => {
+        setErrors({ [action.field]: FIELD_ERROR_COPY[action.field] });
+        setStatus("idle");
+      });
+      document.getElementById(`crf-${action.field}`)?.focus();
+      return;
+    }
+    setErrorKind(action.kind);
+    setStatus("error");
   }
 
   const busy = status === "submitting";

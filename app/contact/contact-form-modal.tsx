@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { flushSync } from "react-dom";
 import { PaperPlaneTilt, CheckCircle } from "@phosphor-icons/react/dist/ssr";
 import {
   Dialog,
@@ -14,12 +15,20 @@ import {
 } from "@/components/ui";
 import { trackEvent, identifyLead } from "@/lib/analytics";
 import { TURNSTILE_SITE_KEY, loadTurnstile } from "@/components/shared/turnstile";
-import { reportUnreachable, submitWebsiteForm } from "@/lib/website-contact";
+import {
+  formActionFor,
+  reportUnreachable,
+  submitWebsiteForm,
+  type ContactOutcome,
+  type ErrorKind,
+  type FieldCode,
+} from "@/lib/website-contact";
 
 type Status = "idle" | "submitting" | "success" | "error";
-// Which banner an "error" shows. The platform tells a failed security check and
-// its rate limit apart from a real failure, and the contract asks us to say so.
-type ErrorKind = "generic" | "captcha" | "rate_limited";
+
+// The fields this form shows; a refusal on any other is a client out of step
+// with the platform's contract and gets the generic banner (formActionFor).
+const CONTACT_FIELDS = ["name", "email", "message"] as const satisfies readonly FieldCode[];
 
 const EMPTY = { name: "", email: "", message: "", company: "" };
 
@@ -30,7 +39,7 @@ const EMPTY = { name: "", email: "", message: "", company: "" };
 // the generic banner. On-brand Dutch; deliberately distinct from validate()'s
 // empty-field prompts ("Vul je naam in.") — these signal a length/format reject,
 // not a blank field. Re-tone both together if you change the field copy.
-const FIELD_ERROR_COPY: Record<"name" | "email" | "message", string> = {
+const FIELD_ERROR_COPY: Record<(typeof CONTACT_FIELDS)[number], string> = {
   name: "Controleer je naam.",
   email: "Vul een geldig e-mailadres in.",
   message: "Controleer je bericht.",
@@ -198,33 +207,9 @@ export function ContactFormModal({
       timedOut = true;
       controller.abort();
     }, 10000);
+    let outcome: ContactOutcome;
     try {
-      const outcome = await submitWebsiteForm(
-        { ...form, turnstileToken: token },
-        controller.signal,
-      );
-      if (outcome.kind === "ok") {
-        trackEvent("contact_form_submitted");
-        // The one PostHog identify on the site — on the anonymous $device_id,
-        // never on the address (see lib/analytics.ts, T-46).
-        identifyLead(form.email);
-        setForm(EMPTY);
-        setStatus("success");
-        return;
-      }
-      // Anything but ok leaves the token spent, a field refusal included: the
-      // platform's contract says to reset the widget after every other answer.
-      resetTurnstile();
-      if (outcome.kind === "field" && outcome.field !== "collaboration") {
-        setErrors({ [outcome.field]: FIELD_ERROR_COPY[outcome.field] });
-        setStatus("idle");
-        document.getElementById(`cf-${outcome.field}`)?.focus();
-        return;
-      }
-      setErrorKind(
-        outcome.kind === "captcha" || outcome.kind === "rate_limited" ? outcome.kind : "generic",
-      );
-      setStatus("error");
+      outcome = await submitWebsiteForm({ ...form, turnstileToken: token }, controller.signal);
     } catch (err) {
       // A close-initiated abort (not the timeout) is benign: the dialog is gone
       // and handleOpenChange already reset it — settle to idle so a fast reopen
@@ -235,14 +220,43 @@ export function ContactFormModal({
       }
       // No answer at all — the one failure the platform cannot see, because
       // nothing reached it. A CORS refusal lands here too.
-      reportUnreachable(timedOut ? "timeout" : String(err));
+      reportUnreachable(err, timedOut);
       setErrorKind("generic");
       setStatus("error");
       resetTurnstile();
+      return;
     } finally {
       window.clearTimeout(timeout);
       if (abortRef.current === controller) abortRef.current = null;
     }
+
+    // Outside the try on purpose: nothing below may be reported as an
+    // unreachable platform, and an analytics sink that throws must not turn a
+    // delivered message into an error banner.
+    const action = formActionFor(outcome, CONTACT_FIELDS);
+    if (action.type === "success") {
+      setForm(EMPTY);
+      setStatus("success");
+      trackEvent("contact_form_submitted");
+      // The one PostHog identify on the site — on the anonymous $device_id,
+      // never on the address (see lib/analytics.ts, T-46).
+      identifyLead(form.email);
+      return;
+    }
+    resetTurnstile();
+    if (action.type === "field") {
+      // flushSync so the input is no longer `disabled` when focus() runs: set in
+      // the same tick, the field was still disabled and focus stayed on the
+      // button (pre-existing since 2026-06-25, found in the T-83 review).
+      flushSync(() => {
+        setErrors({ [action.field]: FIELD_ERROR_COPY[action.field] });
+        setStatus("idle");
+      });
+      document.getElementById(`cf-${action.field}`)?.focus();
+      return;
+    }
+    setErrorKind(action.kind);
+    setStatus("error");
   }
 
   return (
