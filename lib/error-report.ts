@@ -1,22 +1,19 @@
 // The error sink's shared core: what may be reported, what may travel with it,
-// and the bytes that go on the wire. Executed by BOTH runtimes (T-44, executing
-// loop decision D-6).
+// and the bytes that go on the wire (T-44, executing loop decision D-6).
 //
-// TWO RUNTIMES, ONE PROJECT. This site is a static export, so the browser half
-// is a browser SDK; `functions/api/contact.ts` runs on the Cloudflare Workers
-// runtime and has DELIBERATELY zero dependencies, so its half is a small
-// `fetch` POST to Sentry's envelope endpoint. They are told apart by the
-// `runtime` TAG (`browser` | `pages-function`), never by a second project — a
-// contract breach reported from the browser and a lost lead reported from the
-// Function belong in one stream, sorted by tag.
+// ONE RUNTIME SINCE 2026-09-14. Until then a second half ran in the Cloudflare
+// Pages Function `functions/api/contact.ts`, tagged `runtime: pages-function`
+// in the same Sentry project; that Function was retired when the forms moved to
+// the platform (T-83), so every report now comes from the browser half
+// (lib/error-sink.ts). The `runtime` tag stays on every event, because the
+// project's history before that date is sorted by it.
 //
-// WHY THIS FILE IS PURE AND IMPORTS NOTHING. It is imported by
-// `functions/api/contact.ts`, which may not grow a dependency: the Cloudflare
-// build has to stay a plain `next build`, and the Function may only use
-// web-standard `Request`/`Response`/`fetch`. So: no npm packages, no Node APIs,
-// no DOM access, no module-level state. Everything here is a pure function over
-// its arguments. Both runtimes bundle it; there is one spelling of the rule
-// list, one of the redaction, and one of the envelope.
+// WHY THIS FILE IS STILL PURE AND IMPORTS NOTHING. It was written that way for
+// the Function, which could not grow a dependency, and the property earns its
+// keep without it: no npm packages, no Node APIs, no DOM access, no module-level
+// state means every rule, the redaction and the envelope are tested as plain
+// functions in the Node environment. There is one spelling of the rule list,
+// one of the redaction, and one of the envelope.
 //
 // -----------------------------------------------------------------------------
 // THE HARD LIMIT: NO CONSENT CATEGORIES IN THE PAYLOAD.
@@ -53,8 +50,11 @@
 // measurement that caused it — the byte count, the status, the copy count — so
 // the reason travels instead of being collapsed into "something broke".
 
-/** Which runtime produced this report. A tag, never a second project. */
-export type ErrorRuntime = "browser" | "pages-function";
+/**
+ * Which runtime produced this report. A tag, never a second project. Only the
+ * browser is left; `pages-function` exists in Sentry's history up to 2026-09-14.
+ */
+export type ErrorRuntime = "browser";
 
 /** Sentry levels this sink uses. Nothing here is informational. */
 export type ReportLevel = "error" | "warning";
@@ -65,7 +65,7 @@ export type SentryEnvironment = "production" | "preview";
  * THE CLOSED LIST OF RULES, and it is closed on purpose.
  *
  * A stable id per failure is what makes the sink countable: "how often did
- * Postmark reject the batch this week" is a filter, not a text search. It is
+ * the platform refuse the form this week" is a filter, not a text search. It is
  * also the diagnosis itself — the platform's lesson is that a branch which sets
  * a failure card without naming which check refused has thrown the measurement
  * away. Every id below is one branch, never a family of them.
@@ -91,23 +91,18 @@ export const REPORT_RULES = [
    */
   "consent_chain.cookiebot_never_usable",
 
-  // --- The eight failure paths of functions/api/contact.ts --------------------
-  /** Turnstile siteverify answered non-2xx — an infrastructure problem, not a bot. */
-  "contact.turnstile_siteverify_non_2xx",
-  /** Turnstile siteverify threw: network error, timeout/abort, unparseable body. */
-  "contact.turnstile_siteverify_failed",
-  /** No TURNSTILE_SECRET_KEY on a host where the gate is ENFORCED — fails closed (500). */
-  "contact.turnstile_secret_missing",
-  /** No POSTMARK_SERVER_TOKEN — the form is dead on this deploy (500). */
-  "contact.postmark_token_missing",
-  /** The Postmark batch fetch threw: network error or the 10s timeout firing. */
-  "contact.postmark_batch_fetch_failed",
-  /** Postmark rejected the whole batch (auth/payload) — nothing was sent. */
-  "contact.postmark_batch_non_2xx",
-  /** 200, but the SUPPORT message (index 0) was not accepted — the partial failure. */
-  "contact.postmark_support_not_accepted",
-  /** 200 with a body we could not read: malformed JSON, or a timeout mid-read. */
-  "contact.postmark_result_unreadable",
+  // --- The forms' round trip to the platform (lib/website-contact.ts) --------
+  // Until 2026-09-14 this block held the eight failure paths of the Pages
+  // Function that mailed the forms through Postmark. That Function is gone (T-83):
+  // the platform's `submit-website-contact` now verifies Turnstile, stores the
+  // message and sends the mail, and reports its own failures there. What is
+  // left for THIS side is what only the browser can witness.
+  /** No answer at all: network error, CORS refusal, or our 10s timeout. */
+  "contact.platform_unreachable",
+  /** An answer that is neither ok nor the visitor's own mistake (403, 400 invalid_*, 500, off-contract). */
+  "contact.platform_refused",
+  /** 400 captcha. Warning: one is a visitor; a run of them is a secret that does not match our widget. */
+  "contact.platform_captcha_refused",
 ] as const;
 
 export type ReportRule = (typeof REPORT_RULES)[number];
@@ -146,7 +141,12 @@ export const MEASUREMENT_KEYS = [
   "hostname",
   /** `String(err)` for a thrown upstream call — bounded, see MAX_MEASUREMENT_CHARS. */
   "cause",
-  /** Postmark's per-message ErrorCode. The numeric code only; never its Message. */
+  /**
+   * The platform's `error` code (`forbidden`, `unavailable`, …) — a word from a
+   * closed set, reduced to "unexpected" by lib/website-contact.ts when it is not
+   * one, so upstream free text can never ride in on it. (Until 2026-09-14 this
+   * key carried Postmark's numeric ErrorCode.)
+   */
   "errorCode",
   /** How long the consent-chain wait ran before giving up, in ms. */
   "waitedMs",
@@ -229,37 +229,17 @@ const RULE_DEFINITIONS: Record<ReportRule, { message: string; level: ReportLevel
     message: "Cookiebot werd niet bruikbaar binnen de wachttijd: geen enkele consent-staat geleverd",
     level: "error",
   },
-  "contact.turnstile_siteverify_non_2xx": {
-    message: "[contact] turnstile siteverify non-2xx",
+  "contact.platform_unreachable": {
+    message: "[contact] submit-website-contact gaf geen antwoord (netwerk, CORS of time-out)",
     level: "error",
   },
-  "contact.turnstile_siteverify_failed": {
-    message: "[contact] turnstile siteverify failed",
+  "contact.platform_refused": {
+    message: "[contact] submit-website-contact weigerde buiten de bezoeker om",
     level: "error",
   },
-  "contact.turnstile_secret_missing": {
-    message: "[contact] turnstile secret missing on enforced host",
-    level: "error",
-  },
-  "contact.postmark_token_missing": {
-    message: "[contact] postmark token missing",
-    level: "error",
-  },
-  "contact.postmark_batch_fetch_failed": {
-    message: "[contact] postmark batch fetch failed",
-    level: "error",
-  },
-  "contact.postmark_batch_non_2xx": {
-    message: "[contact] postmark batch non-2xx",
-    level: "error",
-  },
-  "contact.postmark_support_not_accepted": {
-    message: "[contact] postmark support message not accepted",
-    level: "error",
-  },
-  "contact.postmark_result_unreadable": {
-    message: "[contact] postmark batch result unreadable (parse or timeout)",
-    level: "error",
+  "contact.platform_captcha_refused": {
+    message: "[contact] submit-website-contact weigerde het Turnstile-token",
+    level: "warning",
   },
 };
 

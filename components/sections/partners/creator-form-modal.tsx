@@ -13,7 +13,8 @@ import {
   Button,
 } from "@/components/ui";
 import { trackEvent, identifyLead } from "@/lib/analytics";
-import { TURNSTILE_SITE_KEY, loadTurnstile, readErrorCode } from "@/components/shared/turnstile";
+import { TURNSTILE_SITE_KEY, loadTurnstile } from "@/components/shared/turnstile";
+import { reportUnreachable, submitWebsiteForm } from "@/lib/website-contact";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -37,15 +38,28 @@ const COLLABORATION_OPTIONS = [
   { value: "unsure", label: "Ik weet het nog niet, vertel me meer" },
 ];
 
-// Server-side field-validation copy. functions/api/contact.ts returns
-// { ok:false, error:"name"|"email"|"message"|"collaboration" } with 400 when a
-// field fails its stricter server checks — surface those on the matching field
+// Server-side field-validation copy. The platform (lib/website-contact.ts)
+// returns { ok:false, error:"name"|"email"|"message"|"collaboration" } with 400
+// when a field fails its stricter checks — surface those on the matching field
 // instead of the generic banner.
 const FIELD_ERROR_COPY: Record<string, string> = {
   name: "Controleer je naam.",
   email: "Vul een geldig e-mailadres in.",
   message: "Je tekst is te lang.",
   collaboration: "Kies hoe je wilt samenwerken.",
+};
+
+// Which banner an "error" shows, and its copy. `generic` is the old text
+// unchanged; the other two are the platform's own answers (hub contract
+// websiteformulier-ingang.md). Same kinds as the contact modal.
+type ErrorKind = "generic" | "captcha" | "rate_limited";
+const ERROR_COPY: Record<ErrorKind, string> = {
+  generic:
+    "Er ging iets mis bij het versturen. Probeer het opnieuw, of mail ons op creators@letsdog.nl.",
+  captcha:
+    "De beveiligingscontrole is niet gelukt. Doe de controle hierboven opnieuw en verstuur je aanmelding nog een keer.",
+  rate_limited:
+    "Er zijn net te veel aanmeldingen achter elkaar verstuurd. Probeer het over een uur opnieuw, of mail ons op creators@letsdog.nl.",
 };
 
 // Native select styled to match <Input>. There is no Select in components/ui yet
@@ -65,6 +79,7 @@ export function CreatorFormModal({
   const [channels, setChannels] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>("idle");
+  const [errorKind, setErrorKind] = useState<ErrorKind>("generic");
   const [token, setToken] = useState("");
   const [turnstileError, setTurnstileError] = useState(false);
   const widgetRef = useRef<HTMLDivElement>(null);
@@ -189,37 +204,34 @@ export function CreatorFormModal({
       controller.abort();
     }, 10000);
     try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          kind: "creator",
-          channels,
-          turnstileToken: token,
-        }),
-        signal: controller.signal,
-      });
-      if (!res.ok) {
-        // The Function validates fields BEFORE Turnstile, so a field 400 leaves
-        // the token unconsumed and still valid — surface the error on the field
-        // and keep the armed token so a fix can resubmit straight away.
-        const code = await readErrorCode(res);
-        if (code && FIELD_ERROR_COPY[code]) {
-          setErrors({ [code]: FIELD_ERROR_COPY[code] });
-          setStatus("idle");
-          document.getElementById(`crf-${code}`)?.focus();
-          return;
-        }
-        throw new Error("send failed");
+      const outcome = await submitWebsiteForm(
+        { ...form, kind: "creator", channels, turnstileToken: token },
+        controller.signal,
+      );
+      if (outcome.kind === "ok") {
+        trackEvent("creator_form_submitted", { collaboration: form.collaboration });
+        // Same identify as the contact form — on the anonymous $device_id,
+        // never on the address (see lib/analytics.ts, T-46).
+        identifyLead(form.email);
+        setForm(EMPTY);
+        setChannels([]);
+        setStatus("success");
+        return;
       }
-      trackEvent("creator_form_submitted", { collaboration: form.collaboration });
-      // Same cross-product join key as the contact form — lowercased email.
-      identifyLead(form.email);
-      setForm(EMPTY);
-      setChannels([]);
-      setStatus("success");
-    } catch {
+      // Anything but ok leaves the token spent, a field refusal included: the
+      // platform's contract says to reset the widget after every other answer.
+      resetTurnstile();
+      if (outcome.kind === "field") {
+        setErrors({ [outcome.field]: FIELD_ERROR_COPY[outcome.field] });
+        setStatus("idle");
+        document.getElementById(`crf-${outcome.field}`)?.focus();
+        return;
+      }
+      setErrorKind(
+        outcome.kind === "captcha" || outcome.kind === "rate_limited" ? outcome.kind : "generic",
+      );
+      setStatus("error");
+    } catch (err) {
       // A close-initiated abort (not the timeout) is benign: the dialog is gone
       // and handleOpenChange already reset it — settle to idle so a fast reopen
       // isn't stuck "submitting".
@@ -227,8 +239,11 @@ export function CreatorFormModal({
         setStatus("idle");
         return;
       }
+      // No answer at all — the one failure the platform cannot see, because
+      // nothing reached it. A CORS refusal lands here too.
+      reportUnreachable(timedOut ? "timeout" : String(err));
+      setErrorKind("generic");
       setStatus("error");
-      // Turnstile tokens are single-use; get a fresh one for the retry.
       resetTurnstile();
     } finally {
       window.clearTimeout(timeout);
@@ -523,8 +538,7 @@ export function CreatorFormModal({
                   role="alert"
                   aria-live="polite"
                 >
-                  Er ging iets mis bij het versturen. Probeer het opnieuw, of mail
-                  ons op creators@letsdog.nl.
+                  {ERROR_COPY[errorKind]}
                 </p>
               )}
 

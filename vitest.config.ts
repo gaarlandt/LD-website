@@ -4,8 +4,9 @@ import { configDefaults, defineConfig } from "vitest/config";
 
 const root = dirname(fileURLToPath(import.meta.url));
 
-// Node environment: the only code under test is server-side (the Cloudflare Pages
-// Function in functions/ and pure lib helpers) — no DOM needed. Test files live
+// Node environment: the code under test is pure lib/ and component helpers (the
+// Cloudflare Pages Function that used to live in functions/ was retired with T-83)
+// — no DOM needed. Test files live
 // next to their source as *.test.ts.
 //
 // NOTE: *.test.ts and this config are EXCLUDED from the root tsconfig.json so

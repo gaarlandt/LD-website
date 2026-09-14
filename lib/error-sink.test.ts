@@ -53,14 +53,14 @@ describe("when the sink is not configured", () => {
     // logged problem into a broken page.
     const { calls } = stubBrowser();
     vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "");
-    expect(() => reportRuleBreach("contact.postmark_token_missing")).not.toThrow();
+    expect(() => reportRuleBreach("contact.platform_unreachable")).not.toThrow();
     expect(calls).toHaveLength(0);
   });
 
   it("sends nothing and throws nothing on a malformed DSN", () => {
     const { calls } = stubBrowser();
     vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "not-a-dsn");
-    expect(() => reportRuleBreach("contact.postmark_token_missing")).not.toThrow();
+    expect(() => reportRuleBreach("contact.platform_unreachable")).not.toThrow();
     expect(calls).toHaveLength(0);
   });
 
@@ -71,7 +71,7 @@ describe("when the sink is not configured", () => {
     vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", DSN);
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
-    expect(() => reportRuleBreach("contact.postmark_token_missing")).not.toThrow();
+    expect(() => reportRuleBreach("contact.platform_unreachable")).not.toThrow();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
@@ -99,13 +99,13 @@ describe("the request it makes", () => {
     // transport omits it for exactly this reason. The Cloudflare Function, which
     // has no CORS to satisfy, does send `application/x-sentry-envelope`.
     const { calls } = stubBrowser();
-    reportRuleBreach("contact.postmark_token_missing");
+    reportRuleBreach("contact.platform_unreachable");
     expect(calls[0].init.headers).toBeUndefined();
   });
 
   it("keeps the request alive across a navigation and leaks no referrer", () => {
     const { calls } = stubBrowser();
-    reportRuleBreach("contact.postmark_token_missing");
+    reportRuleBreach("contact.platform_unreachable");
     expect(calls[0].init.keepalive).toBe(true);
     expect(calls[0].init.referrerPolicy).toBe("strict-origin");
   });
@@ -145,13 +145,13 @@ describe("the request it makes", () => {
 
   it("marks a preview host as preview, matching GA4 and PostHog", () => {
     const { calls } = stubBrowser({ hostname: "feat-x.website-letsdog.pages.dev" });
-    reportRuleBreach("contact.postmark_token_missing");
+    reportRuleBreach("contact.platform_unreachable");
     expect(eventFrom(calls[0]).environment).toBe("preview");
   });
 
   it("marks the apex as production", () => {
     const { calls } = stubBrowser({ hostname: "letsdog.nl" });
-    reportRuleBreach("contact.postmark_token_missing");
+    reportRuleBreach("contact.platform_unreachable");
     expect(eventFrom(calls[0]).environment).toBe("production");
   });
 });
@@ -174,7 +174,7 @@ describe("it cannot become the problem", () => {
     vi.stubGlobal("fetch", () => {
       throw new Error("blocked by an extension");
     });
-    expect(() => reportRuleBreach("contact.postmark_token_missing")).not.toThrow();
+    expect(() => reportRuleBreach("contact.platform_unreachable")).not.toThrow();
   });
 
   it("does not produce an unhandled rejection when the POST fails", async () => {
@@ -182,7 +182,7 @@ describe("it cannot become the problem", () => {
     const rejection = Promise.reject(new Error("network down"));
     vi.stubGlobal("fetch", () => rejection);
 
-    expect(() => reportRuleBreach("contact.postmark_token_missing")).not.toThrow();
+    expect(() => reportRuleBreach("contact.platform_unreachable")).not.toThrow();
     // If the rejection were not swallowed at the source, this microtask drain is
     // where Vitest would surface it.
     await new Promise((resolve) => setTimeout(resolve, 0));
