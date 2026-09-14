@@ -16,6 +16,11 @@ tags: [legal-pages, content, transactional-email, postmark, company-identity, si
 
 # The company address is prose on 5 surfaces — one of them only ever appears in sent email
 
+> **Retired 2026-09-14 (T-83).** This site no longer runs a Pages Function: the contact and
+> creator forms post straight to the platform's `submit-website-contact` (`lib/website-contact.ts`,
+> hub contract `contracts/websiteformulier-ingang.md`), which verifies Turnstile, stores the message
+> and mails through Loops. What follows is kept as the learning it was, not as current practice.
+
 ## Context
 
 The company's statutory address is **not** derived from a constant. It is hand-written prose,

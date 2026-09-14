@@ -16,6 +16,11 @@ tags: [postmark, transactional-email, cloudflare-pages-functions, email-batch, h
 
 # Transactional confirmation email from a Cloudflare Pages Function (Postmark batch, best-effort)
 
+> **Retired 2026-09-14 (T-83).** This site no longer runs a Pages Function: the contact and
+> creator forms post straight to the platform's `submit-website-contact` (`lib/website-contact.ts`,
+> hub contract `contracts/websiteformulier-ingang.md`), which verifies Turnstile, stores the message
+> and mails through Loops. What follows is kept as the learning it was, not as current practice.
+
 > ↑ **Promoted to a cross-project contract** — the portable rules live in the shared hub: `ldcoding/LD - project cross knowledge/contracts/postmark-transactional-email.md` (repo `gaarlandt/ld-project-cross-knowledge`). This doc stays as the detailed origin rationale.
 
 ## Context

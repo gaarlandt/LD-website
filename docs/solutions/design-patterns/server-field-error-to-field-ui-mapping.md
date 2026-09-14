@@ -15,6 +15,11 @@ tags: [react, forms, error-handling, validation, fetch, contact-form, turnstile]
 
 # Map a server's field-error codes onto field-level UI
 
+> **Retired 2026-09-14 (T-83).** This site no longer runs a Pages Function: the contact and
+> creator forms post straight to the platform's `submit-website-contact` (`lib/website-contact.ts`,
+> hub contract `contracts/websiteformulier-ingang.md`), which verifies Turnstile, stores the message
+> and mails through Loops. What follows is kept as the learning it was, not as current practice.
+
 ## Context
 `functions/api/contact.ts` returns `{ ok:false, error:"name"|"email"|"message" }`
 with 400 when a field fails its stricter server checks (length caps, a tighter

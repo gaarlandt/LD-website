@@ -21,6 +21,9 @@ Curated from BreedSelector (BS) and Puppy Agenda V2 (PA). Only items that genuin
 
 ## Pages Functions run on the Workers runtime — PA's Worker lessons apply
 
+> **No Pages Function left since 2026-09-14 (T-83):** the contact Function was retired and the forms
+> post to the platform (`lib/website-contact.ts`). The lessons below apply again the day one comes back.
+
 - **Curl-smoketest the Pages Function secret.** Your contact Function holds `POSTMARK_SERVER_TOKEN`; a wrong/unset secret returns a generic error. Smoketest right after setting it (and remember secrets only apply to builds *after* the change). → `…/PuppyAgenda/code_puppyagenda/docs/solutions/conventions/curl-smoketest-new-cf-worker-secrets-2026-05-29.md`
 - **Prefer browser-only over `isomorphic-*` packages.** Pages Functions are the Workers runtime — isomorphic packages with a Node fallback throw at runtime despite a clean build. → `…/PuppyAgenda/code_puppyagenda/docs/solutions/tooling-decisions/prefer-browser-only-packages-over-isomorphic-on-workers-2026-05-15.md`
 - **Phosphor icons: import from `/dist/ssr`, use the `*Icon` names.** You use Phosphor — the SSR entry is Workers-safe and dodges the deprecated-name lint. → `…/PuppyAgenda/code_puppyagenda/docs/solutions/tooling-decisions/phosphor-icons-on-cloudflare-workers-2026-06-01.md`

@@ -16,6 +16,11 @@ tags: [turnstile, captcha, cloudflare-pages-functions, fail-closed, env-vars, co
 
 # Cloudflare Turnstile on a Pages Function — fail-closed guard, key setup, hand-rolled widget
 
+> **Retired 2026-09-14 (T-83).** This site no longer runs a Pages Function: the contact and
+> creator forms post straight to the platform's `submit-website-contact` (`lib/website-contact.ts`,
+> hub contract `contracts/websiteformulier-ingang.md`), which verifies Turnstile, stores the message
+> and mails through Loops. What follows is kept as the learning it was, not as current practice.
+
 ## Context
 
 The contact form (`functions/api/contact.ts` + `app/contact/contact-form-modal.tsx`) needed an anti-abuse gate: it emails submitter-authored content from a verified sender to a user-supplied address, so the honeypot alone was weak. We added Cloudflare Turnstile — a client widget plus server-side token verification on the Workers runtime — wanting dev/preview to work without real keys but production to never silently fail open. Several non-obvious rules surfaced; no prior `docs/solutions/` doc covered Turnstile. (PR #41; a code review caught a P1 fail-open in the first cut.)
