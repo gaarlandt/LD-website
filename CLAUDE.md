@@ -47,7 +47,7 @@ npm run lint            # ESLint 9 flat config (eslint.config.mjs). --max-warnin
                         # suppression announces itself instead of rotting.
 npm run typecheck:test  # tsc over the test surface (tsconfig.test.json). NOT run by
                         # `next build` — see Testing below for why they are separate.
-npm test                # Vitest unit tests (Node env; contact Function + pure helpers)
+npm test                # Vitest unit tests (Node env; pure lib/ and component helpers)
 npm run optimize:images # Regenerate AVIF/WebP variants after adding/changing a photo
 npm run assets          # optimize:images + regenerate favicons + og image
 npm run verify:live     # Drive a real Chrome against the DEPLOYED site and measure the consent
@@ -105,7 +105,7 @@ Vitest (Node environment) covers the server-side + pure logic the browser previe
 
 - **What's covered**: pure `lib/` and component helpers — including the forms' answer table against the platform's contract (`lib/website-contact.test.ts`). **A real form submission cannot be verified on a branch preview**: the platform accepts only `letsdog.nl` / `www.letsdog.nl` as Origin and refuses the preview's always-pass Turnstile token, so the live round trip is measured on the apex after the merge. (Until 2026-09-14 a Pages Function lived in `functions/` with its own suite; retired with T-83.)
 - **`next build` isolation (don't break this)**: the root `tsconfig.json` `include`s `**/*.ts`, and `next build` typechecks all of it — so `*.test.ts` and `vitest.config.ts` are listed in the root `tsconfig.json` `exclude`, and typechecked separately by `tsconfig.test.json`. Without that, the first test file's `vitest` import breaks the production build. Keep new test files under those globs (or extend the exclude) so the build stays green.
-- **Adding tests**: co-locate as `<name>.test.ts` next to the source. For the contact Function, exercise `onRequestPost` with a hand-built `Request` + an inline structurally-typed `env` and a stubbed global `fetch` (no Next/Workers harness needed). Prefer extracting pure logic (e.g. predicates, parsers) so it's unit-testable off the Workers runtime.
+- **Adding tests**: co-locate as `<name>.test.ts` next to the source. For code that calls out, stub the global `fetch` with `vi.stubGlobal` and hand back the counterpart's documented status/body pairs — `lib/website-contact.test.ts` does this for the platform's form entry. Prefer extracting pure logic (e.g. predicates, parsers, the outcome-to-action table in `formActionFor`) so it stays unit-testable in the Node environment, where a React component is not.
 
 ## Project Structure
 ```
@@ -148,8 +148,9 @@ Vitest (Node environment) covers the server-side + pure logic the browser previe
 │   ├── content.ts          # loadLegalContent(slug) — reads content/<slug>.md at build time (front-matter via js-yaml)
 │   ├── analytics.ts        # trackEvent (dual-fire GA4+PostHog) + identifyLead
 │   ├── attribution.ts      # ld_attribution handover cookie — the seven campaign params, FIRST-TOUCH (inverse of consent.ts)
-│   ├── error-report.ts     # Error sink core, shared by BOTH runtimes: rule ids, fixed messages, Sentry event/envelope, and the REDACTION allowlist. Pure — no deps, no DOM, no Node (the Pages Function imports it)
+│   ├── error-report.ts     # Error sink core: rule ids, fixed messages, Sentry event/envelope, and the REDACTION allowlist. Pure — no deps, no DOM, no Node (kept pure from when the retired contact Pages Function imported it too)
 │   ├── error-sink.ts       # Browser half — posts the envelope itself, ungated, no-op without a DSN
+│   ├── website-contact.ts  # The two forms' round trip to the platform's submit-website-contact: URL, answer table, formActionFor, what gets reported
 │   └── prod-hosts.ts        # PROD_HOSTS allowlist (shared by ga4.tsx + posthog-provider)
 ├── public/                 # Static assets (images, fonts, _headers, _redirects, llms.txt, .well-known/security.txt, og/, images/optimized/)
 ├── scripts/                # Build-time asset generators (optimize-images, generate-icons, generate-og-image) — sharp
