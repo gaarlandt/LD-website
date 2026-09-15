@@ -48,19 +48,19 @@ export const faqCategories: FaqCategory[] = [
     faqs: [
       {
         q: "Wat kost het abonnement?",
-        a: "Twee smaken. Flexibel is €19,99 per maand, maandelijks opzegbaar en zonder proefperiode: je betaalt direct bij het afsluiten. Early Member is €59 voor het eerste jaar (onze launchprijs, daarna €119) en begint met 7 dagen gratis proberen. Zeg je binnen die 7 dagen op, dan betaal je niets.",
+        a: "Twee smaken, allebei met 7 dagen gratis proberen. Flexibel is €14,99 per maand en maandelijks opzegbaar. Early Member is €59 voor het eerste jaar (onze launchprijs, daarna €119). Zeg je binnen die 7 dagen op, dan betaal je niets.",
       },
       {
         q: "Kan ik opzeggen wanneer ik wil?",
-        a: "Ja, opzeggen kan altijd via je account op mijn.letsdog.nl, onder Profiel en dan Abonnement. Bij het maandabonnement stopt het abonnement aan het einde van de lopende maand; terugbetaling van die maand is niet mogelijk. Bij een jaarabonnement stopt het abonnement aan het einde van het jaar. Zeg je binnen de eerste 7 dagen op, dan gaat de afschrijving niet door en betaal je niets, en stopt je abonnement na die 7 dagen.",
+        a: "Ja, opzeggen kan altijd via je account op mijn.letsdog.nl, onder Profiel en dan Abonnement. Zeg je binnen de eerste 7 dagen op, dan gaat de afschrijving niet door, betaal je niets en stopt je abonnement na die 7 dagen. Dat geldt voor allebei de abonnementen.",
       },
       {
         q: "Via welke betaalmethoden kan ik betalen?",
         a: "Betalen gaat via Stripe. Je kunt kiezen uit iDEAL, creditcard en SEPA-incasso. Betaal je met iDEAL, dan geef je bij die betaling meteen een machtiging af waarmee we de verlenging later automatisch incasseren.",
       },
       {
-        q: "Waarom zie ik bij het jaarabonnement eerst €0,01 op mijn afschrift?",
-        a: "Dat is een controle van je bank, geen betaling. Om de machtiging voor de automatische verlenging te kunnen afgeven, schrijft Stripe eenmalig 1 cent af en boekt die direct weer terug. Op je afschrift zie je dus 1 cent af en 1 cent terug. Daarna gebeurt er tijdens je proefperiode niets: pas na 7 dagen schrijven we het jaarbedrag af. Bij het maandabonnement gebeurt dit niet, daar betaal je meteen het maandbedrag.",
+        q: "Waarom zie ik eerst €0,01 op mijn afschrift?",
+        a: "Dat is een controle van je bank, geen betaling. Om de machtiging voor de automatische verlenging te kunnen afgeven, schrijft Stripe eenmalig 1 cent af en boekt die direct weer terug. Op je afschrift zie je dus 1 cent af en 1 cent terug. Daarna gebeurt er tijdens je proefperiode niets: pas na 7 dagen schrijven we het eerste bedrag af: €14,99 bij het maandabonnement, €59 bij het jaarabonnement.",
       },
     ],
   },
