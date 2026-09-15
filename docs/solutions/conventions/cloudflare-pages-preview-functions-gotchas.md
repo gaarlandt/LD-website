@@ -16,6 +16,11 @@ tags: [cloudflare-pages, preview-deploy, functions, env-vars, secrets, gotcha, d
 
 # Cloudflare Pages preview gotchas — 28-char alias truncation + env-var scope/timing
 
+> **Retired 2026-09-14 (T-83).** This site no longer runs a Pages Function: the contact and
+> creator forms post straight to the platform's `submit-website-contact` (`lib/website-contact.ts`,
+> hub contract `contracts/websiteformulier-ingang.md`), which verifies Turnstile, stores the message
+> and mails through Loops. What follows is kept as the learning it was, not as current practice.
+
 Two unrelated Cloudflare Pages behaviors that both make a *correctly written, correctly
 deployed* Pages Function look broken on a branch preview. They surfaced together while
 verifying the contact-form function (`functions/api/contact.ts`, PR #17) and each sent

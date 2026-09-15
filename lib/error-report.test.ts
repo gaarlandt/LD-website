@@ -126,13 +126,21 @@ describe("the rule table", () => {
     }
   });
 
-  it("covers the eight failure paths of the contact Function, one id each", () => {
-    // D-6 named these eight as the strongest justification for having a sink at
-    // all: each one is a lost lead. Collapsing two of them into one id would be
-    // the exact failure the platform's lesson is about.
+  it("covers the forms' round trip to the platform, one id per outcome", () => {
+    // Until 2026-09-14 these were the eight failure paths of the Pages Function
+    // (D-6: each one a lost lead). The platform owns those now (T-83); what the
+    // browser alone can witness is three outcomes, and collapsing two of them
+    // into one id would be the exact failure the platform's lesson is about.
     const contactRules = REPORT_RULES.filter((rule) => rule.startsWith("contact."));
-    expect(contactRules).toHaveLength(8);
-    expect(new Set(contactRules).size).toBe(8);
+    expect(contactRules).toEqual([
+      "contact.platform_unreachable",
+      "contact.platform_refused",
+      "contact.platform_captcha_refused",
+    ]);
+    // A single captcha refusal is a visitor; only a run of them is our problem.
+    expect(ruleLevel("contact.platform_captcha_refused")).toBe("warning");
+    expect(ruleLevel("contact.platform_unreachable")).toBe("error");
+    expect(ruleLevel("contact.platform_refused")).toBe("error");
   });
 
   it("keeps the duplicate-cookie error/warning split as two ids, not one at two levels", () => {
@@ -143,27 +151,31 @@ describe("the rule table", () => {
 
 describe("the event", () => {
   const base = {
-    runtime: "pages-function" as const,
+    runtime: "browser" as const,
     environment: "production" as const,
     eventId: "a".repeat(32),
     timestampMs: 1_755_000_000_000,
   };
 
-  it("tags the runtime, so two runtimes share one project", () => {
-    const browser = buildSentryEvent({ ...base, runtime: "browser", rule: "contact.postmark_token_missing" });
-    const fn = buildSentryEvent({ ...base, rule: "contact.postmark_token_missing" });
-    expect(browser.tags.runtime).toBe("browser");
-    expect(fn.tags.runtime).toBe("pages-function");
-    expect(browser.tags.rule).toBe("contact.postmark_token_missing");
+  it("tags the runtime and the rule, which Sentry's history is sorted by", () => {
+    // One runtime since 2026-09-14 (the Pages Function went with T-83), but the
+    // tag stays: events before that date carry `pages-function`.
+    const event = buildSentryEvent({ ...base, rule: "contact.platform_unreachable" });
+    expect(event.tags.runtime).toBe("browser");
+    expect(event.tags.rule).toBe("contact.platform_unreachable");
   });
 
   it("groups on the rule and carries its fixed message", () => {
-    const rule: ReportRule = "contact.postmark_batch_non_2xx";
-    const event = buildSentryEvent({ ...base, rule, measured: { status: 503 } });
+    const rule: ReportRule = "contact.platform_refused";
+    const event = buildSentryEvent({
+      ...base,
+      rule,
+      measured: { status: 403, errorCode: "forbidden" },
+    });
     expect(event.fingerprint).toEqual([rule]);
     expect(event.transaction).toBe(rule);
     expect(event.message.formatted).toBe(ruleMessage(rule));
-    expect(event.extra).toEqual({ status: 503 });
+    expect(event.extra).toEqual({ status: 403, errorCode: "forbidden" });
   });
 
   it("uses the rule's level unless the call site overrides it", () => {
@@ -173,7 +185,7 @@ describe("the event", () => {
   });
 
   it("reports the timestamp in seconds, which is what Sentry reads", () => {
-    expect(buildSentryEvent({ ...base, rule: "contact.postmark_token_missing" }).timestamp).toBe(
+    expect(buildSentryEvent({ ...base, rule: "contact.platform_unreachable" }).timestamp).toBe(
       1_755_000_000,
     );
   });
@@ -211,8 +223,8 @@ describe("the DSN", () => {
 
 describe("the envelope", () => {
   const event = buildSentryEvent({
-    rule: "contact.turnstile_siteverify_non_2xx",
-    runtime: "pages-function",
+    rule: "contact.platform_refused",
+    runtime: "browser",
     environment: "preview",
     eventId: "b".repeat(32),
     timestampMs: 1_755_000_000_000,

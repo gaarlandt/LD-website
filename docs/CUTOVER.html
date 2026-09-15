@@ -230,6 +230,7 @@
 
         <li><input type="checkbox" id="pf-ga4"><label for="pf-ga4"><b>GA4 fires on production.</b> GA4 → Realtime shows <code>hostname=website-letsdog.pages.dev</code> with <code>debug_mode=true</code>.</label></li>
 
+        <li style="list-style:none"><div class="callout warn"><b>Retired 2026-09-14 (T-83).</b> This site no longer runs the contact Pages Function: the contact and creator forms post from the browser to the platform's <code>submit-website-contact</code> (<code>lib/website-contact.ts</code>; hub contract <code>contracts/websiteformulier-ingang.md</code>). There is no Postmark token, no <code>TURNSTILE_SECRET_KEY</code> and no <code>/api/contact</code> on this site any more; the Turnstile secret lives on the platform as <code>WEBSITE_TURNSTILE_SECRET_KEY</code>. Kept below as history. Whether to delete the zone WAF rule and alert on <code>/api/contact</code> is Jur's call.</div></li>
         <li><input type="checkbox" id="pf-postmark"><label for="pf-postmark"><b>Contact form delivers.</b> <code>POSTMARK_SERVER_TOKEN</code> is set in Cloudflare Pages (Production <em>and</em> Preview) and <code>CONTACT_FROM</code> is a Postmark-verified sender. Submit the form on production and confirm it lands at <code>support@letsdog.nl</code> (Postmark → Activity). Without the token, <code>/api/contact</code> returns 500.</label></li>
 
         <li><input type="checkbox" id="pf-turnstile"><label for="pf-turnstile"><b>Turnstile is live</b> on the contact form. <a href="#turnstile">Full steps below ↓</a> <span class="gatebadge dash">dashboard</span></label></li>
@@ -260,6 +261,7 @@
 
     <!-- ---------- RATE LIMIT (the flagged one) ---------- -->
     <h4 id="ratelimit">🛡️ Rate-limiting rule on <code>/api/contact</code></h4>
+    <div class="callout warn"><b>Retired 2026-09-14 (T-83).</b> This site no longer runs the contact Pages Function: the contact and creator forms post from the browser to the platform's <code>submit-website-contact</code> (<code>lib/website-contact.ts</code>; hub contract <code>contracts/websiteformulier-ingang.md</code>). There is no Postmark token, no <code>TURNSTILE_SECRET_KEY</code> and no <code>/api/contact</code> on this site any more; the Turnstile secret lives on the platform as <code>WEBSITE_TURNSTILE_SECRET_KEY</code>. Kept below as history. Whether to delete the zone WAF rule and alert on <code>/api/contact</code> is Jur's call.</div>
     <div class="callout warn">
       <div class="ico">💡</div>
       <div>

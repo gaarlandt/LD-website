@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { flushSync } from "react-dom";
 import { PaperPlaneTilt, CheckCircle } from "@phosphor-icons/react/dist/ssr";
 import {
   Dialog,
@@ -13,75 +14,47 @@ import {
   Button,
 } from "@/components/ui";
 import { trackEvent, identifyLead } from "@/lib/analytics";
+import { TURNSTILE_SITE_KEY, loadTurnstile } from "@/components/shared/turnstile";
+import {
+  formActionFor,
+  reportUnreachable,
+  submitWebsiteForm,
+  type ContactOutcome,
+  type ErrorKind,
+  type FieldCode,
+} from "@/lib/website-contact";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
+// The fields this form shows; a refusal on any other is a client out of step
+// with the platform's contract and gets the generic banner (formActionFor).
+const CONTACT_FIELDS = ["name", "email", "message"] as const satisfies readonly FieldCode[];
+
 const EMPTY = { name: "", email: "", message: "", company: "" };
 
-// Server-side field-validation copy. functions/api/contact.ts returns
-// { ok:false, error:"name"|"email"|"message" } with 400 when a field fails its
-// stricter server checks (length caps, a tighter email regex) that the lighter
+// Server-side field-validation copy. The platform (lib/website-contact.ts)
+// returns { ok:false, error:"name"|"email"|"message" } with 400 when a field fails
+// its stricter checks (length caps, a tighter address shape) that the lighter
 // client validation lets through — surface those on the matching field instead of
 // the generic banner. On-brand Dutch; deliberately distinct from validate()'s
 // empty-field prompts ("Vul je naam in.") — these signal a length/format reject,
 // not a blank field. Re-tone both together if you change the field copy.
-const FIELD_ERROR_COPY: Record<"name" | "email" | "message", string> = {
+const FIELD_ERROR_COPY: Record<(typeof CONTACT_FIELDS)[number], string> = {
   name: "Controleer je naam.",
   email: "Vul een geldig e-mailadres in.",
   message: "Controleer je bericht.",
 };
 
-// Cloudflare's always-passes TEST site key — used when the real key is unset so
-// dev/preview render a working widget without a real Turnstile config. The real
-// key is inlined at build time from NEXT_PUBLIC_TURNSTILE_SITE_KEY in production.
-// Pairs with the always-pass test SECRET in functions/api/contact.ts.
-const TURNSTILE_SITE_KEY =
-  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
-
-interface TurnstileAPI {
-  render: (el: HTMLElement, opts: Record<string, unknown>) => string;
-  remove: (id: string) => void;
-  reset: (id: string) => void;
-}
-declare global {
-  interface Window {
-    turnstile?: TurnstileAPI;
-  }
-}
-
-// Load the Turnstile script once, lazily; resolve when window.turnstile is ready.
-let turnstileScript: Promise<void> | null = null;
-function loadTurnstile(): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
-  if (window.turnstile) return Promise.resolve();
-  if (turnstileScript) return turnstileScript;
-  turnstileScript = new Promise<void>((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-    s.async = true;
-    s.defer = true;
-    s.onload = () => resolve();
-    s.onerror = () => {
-      // Don't cache the rejection — let a later open retry the load.
-      turnstileScript = null;
-      reject(new Error("turnstile failed to load"));
-    };
-    document.head.appendChild(s);
-  });
-  return turnstileScript;
-}
-
-// Read the Function's `error` code from a non-OK response, defensively: a 5xx/502
-// can return a non-JSON body (e.g. a gateway page) and res.json() would throw —
-// swallow that so the caller falls through to the generic banner.
-async function readErrorCode(res: Response): Promise<string | undefined> {
-  try {
-    const data = (await res.json()) as { error?: unknown };
-    return typeof data.error === "string" ? data.error : undefined;
-  } catch {
-    return undefined;
-  }
-}
+// The banner per ErrorKind. `generic` is the old copy unchanged; the other two
+// are the platform's own answers (hub contract websiteformulier-ingang.md).
+const ERROR_COPY: Record<ErrorKind, string> = {
+  generic:
+    "Er ging iets mis bij het versturen. Probeer het opnieuw of mail ons direct via mail@letsdog.nl.",
+  captcha:
+    "De beveiligingscontrole is niet gelukt. Doe de controle hierboven opnieuw en verstuur je bericht nog een keer.",
+  rate_limited:
+    "Er zijn net te veel berichten achter elkaar verstuurd. Probeer het over een uur opnieuw, of mail ons direct via mail@letsdog.nl.",
+};
 
 export function ContactFormModal({
   open,
@@ -93,6 +66,7 @@ export function ContactFormModal({
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>("idle");
+  const [errorKind, setErrorKind] = useState<ErrorKind>("generic");
   const [token, setToken] = useState("");
   const [turnstileError, setTurnstileError] = useState(false);
   const widgetRef = useRef<HTMLDivElement>(null);
@@ -101,7 +75,7 @@ export function ContactFormModal({
   // a close→reopen within the 250ms window can cancel it; otherwise the stale timer
   // wipes the freshly-rendered widget's token and disables submit on a live dialog.
   const resetTimerRef = useRef<number | null>(null);
-  // AbortController for the in-flight /api/contact submit: bounds a stalled request
+  // AbortController for the in-flight submit to the platform: bounds a stalled request
   // (10s timeout) and lets a dialog close cancel it, so the orphaned fetch's
   // continuation can't paint a stale success/error onto a closed dialog.
   const abortRef = useRef<AbortController | null>(null);
@@ -233,50 +207,56 @@ export function ContactFormModal({
       timedOut = true;
       controller.abort();
     }, 10000);
+    let outcome: ContactOutcome;
     try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, turnstileToken: token }),
-        signal: controller.signal,
-      });
-      if (!res.ok) {
-        // The Function validates name/email/message BEFORE Turnstile, so a field
-        // 400 leaves the token unconsumed and still valid — surface the error on
-        // the field, focus it, and keep the armed token so a fix can resubmit
-        // straight away. captcha / invalid_json / 500 / 502 / network fall through
-        // to the generic banner + token reset in catch.
-        const code = await readErrorCode(res);
-        if (code === "name" || code === "email" || code === "message") {
-          setErrors({ [code]: FIELD_ERROR_COPY[code] });
-          setStatus("idle");
-          document.getElementById(`cf-${code}`)?.focus();
-          return;
-        }
-        throw new Error("send failed");
-      }
-      trackEvent("contact_form_submitted");
-      // The one PostHog identify on the site — lowercased email is the
-      // cross-product join key (see lib/analytics.ts + the identity contract).
-      identifyLead(form.email);
-      setForm(EMPTY);
-      setStatus("success");
-    } catch {
+      outcome = await submitWebsiteForm({ ...form, turnstileToken: token }, controller.signal);
+    } catch (err) {
       // A close-initiated abort (not the timeout) is benign: the dialog is gone
       // and handleOpenChange already reset it — settle to idle so a fast reopen
       // (where the [open] effect cancels the reset timer) isn't stuck "submitting".
-      // A timeout or a real network/parse failure shows the generic banner.
       if (controller.signal.aborted && !timedOut) {
         setStatus("idle");
         return;
       }
+      // No answer at all — the one failure the platform cannot see, because
+      // nothing reached it. A CORS refusal lands here too.
+      reportUnreachable(err, timedOut);
+      setErrorKind("generic");
       setStatus("error");
-      // Turnstile tokens are single-use; get a fresh one for the retry.
       resetTurnstile();
+      return;
     } finally {
       window.clearTimeout(timeout);
       if (abortRef.current === controller) abortRef.current = null;
     }
+
+    // Outside the try on purpose: nothing below may be reported as an
+    // unreachable platform, and an analytics sink that throws must not turn a
+    // delivered message into an error banner.
+    const action = formActionFor(outcome, CONTACT_FIELDS);
+    if (action.type === "success") {
+      setForm(EMPTY);
+      setStatus("success");
+      trackEvent("contact_form_submitted");
+      // The one PostHog identify on the site — on the anonymous $device_id,
+      // never on the address (see lib/analytics.ts, T-46).
+      identifyLead(form.email);
+      return;
+    }
+    resetTurnstile();
+    if (action.type === "field") {
+      // flushSync so the input is no longer `disabled` when focus() runs: set in
+      // the same tick, the field was still disabled and focus stayed on the
+      // button (pre-existing since 2026-06-25, found in the T-83 review).
+      flushSync(() => {
+        setErrors({ [action.field]: FIELD_ERROR_COPY[action.field] });
+        setStatus("idle");
+      });
+      document.getElementById(`cf-${action.field}`)?.focus();
+      return;
+    }
+    setErrorKind(action.kind);
+    setStatus("error");
   }
 
   return (
@@ -421,8 +401,7 @@ export function ContactFormModal({
 
               {status === "error" && (
                 <p role="alert" className="text-sm text-[var(--ld-danger)]">
-                  Er ging iets mis bij het versturen. Probeer het opnieuw of mail
-                  ons direct via mail@letsdog.nl.
+                  {ERROR_COPY[errorKind]}
                 </p>
               )}
 

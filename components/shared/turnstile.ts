@@ -7,7 +7,9 @@
 // Cloudflare's always-passes TEST site key — used when the real key is unset so
 // dev/preview render a working widget without a real Turnstile config. The real
 // key is inlined at build time from NEXT_PUBLIC_TURNSTILE_SITE_KEY in production.
-// Pairs with the always-pass test SECRET in functions/api/contact.ts.
+// The SECRET that verifies it lives on the platform since 2026-09-14 (T-83, as
+// WEBSITE_TURNSTILE_SECRET_KEY), and it is the real one: a test-key token is
+// refused there, so the forms render on a preview but cannot deliver from one.
 export const TURNSTILE_SITE_KEY =
   process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
 
@@ -44,16 +46,4 @@ export function loadTurnstile(): Promise<void> {
     document.head.appendChild(s);
   });
   return turnstileScript;
-}
-
-// Read the Function's `error` code from a non-OK response, defensively: a 5xx/502
-// can return a non-JSON body (e.g. a gateway page) and res.json() would throw —
-// swallow that so the caller falls through to the generic banner.
-export async function readErrorCode(res: Response): Promise<string | undefined> {
-  try {
-    const data = (await res.json()) as { error?: unknown };
-    return typeof data.error === "string" ? data.error : undefined;
-  } catch {
-    return undefined;
-  }
 }

@@ -113,10 +113,9 @@ function sentryDsn(): string | undefined {
  * and the analytics around it agree about which deploy they came from.
  *
  * Note this is the ANALYTICS classification, which counts
- * `website-letsdog.pages.dev` as preview. `functions/api/contact.ts` takes the
- * opposite stance for its own reports, matching the Turnstile posture it
- * enforces there; `lib/prod-hosts.ts` explains why both are right for their own
- * question.
+ * `website-letsdog.pages.dev` as preview. Until 2026-09-14 the contact Pages
+ * Function took the opposite stance for its own reports; it was retired with
+ * T-83, so this is now the only classification a report gets.
  */
 function environment(): "production" | "preview" {
   // `window.location` is read through an optional chain rather than assumed. It

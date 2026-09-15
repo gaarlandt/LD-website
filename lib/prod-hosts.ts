@@ -10,11 +10,11 @@
 //
 // NOTE: this list is scoped to ANALYTICS environment tagging — it intentionally
 // treats the Pages alias `website-letsdog.pages.dev` as non-production so the
-// shared GA4/PostHog data stays clean. The contact Function takes the OPPOSITE
-// stance for security: it ENFORCES Turnstile on `website-letsdog.pages.dev` too,
-// since that alias is a live, publicly-reachable surface (see
-// functions/api/contact.ts — PROD_PAGES_ALIAS / isPreviewOrLocalHost). If you add
-// a production host, consider both classifications.
+// shared GA4/PostHog data stays clean. (Until 2026-09-14 the contact Pages
+// Function took the opposite stance and enforced Turnstile on that alias too;
+// the forms now post to the platform, which accepts only letsdog.nl and
+// www.letsdog.nl as Origin — see lib/website-contact.ts.) If you add a
+// production host, the platform's WEBSITE_ORIGINS list has to hear about it.
 export const PROD_HOSTS = ["www.letsdog.nl", "letsdog.nl"];
 
 export function isProdHost(hostname: string): boolean {
