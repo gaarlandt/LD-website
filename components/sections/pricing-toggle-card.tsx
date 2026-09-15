@@ -163,7 +163,10 @@ export function PricingToggleCard() {
           </div>
         )}
 
-        <CardFooter className="text-center text-[11px] font-bold uppercase tracking-widest text-[var(--ld-text-subtle)]">
+        {/* text-balance: the monthly note is two lines below ~1440px, and an
+            unbalanced wrap strands its last word alone ("MAAND"). Balanced,
+            the break lands at the "·" — measured on the T-85 preview. */}
+        <CardFooter className="text-center text-balance text-[11px] font-bold uppercase tracking-widest text-[var(--ld-text-subtle)]">
           {tier.footerNote}
         </CardFooter>
       </Card>
