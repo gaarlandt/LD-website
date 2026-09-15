@@ -13,8 +13,8 @@ const flex = tiers.find((t) => t.key === "flex")!;
 const early = tiers.find((t) => t.key === "early")!;
 
 // Every secondary figure is derived from priceValue so the displayed numbers
-// can never drift from the headline price (plan KTD1/KTD2). At €19,99 monthly
-// vs €59 first-year annual: €239,88/yr, €180,88 "meer", €4,92 p/m, save 75%.
+// can never drift from the headline price (plan KTD1/KTD2). At €14,99 monthly
+// vs €59 first-year annual: €179,88/yr, €120,88 "meer", €4,92 p/m, save 67%.
 const monthlyPerYear = flex.priceValue * 12;
 const meerPerJaar = monthlyPerYear - early.priceValue;
 const perMonthEq = early.priceValue / 12;
