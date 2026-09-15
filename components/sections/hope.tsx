@@ -27,7 +27,7 @@ const outcomes = [
     icon: Headphones,
     title: "Luister onderweg, lees terug wanneer je wilt.",
     description:
-      "Audiolessen voor tijdens het uitlaten, en een bibliotheek waarin je elke les terugvindt wanneer je hem nodig hebt.",
+      "Audiolessen voor op je eigen moment, en een bibliotheek waarin je elke les terugvindt wanneer je hem nodig hebt.",
   },
 ];
 
