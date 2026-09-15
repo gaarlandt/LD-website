@@ -22,10 +22,12 @@ export type Tier = {
   // struck-through above the intro price on the yearly view. Purely visual, so
   // it stays inclusive of VAT.
   listPriceValue?: number;
-  // Analytics (begin_checkout) — the shared item contract with the platform,
+  // Analytics (add_to_cart) — the shared item contract with the platform,
   // owned by docs/plans/2026-08-06-001-feat-ga4-platform-cutover-plan.md. GA4's
-  // item-scoped reports join begin_checkout → purchase on `item_id`, so both
-  // hosts must send these exact values. Kept beside ctaHref so a checkout swap
+  // item-scoped reports join add_to_cart → begin_checkout → purchase on
+  // `item_id`, so both hosts must send these exact values (pinned on both sides:
+  // pricing-data.test.ts here, packages/core/src/pricing.test.ts on the
+  // platform). Kept beside ctaHref so a checkout swap
   // updates the tracked item in the same gesture (that coupling is why the SKU
   // change and the platform checkout link ship in one commit).
   itemId: "ld_maand" | "ld_jaar";

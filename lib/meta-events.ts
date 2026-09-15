@@ -31,7 +31,7 @@ export type MetaEvent = {
   params: Record<string, unknown>;
 };
 
-// A single line item as begin_checkout emits it (components/sections/plan-cta.tsx).
+// A single line item as add_to_cart emits it (components/sections/plan-cta-event.ts).
 type CheckoutItem = {
   item_id?: unknown;
   price?: unknown;
@@ -75,7 +75,15 @@ const MAPPINGS: Record<string, { name: string; params: (p: MetaEventParams) => R
   // funnel keeps its order. Do not "fix" this into a custom event: a custom
   // event cannot be optimised or bid on, which is the whole reason this mapping
   // table only ever emits standard events.
-  begin_checkout: {
+  //
+  // THE KEY IS THE GA4 NAME, AND IT MOVED ON 2026-09-14 (LDplatform D-473). It
+  // was begin_checkout, which the platform also sends on checkout arrival, so
+  // Google counted two per visitor; the click now goes out as add_to_cart and
+  // the Meta outcome did not change. This key and the name in
+  // components/sections/plan-cta-event.ts must move together: toMetaEvent
+  // returns null for an unknown name without a sound, so renaming only the
+  // call would silently end AddToCart.
+  add_to_cart: {
     name: "AddToCart",
     params: (p) => {
       // Filter once, up front: content_ids and contents must describe the SAME
