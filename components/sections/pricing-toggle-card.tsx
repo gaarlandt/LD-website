@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, TrendUp } from "@phosphor-icons/react/dist/ssr";
+import { Check } from "@phosphor-icons/react/dist/ssr";
 import { Card, CardTitle, CardFooter, Badge, Eyebrow } from "@/components/ui";
 import { PlanCTA } from "./plan-cta";
 import { PricingViewTracker } from "./pricing-view-tracker";
@@ -14,9 +14,8 @@ const early = tiers.find((t) => t.key === "early")!;
 
 // Every secondary figure is derived from priceValue so the displayed numbers
 // can never drift from the headline price (plan KTD1/KTD2). At €14,99 monthly
-// vs €59 first-year annual: €179,88/yr, €120,88 "meer", €4,92 p/m, save 67%.
+// vs €59 first-year annual: €179,88/yr, €4,92 p/m, save 67%.
 const monthlyPerYear = flex.priceValue * 12;
-const meerPerJaar = monthlyPerYear - early.priceValue;
 const perMonthEq = early.priceValue / 12;
 const savingsPct = Math.round(((monthlyPerYear - early.priceValue) / monthlyPerYear) * 100);
 
@@ -151,17 +150,8 @@ export function PricingToggleCard() {
             itemId / priceValueExVat / billingPeriod. */}
         <PlanCTA tier={tier} />
 
-        {/* Monthly → annual nudge */}
-        {!isYearly && (
-          <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-[var(--ld-green)]/10 px-4 py-3 text-center text-sm text-[var(--ld-text-muted)]">
-            <TrendUp size={16} weight="bold" className="flex-shrink-0 text-[var(--ld-green)]" />
-            <span>
-              Je betaalt{" "}
-              <strong className="text-[var(--ld-text)]">{formatEUR(meerPerJaar)}</strong>{" "}
-              meer dan per jaar, kies Jaarlijks
-            </span>
-          </div>
-        )}
+        {/* The green "Je betaalt €… meer dan per jaar, kies Jaarlijks" nudge
+            under the monthly CTA was removed on Jur's word (T-85, 2026-09-15). */}
 
         {/* text-balance: the monthly note is two lines below ~1440px, and an
             unbalanced wrap strands its last word alone ("MAAND"). Balanced,

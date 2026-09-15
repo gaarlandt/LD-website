@@ -631,9 +631,6 @@ Start 7 dagen proef
 **Footer note**
 Pas na 7 dagen betalen · daarna €14,99 per maand
 
-**"Switch to yearly" nudge** _(price auto-calculated)_
-Je betaalt €120,88 meer dan per jaar, kies Jaarlijks
-
 ### Plan: Early Member (yearly)
 **Plan name**
 Early Member
