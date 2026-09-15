@@ -1,7 +1,7 @@
 ---
 title: Privacybeleid
 description: Hoe Let's dog omgaat met je persoonsgegevens, je rechten en onze beveiligingsmaatregelen.
-lead: Laatst bijgewerkt op 18 augustus 2026.
+lead: Laatst bijgewerkt op 15 september 2026.
 ---
 
 Voor website, webapp, iOS-app, Android-app en platformomgeving.
@@ -29,6 +29,9 @@ Website: letsdog.nl
 Dit privacybeleid geldt voor:
 
 - de website letsdog.nl;
+- de rassenkeuzehulp op letsdog.nl (die draait op keuzehulp.letsdog.nl);
+- de quiz op mijn.letsdog.nl;
+- het contactformulier en de aanmelding als creator op letsdog.nl;
 - de webapplicatie, waaronder mijn.letsdog.nl;
 - de iOS- en Android-app van Let's dog;
 - het aanmaken en gebruiken van een account;
@@ -117,6 +120,32 @@ Wanneer een gebruiker via de website of webapplicatie een aankoop doet, een abon
 
 Volledige betaalkaartgegevens worden verwerkt door de betaalprovider en niet door Let's dog opgeslagen.
 
+### 3.9 De quiz
+
+Vul je de quiz op mijn.letsdog.nl in, dan bewaren wij wat je daar invult, ook als je (nog) geen account hebt:
+
+- je voornaam en je e-mailadres;
+- de naam en de geboortedatum van je hond, of wanneer je je pup verwacht;
+- je antwoorden;
+- het IP-adres waarmee je de quiz verstuurde;
+- dat je het vinkje zette, wanneer, en bij welke versie van de tekst;
+- via welke advertentie of link je binnenkwam, voor zover je daar toestemming voor gaf (zie de cookieverklaring).
+
+### 3.10 De rassenkeuzehulp
+
+Vul je de rassenkeuzehulp op letsdog.nl in, dan bewaren wij, ook als je geen account hebt:
+
+- je voornaam en je e-mailadres;
+- je keuzes en het ras dat het best bij je past;
+- het IP-adres waarmee je de keuzehulp verstuurde;
+- dat je het vinkje zette, wanneer, en bij welke versie van de tekst.
+
+Doorloop je de rassenkeuzehulp nog een keer, bijvoorbeeld om een andere keuze te proberen, dan bewaren wij ook die nieuwe keuzes. Hoe je browser je naam en e-mailadres onthoudt zodat je ze niet opnieuw hoeft in te typen, staat in de cookieverklaring.
+
+### 3.11 Contactformulier en aanmelding als creator
+
+Stuur je ons een bericht via het contactformulier op letsdog.nl, of meld je je aan als creator, dan bewaren wij je naam, je e-mailadres en je bericht. Bij een aanmelding bewaren wij ook hoe je wilt samenwerken, je kanalen, je profiel, je bereik en of je zelf in beeld wilt. Daarnaast bewaren wij het IP-adres waarmee je het formulier verstuurde. Dat gebruiken wij om misbruik tegen te gaan, en het blijft staan zolang je bericht bewaard blijft.
+
 ## 4. Welke gegevens verwerkt de mobiele app niet rechtstreeks?
 
 De mobiele app verwerkt niet rechtstreeks:
@@ -137,6 +166,9 @@ De iOS-app verwerkt User ID, naam, e-mailadres of telefoonnummer niet voor track
 - het afstemmen van onze e-mail op waar je in het programma zit;
 - het verwerken van bestellingen, abonnementen en betalingen via de webomgeving;
 - klantenservice, support en communicatie;
+- het mailen van je uitslag als je de quiz of de rassenkeuzehulp invult, en daarna e-mails van Let's dog als je daar met het vinkje om vroeg;
+- het beantwoorden van je bericht of je aanmelding als creator;
+- zien welke campagnes en welke antwoorden in de quiz en de rassenkeuzehulp uiteindelijk tot klanten leiden;
 - beveiliging, fraudepreventie en technische monitoring;
 - analyse en verbetering van de app, website, content en funnel;
 - het verzenden van pushnotificaties als daarvoor toestemming is gegeven;
@@ -146,14 +178,16 @@ De gegevens worden binnen de iOS-app niet verwerkt met als doel gebruikers te tr
 
 Wij gebruiken gegevens over jou en je hond ook om onze e-mail af te stemmen op waar je in het programma zit. Denk aan de naam en de leeftijd van je hond, de fase waarin hij zit en hoever je bent, zodat een bericht aansluit bij wat er die week speelt. Voor mail die hoort bij je account, je betaling en je abonnement doen wij dat omdat het nodig is voor de uitvoering van de overeenkomst. Voor mail met tips en aanmoediging doen wij dat op grond van ons gerechtvaardigd belang om je goed te helpen met de training. Je kunt je voor die tweede groep altijd afmelden, met de afmeldlink onderaan zo'n bericht.
 
+Vul je de quiz of de rassenkeuzehulp in, dan mailen wij je de uitslag, en daarna e-mails van Let's dog. Dat doen wij op grond van het vinkje dat je daarvoor zette. Je kunt je altijd afmelden, met de afmeldlink onderaan elke e-mail.
+
 ## 6. Grondslagen voor verwerking
 
 Wij verwerken persoonsgegevens op basis van een of meer van de volgende grondslagen:
 
 - uitvoering van de overeenkomst met de gebruiker;
-- gerechtvaardigd belang, bijvoorbeeld voor beveiliging, support, foutanalyse en verbetering van de dienst;
+- gerechtvaardigd belang, bijvoorbeeld voor beveiliging, support, foutanalyse, verbetering van de dienst, en om te zien welke campagnes en antwoorden tot klanten leiden;
 - wettelijke verplichting, bijvoorbeeld voor administratie en fiscale bewaarplichten;
-- toestemming, bijvoorbeeld voor pushnotificaties, niet-noodzakelijke cookies of trackingtechnologieën als die worden ingezet.
+- toestemming, bijvoorbeeld voor pushnotificaties, voor e-mails van Let's dog na de quiz of de rassenkeuzehulp, en voor niet-noodzakelijke cookies of trackingtechnologieën als die worden ingezet.
 
 Op dit moment is de iOS-app niet ingericht voor tracking in de zin van Apple's App Tracking Transparency-regels. Als dit verandert, wordt vooraf toestemming gevraagd via het ATT-framework.
 
@@ -170,7 +204,7 @@ Wij delen persoonsgegevens alleen als dat nodig is voor de werking van de dienst
 - support- en communicatieleveranciers;
 - ons e-mailplatform, dat de berichten rond je account, je abonnement en je voortgang verstuurt;
 - AI- of automatiseringsleveranciers voor zover Let's dog AI-functionaliteit aanbiedt;
-- advertentie- en analyseplatforms die wij informeren over het starten van een proefperiode en over een geslaagde aankoop, uitsluitend voor conversie- en effectmeting. Een proefperiode melden wij pas nadat de betaling is goedgekeurd door je bank of je kaartverstrekker, niet al bij het invullen van het formulier. Aan Google melden wij daarnaast een verlenging en een terugbetaling. Dit alles gebeurt alleen nadat je daarvoor toestemming hebt gegeven. Naar Meta sturen wij daarbij je e-mailadres in versleutelde vorm; naar Google sturen wij geen e-mailadres en geen advertentie-klikgegevens;
+- advertentie- en analyseplatforms die wij informeren over het starten van een proefperiode en over een geslaagde aankoop, uitsluitend voor conversie- en effectmeting. Een proefperiode melden wij pas nadat de betaling is goedgekeurd door je bank of je kaartverstrekker, niet al bij het invullen van het formulier. Aan Google melden wij daarnaast een verlenging en een terugbetaling. Vul je de quiz in, dan melden wij ook dat: aan Meta met je e-mailadres in versleutelde vorm, je IP-adres en je browsergegevens, en aan Google zonder e-mailadres. Vul je de rassenkeuzehulp in, dan melden wij dat aan geen van beide. Dit alles gebeurt alleen nadat je daarvoor toestemming hebt gegeven. Naar Meta sturen wij daarbij je e-mailadres in versleutelde vorm; naar Google sturen wij geen e-mailadres en geen advertentie-klikgegevens;
 - bevoegde instanties indien wij daartoe wettelijk verplicht zijn.
 
 Wij verkopen geen persoonsgegevens aan derden. Wij delen User ID, naam, telefoonnummer of e-mailadres niet met derden om gebruikers te tracken en wij delen deze gegevens niet met databrokers. Leveranciers mogen persoonsgegevens alleen verwerken voor de afgesproken dienst, zoals werking, beveiliging, support, foutanalyse, betaling, fulfilment of verbetering van de app en webomgeving.
@@ -187,7 +221,7 @@ Voor verbetering van AI-functionaliteit gebruikt Let's dog bij voorkeur geanonim
 
 Indien persoonsgegevens buiten de Europese Economische Ruimte worden verwerkt, zorgen wij voor passende waarborgen, zoals standaardcontractbepalingen, aanvullende beveiligingsmaatregelen of vergelijkbare beschermingsmaatregelen.
 
-Concreet gaat het om doorgifte naar de Verenigde Staten. Dat gebeurt op twee plaatsen. Ten eerste bij de conversiemeting die in hoofdstuk 7 is beschreven: nadat je daarvoor toestemming hebt gegeven, informeren wij Meta Platforms en Google over het starten van een proefperiode en over een geslaagde aankoop. Ten tweede bij ons e-mailplatform Loops (Astrodon, Inc.), dat de mail rond je account en je abonnement verstuurt en daarvoor je e-mailadres, je naam, gegevens over je abonnement en gegevens over je hond en je voortgang verwerkt. Voor beide doorgiften baseren wij ons op standaardcontractbepalingen en, waar de partij daarvoor gecertificeerd is, op het EU-US Data Privacy Framework. Onze gebruiksmeting (PostHog) en onze hostingpartij draaien op Europese servers.
+Concreet gaat het om doorgifte naar de Verenigde Staten. Dat gebeurt op twee plaatsen. Ten eerste bij de conversiemeting die in hoofdstuk 7 is beschreven: nadat je daarvoor toestemming hebt gegeven, informeren wij Meta Platforms en Google over het starten van een proefperiode, over een geslaagde aankoop en over het invullen van de quiz. Ten tweede bij ons e-mailplatform Loops (Astrodon, Inc.), dat de mail rond je account en je abonnement verstuurt, de uitslag en de e-mails na de quiz of de rassenkeuzehulp, en de melding en de bevestiging van een bericht via het contactformulier. Loops verwerkt daarvoor je e-mailadres en je naam, en verder wat die mail nodig heeft: gegevens over je abonnement, je hond en je voortgang, je antwoorden in de quiz of je keuzes in de rassenkeuzehulp, of de tekst van je bericht. Voor beide doorgiften baseren wij ons op standaardcontractbepalingen en, waar de partij daarvoor gecertificeerd is, op het EU-US Data Privacy Framework. Onze gebruiksmeting (PostHog) en onze hostingpartij draaien op Europese servers.
 
 ## 10. Bewaartermijnen
 
@@ -196,6 +230,10 @@ Wij bewaren persoonsgegevens niet langer dan noodzakelijk voor de doeleinden waa
 - accountgegevens: zolang het account actief is;
 - cursus- en communitygegevens: zolang nodig voor het functioneren van het account en de dienstverlening;
 - supportgegevens: zolang nodig voor afhandeling, kwaliteitscontrole en eventuele geschillen;
+- leads uit de quiz en de rassenkeuzehulp: zonder vaste termijn, zodat wij kunnen zien welke campagnes en welke antwoorden uiteindelijk tot klanten leiden. Je kunt ze altijd laten verwijderen via support@letsdog.nl. Daarna bewaren wij alleen je e-mailadres in ons logboek van verwijderingen, zodat wij kunnen aantonen dat wij je gegevens hebben verwijderd;
+- afmeldingen: meld je je af voor e-mail, dan onthouden wij je e-mailadres, de reden en de datum, zonder vaste termijn, zodat wij je geen e-mails van Let's dog meer sturen;
+- berichten via het contactformulier en aanmeldingen als creator, met het IP-adres waarmee je ze verstuurde: zonder vaste termijn, zodat wij eerdere correspondentie met je kunnen terugvinden. Je kunt ze laten verwijderen via support@letsdog.nl;
+- campagnegegevens bij je account: via welke advertentie of link je binnenkwam (campagnenamen en klik-id's) en het IP-adres en de browser waarmee je je aanmeldde. Die bewaren wij bij iedereen, zolang je account bestaat. Wij gebruiken het IP-adres en de browser om een aankoop aan de juiste advertentie te koppelen, en geven ze alleen aan Meta door als je marketing hebt toegestaan. De cookie `ld_attribution` zelf verloopt na 90 dagen, zoals de cookieverklaring zegt;
 - technische loggegevens: zolang nodig voor beveiliging, support en foutanalyse;
 - factuur- en administratieve gegevens: zolang wettelijk vereist, in de regel 7 jaar;
 - analyticsgegevens: volgens de ingestelde bewaartermijn van de gebruikte tool en niet langer dan noodzakelijk;
