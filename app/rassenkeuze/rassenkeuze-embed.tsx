@@ -30,7 +30,9 @@ export function RassenkeuzeEmbed() {
             title="Let's dog Rassenkeuze hulp — rasadvies quiz"
             className="w-full min-h-[700px] border-0"
             loading="lazy"
-            allow="clipboard-write"
+            // web-share: "Deel uitslag" in the keuzehulp opens the phone's share menu; without it the
+            // browser refuses and the keuzehulp falls back to WhatsApp (LDplatform D-516, loop T-93).
+            allow="clipboard-write; web-share"
           />
         ) : (
           // Same-height placeholder keeps the card from shifting before mount.

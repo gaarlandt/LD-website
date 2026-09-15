@@ -61,6 +61,11 @@ const exploreCards = [
 export default function Rassenkeuze() {
   return (
     <>
+      {/* Hides the floating WhatsApp button on this page only (loop T-93): on a phone it covered the
+          right end of the keuzehulp's bottom bar ("Start vandaag gratis") inside the iframe. Remove
+          this line and the button is back; the mechanism lives in components/shared/whatsapp-button.tsx. */}
+      <span hidden data-hide-whatsapp-button />
+
       {/* Hero — beige split (kept inline per KTD8) */}
       <section className="relative bg-[var(--ld-beige)] pt-32 pb-20 lg:pb-24 px-6 lg:px-8 overflow-hidden">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">

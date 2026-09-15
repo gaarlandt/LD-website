@@ -1,5 +1,10 @@
 // No "use client": this is a static link with no hooks or handlers — keep it a
 // server component so no JS ships for it.
+//
+// A page can hide it without JS by rendering an element with `data-hide-whatsapp-button`
+// (CSS `:has()` on the body, the arbitrary variant at the end of className). /rassenkeuze does
+// that, because the button covered the keuzehulp's bottom bar inside the iframe (loop T-93).
+// A browser without `:has()` simply keeps showing the button.
 export function WhatsAppButton() {
   // #25D366 / #1ebe5d are the official WhatsApp brand greens — intentionally literal
   // hex, not DS tokens (they must match the WhatsApp brand and aren't in the LD palette).
@@ -9,7 +14,7 @@ export function WhatsAppButton() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat met ons op WhatsApp"
-      className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-[var(--ld-sh-3)] hover:bg-[#1ebe5d] transition-colors duration-200 cursor-pointer md:w-16 md:h-16"
+      className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-[var(--ld-sh-3)] hover:bg-[#1ebe5d] transition-colors duration-200 cursor-pointer md:w-16 md:h-16 [body:has([data-hide-whatsapp-button])_&]:hidden"
     >
       <svg
         viewBox="0 0 24 24"
