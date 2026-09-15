@@ -28,8 +28,9 @@ several other files**, and those do **not** derive from the array. Miss one and 
 silently contradicts itself or ships stale structured data (Google penalises out-of-sync
 JSON-LD).
 
-The current model is **two plans**: **Flexibel** (`key: "flex"`, €19,99/maand) and
-**Early Member** (`key: "early"`, €59 het eerste jaar, daarna €119/jaar). When the old
+The current model is **two plans**: **Flexibel** (`key: "flex"`, €14,99/maand) and
+**Early Member** (`key: "early"`, €59 het eerste jaar, daarna €119/jaar), both with a
+7-day free trial since T-85. When the old
 multi-tier "Drie/Twee manieren" set was replaced by this toggle (2026-06), the array edit
 was one file; the copy + structured-data sweep was several more.
 
@@ -64,13 +65,18 @@ Why the built output and not a live DOM snapshot:
   `preview_snapshot`/`preview_eval` miss it. Either expand the item or grep `out/`.
 - JSON-LD (`productLd`, `faqPageLd`) and rendered markdown only appear in the built HTML —
   a source grep can miss the *rendered* shape.
+- **But the toggle card server-renders only its default view (Jaarlijks).** Everything that
+  exists only on the Maandelijks view — its CTA, footer note, nudge, `= €… per jaar` — is
+  absent from `out/**/*.html` and lives only in the JS chunk. Grep `out/_next/static` as well,
+  or a removed monthly string reads as "gone" when it was simply never in the HTML (measured
+  2026-09-15, T-85: "Start 7 dagen proef" gave 0 HTML files and 1 chunk).
 
 ## Gotcha — the subscription plan vs the standalone consult service
 
 The subscription plans are **not** the standalone **paid consult service**
 (`https://app.letsdog.nl/consult/`, €39,50 — the "Boek/Plan een consult" cards on
 `/contact` and `/over-ons`). They share the word "consult". A blind sweep for `consult`
-would break the live service's links/CTA. Filter by the plan name / price (€19,99 / €59,
+would break the live service's links/CTA. Filter by the plan name / price (€14,99 / €59,
 list €119), not the bare word.
 
 ## Related

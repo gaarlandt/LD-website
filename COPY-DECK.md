@@ -1,6 +1,8 @@
 # Copy deck — Let's dog website
 
 All the visible text on **4 pages**: Homepage, Prijzen, Puppycursus, Over ons.
+
+> **Re-synced 2026-09-15 (T-85):** §2 (Prijzen) and §5 (the pricing card) match the site again. The other sections are still the 2026-06-16 snapshot and have drifted since; re-extract them before the next copy round.
 (FAQ page, Contact, Rassenkeuze, legal pages, nav & footer are **not** here — out of scope for this round.)
 
 ## How to edit
@@ -12,7 +14,7 @@ All the visible text on **4 pages**: Homepage, Prijzen, Puppycursus, Over ons.
 - `· source:` lines tell me which file a section lives in. Leave them alone.
 - When you're done: **save this file and tell me "apply the copy deck."** I'll map every change back to the source and verify it in the preview.
 
-> ⚠️ **Prices** (€19,99 / €59 / €99) and the lines derived from them (per-month, "Bespaar 75%", "€239,88 per jaar") are shown for reference but are **calculated** — changing a headline price auto-updates the rest. Tell me in plain words if you want a price changed; don't hand-edit the derived lines.
+> ⚠️ **Prices** (€14,99 / €59 / €119) and the lines derived from them (per-month, "Bespaar 67%", "€179,88 per jaar") are shown for reference but are **calculated** — changing a headline price auto-updates the rest. Tell me in plain words if you want a price changed; don't hand-edit the derived lines.
 
 ---
 
@@ -257,7 +259,7 @@ _· source: `app/prijzen/page.tsx`_
 Prijzen — Let's dog
 
 **Meta description**
-Twee manieren om te starten met Let's dog: Flexibel maandelijks of Early Member jaar. Vanaf €4,92 per maand. Betalen via Mollie.
+Twee manieren om te starten met Let's dog: Flexibel maandelijks of Early Member jaar, allebei met 7 dagen gratis proberen. Vanaf €4,92 per maand. Betalen via iDEAL, creditcard of SEPA-incasso.
 
 ### 2.1 · Hero
 _· source: `app/prijzen/page.tsx`_
@@ -285,25 +287,31 @@ Vragen over prijzen
 Hoe lang geldt de Early Member-prijs?
 
 **A1**
-Zolang we lanceren, er is nog geen vaste einddatum. Wie nu instapt, betaalt €59 voor het eerste jaar. Wanneer we de prijs verhogen naar €99/jaar, communiceren we dat ruim van tevoren.
+Zolang we lanceren, er is nog geen vaste einddatum. Wie nu instapt, betaalt €59 voor het eerste jaar. Wanneer we de prijs verhogen naar €119/jaar, communiceren we dat ruim van tevoren.
 
 **Q2**
 Via welke betaalmethoden kan ik betalen?
 
 **A2**
-Betaling verloopt via Mollie. Je kunt betalen met iDEAL en creditcard.
+Betalen gaat via Stripe. Je kunt kiezen uit iDEAL, creditcard en SEPA-incasso. Betaal je met iDEAL, dan geef je bij die betaling meteen een machtiging af waarmee we de verlenging later automatisch incasseren.
 
 **Q3**
-Wat als het toch niet bij jullie past?
+Waarom zie ik eerst €0,01 op mijn afschrift?
 
 **A3**
-Je kunt je abonnement op elk moment opzeggen via de accountinstellingen in de app, geen omweg, geen ingewikkelde procedure. Bij een jaarabonnement geldt bovendien 7 dagen geld-terug-garantie: zeg je binnen 7 dagen op, dan krijg je het volledige bedrag automatisch terug. Het maandabonnement is niet restitueerbaar, maar je kunt elke maand opzeggen.
+Dat is een controle van je bank, geen betaling. Om de machtiging voor de automatische verlenging te kunnen afgeven, schrijft Stripe eenmalig 1 cent af en boekt die direct weer terug. Op je afschrift zie je dus 1 cent af en 1 cent terug. Daarna gebeurt er tijdens je proefperiode niets: pas na 7 dagen schrijven we het eerste bedrag af: €14,99 bij het maandabonnement, €59 bij het jaarabonnement.
 
 **Q4**
-Krijg ik mijn geld terug als ik snel opzeg?
+Wat als het toch niet bij jullie past?
 
 **A4**
-Bij een jaarabonnement (Early Member): ja, binnen 7 dagen. Je zegt op via de accountinstellingen en wij storten het volledige bedrag automatisch binnen 14 dagen terug. Bij het maandabonnement (Flexibel) is geen restitutie mogelijk, je kunt wel elke maand opzeggen zodat de volgende maand niet wordt afgeschreven.
+Je kunt je abonnement op elk moment opzeggen via je account op mijn.letsdog.nl, onder Profiel en dan Abonnement. Bij allebei de abonnementen schrijven we het eerste bedrag pas na 7 dagen af: zeg je binnen die 7 dagen op, dan gaat de afschrijving niet door en betaal je niets. Na je proefweek is het maandabonnement niet restitueerbaar, maar je kunt elke maand opzeggen.
+
+**Q5**
+Krijg ik mijn geld terug als ik snel opzeg?
+
+**A5**
+Bij allebei de abonnementen wordt het eerste bedrag pas na 7 dagen automatisch afgeschreven. Zeg je binnen die 7 dagen op via je account op mijn.letsdog.nl, onder Profiel en dan Abonnement? Dan gaat die afschrijving niet door: je betaalt dus niets en er valt ook niets terug te storten. Na je proefweek is bij het maandabonnement (Flexibel) geen restitutie mogelijk, je kunt wel elke maand opzeggen zodat er de volgende maand niets wordt afgeschreven.
 
 ---
 
@@ -594,7 +602,7 @@ Maandelijks
 Jaarlijks
 
 **Savings badge** _(auto-calculated from the prices)_
-Bespaar 75%
+Bespaar 67%
 
 ### Plan: Flexibel (monthly)
 **Plan name**
@@ -607,24 +615,24 @@ Flexibel
 Maandelijks opzegbaar, geen jaarcontract, geen verplichting.
 
 **Price** _(reference — see ⚠️ at top)_
-€19,99 /maand
+€14,99 /maand
 
 **Sub-line** _(auto-calculated)_
-= €239,88 per jaar
+= €179,88 per jaar
 
 **Features**
 - Volledige puppycursus
 - Alle video's & checklists
-- Let's dog Community
+- Weekplan op de leeftijd van je pup
 
 **Button**
-Start Maandelijks
+Start 7 dagen proef
 
 **Footer note**
-Geen geld-terug-garantie · opzegbaar per maand
+Pas na 7 dagen betalen · daarna €14,99 per maand
 
 **"Switch to yearly" nudge** _(price auto-calculated)_
-Je betaalt €180,88 meer per jaar, kies Jaarlijks
+Je betaalt €120,88 meer dan per jaar, kies Jaarlijks
 
 ### Plan: Early Member (yearly)
 **Plan name**
@@ -639,23 +647,23 @@ Meest gekozen
 **Description**
 Volledige toegang, Early Member prijs zolang we lanceren.
 
-**Price** _(reference — see ⚠️ at top; €99 struck-through old price + €59 first year)_
+**Price** _(reference — see ⚠️ at top; €119,00 struck-through list price + €59 first year)_
 €59 /eerste jaar
 
 **Sub-line** _(auto-calculated)_
-Dat is maar €4,92 per maand · Daarna €99/jaar
+Dat is maar €4,92 per maand · Daarna €119/jaar
 
 **Features**
 - Volledige puppycursus
 - Alle video's & checklists
-- Let's dog Community
+- Weekplan op de leeftijd van je pup
 - Early Member status
 
 **Button**
-Claim Early Member Prijs
+Start 7 dagen gratis
 
 **Footer note**
-7 dagen geld-terug-garantie · eerste jaar €59
+Pas na 7 dagen betalen · eerste jaar €59
 
 ---
 
