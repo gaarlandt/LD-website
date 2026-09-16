@@ -176,6 +176,13 @@
 .ld-card--accent   { background: var(--ld-accent-soft); border-color: var(--ld-accent); }
 .ld-card--featured { box-shadow: var(--ld-sh-3); border-color: var(--ld-peach); }
 @media (min-width: 1024px) { .ld-card--featured { transform: translateY(-24px); } }
+/* The lift assumes neighbours to rise above. In a vertical stack there are none:
+   it only pulls the card (and its "Meest gekozen" badge) up towards whatever sits
+   above — on /prijzen that is the fixed header, and the gap measured 6px (T-85,
+   2026-09-16). Two classes deep on purpose, so it beats the media query above
+   regardless of source order; a Tailwind utility would not, because this file is
+   imported after the utilities layer. */
+.ld-card--featured.ld-card--no-lift { transform: none; }
 .ld-card__media  { margin: calc(-1 * var(--ld-s-5)) calc(-1 * var(--ld-s-5)) var(--ld-s-4); border-radius: var(--ld-r-lg) var(--ld-r-lg) 0 0; overflow: hidden; }
 .ld-card__title  { font-family: var(--ld-font-display); font-weight: 700; font-size: var(--ld-fs-24); letter-spacing: var(--ld-tracking-tight); color: var(--ld-text); }
 .ld-card__body   { color: var(--ld-text-muted); }

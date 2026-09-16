@@ -1,7 +1,7 @@
 ---
 title: Algemene voorwaarden
 description: De algemene voorwaarden voor website, app, cursussen, community, digitale diensten, abonnementen en producten van Let's dog B.V.
-lead: Laatst bijgewerkt op 12 augustus 2026.
+lead: Laatst bijgewerkt op 16 september 2026.
 ---
 
 ## 1. Definities
@@ -58,7 +58,7 @@ Bij niet-betaling, mislukte incasso of stornering mag Let's dog toegang beperken
 
 Voor consumenten geldt in beginsel een wettelijke bedenktijd van 14 dagen bij overeenkomsten op afstand, tenzij een wettelijke uitzondering van toepassing is.
 
-Voor digitale inhoud kan het herroepingsrecht vervallen wanneer de gebruiker vooraf uitdrukkelijk instemt met directe levering binnen de bedenktijd en erkent dat hij of zij daarmee het herroepingsrecht verliest. Let's dog moet dit proces duidelijk vastleggen in de checkout.
+Voor digitale inhoud kan het herroepingsrecht vervallen wanneer de gebruiker vooraf uitdrukkelijk instemt met directe levering binnen de bedenktijd en erkent dat hij of zij daarmee het herroepingsrecht verliest. Bij de abonnementen van Let's dog vragen wij die instemming niet. Je houdt je bedenktijd van 14 dagen vanaf het moment dat je het abonnement afsluit, ook als je in die periode al met de cursus begint.
 
 Voor fysieke producten geldt het retour- en herroepingsbeleid van Let's dog. Dat beleid maakt onderdeel uit van deze voorwaarden.
 

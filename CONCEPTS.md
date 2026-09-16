@@ -23,8 +23,10 @@ of *terms*. Plan and write with these names rather than synonyms.
   AI-generated.
 - **Pre-Puppy voorbereiding** — checklist and exercises for the weeks before the pup
   comes home.
-- **Plannen** — two membership plans: **Flexibel** (maandelijks opzegbaar, €19,99/maand)
-  and **Early Member** (jaarlijks; intro €59 het eerste jaar, daarna €119/jaar). "Early
+- **Plannen** — two membership plans: **Flexibel** (maandelijks opzegbaar, €14,99/maand)
+  and **Early Member** (jaarlijks; intro €59 het eerste jaar, daarna €119/jaar). **Both start
+  with the same 7-day free trial** ("proefweek") since the platform's switch day (LDplatform
+  D-471, T-85 here); before that only the year plan had one and the month plan charged at once. "Early
   Member" is the launch offer on the year plan; "Flexibel" is the no-commitment monthly
   option.
 - **Launch price** — the Early Member intro price on the year plan (€59 het eerste jaar,

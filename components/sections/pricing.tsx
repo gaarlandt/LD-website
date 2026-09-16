@@ -1,15 +1,15 @@
 import { ShieldCheck, Wallet } from "@phosphor-icons/react/dist/ssr";
 import { Eyebrow } from "@/components/ui";
-import { PricingToggleCard } from "./pricing-toggle-card";
+import { PricingPlans } from "./pricing-plans";
 
 const trustItems = [
   { icon: ShieldCheck, label: "Veilig betalen via Stripe" },
   { icon: Wallet, label: "Geen verborgen kosten" },
 ];
 
-// Homepage pricing section. Renders the same interactive toggle card used in
-// the /prijzen hero (PricingToggleCard), keeping this section's heading, trust
-// bar, and id="prijzen" anchor (deep links + same-site CTA tracking depend on it).
+// Homepage pricing section. Renders the same two stacked plan cards as the
+// /prijzen hero (PricingPlans), keeping this section's heading, trust bar, and
+// id="prijzen" anchor (deep links + same-site CTA tracking depend on it).
 export function Pricing() {
   return (
     <section
@@ -34,8 +34,8 @@ export function Pricing() {
           </p>
         </div>
 
-        {/* Interactive pricing card (Maandelijks ⇄ Jaarlijks) */}
-        <PricingToggleCard />
+        {/* The two plans, Jaarlijks above Maandelijks */}
+        <PricingPlans />
 
         {/* Trust bar */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-14 max-w-2xl mx-auto">

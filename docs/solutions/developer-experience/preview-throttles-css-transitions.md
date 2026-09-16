@@ -58,3 +58,5 @@ A correct variant / toggle / theme change reads as a styling bug when the comput
 
 - [`preview-throttles-intersection-observer-and-smooth-scroll.md`](preview-throttles-intersection-observer-and-smooth-scroll.md) — same throttled-rAF root cause; sibling manifestation (scroll/visibility events + smooth scroll don't fire/move).- [`tailwind-utilities-vs-unlayered-ds-classes.md`](tailwind-utilities-vs-unlayered-ds-classes.md) — the `.ld-*` variant cascade these buttons use (why the variant prop, not a utility, drives `--_bg`).
 - Origin: pricing-toggle redesign (PR #37 — interactive Maandelijks/Jaarlijks card + €19,99 monthly).
+  **That toggle no longer exists** (replaced by two stacked plan cards on 2026-09-16, T-85), but the
+  finding is about the preview tool and still applies to every other state-driven style swap.
