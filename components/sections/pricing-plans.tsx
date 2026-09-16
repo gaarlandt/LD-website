@@ -42,7 +42,7 @@ export function PricingPlans() {
 
       {/* Jaarlijks — the plan we lead with: the featured ring, the "Meest
           gekozen" badge and the only peach CTA on the screen. */}
-      <Card featured className="relative flex flex-col">
+      <Card featured className="ld-card--no-lift relative flex flex-col">
         {early.topBadge && (
           <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
             <Badge tone="peach" className="font-bold uppercase tracking-wide shadow-md whitespace-nowrap">
