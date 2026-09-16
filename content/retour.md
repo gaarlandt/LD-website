@@ -1,7 +1,7 @@
 ---
 title: Retour- en herroepingsbeleid
 description: Wanneer je recht hebt op herroeping of retour bij Let's dog, hoe het retourproces werkt en welke uitzonderingen gelden voor digitale content, abonnementen en fysieke producten.
-lead: Laatst bijgewerkt op 17 juni 2026.
+lead: Laatst bijgewerkt op 16 september 2026.
 ---
 
 ## 1. Toepassingsgebied
@@ -38,7 +38,7 @@ Het herroepingsrecht kan onder meer zijn uitgesloten voor:
 
 Voor digitale content, zoals cursussen, modules, video's, downloads, trainingsschema's, AI-functionaliteit en online leeromgeving, geldt dat de klant het herroepingsrecht kan verliezen zodra de uitvoering is begonnen, mits de klant vooraf uitdrukkelijk heeft ingestemd met directe levering en heeft erkend dat het herroepingsrecht daardoor vervalt.
 
-Let's dog moet dit in de checkout duidelijk laten aanvinken of bevestigen voordat de gebruiker toegang krijgt tot digitale content. Zonder deze duidelijke instemming kan het herroepingsrecht niet zomaar worden uitgesloten.
+Bij de abonnementen van Let's dog vragen wij die instemming niet. Je houdt je bedenktijd van 14 dagen vanaf het moment dat je het abonnement afsluit, ook als je in die periode al met de cursus begint.
 
 ## 6. Abonnementen
 

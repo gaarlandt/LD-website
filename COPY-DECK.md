@@ -305,13 +305,7 @@ Dat is een controle van je bank, geen betaling. Om de machtiging voor de automat
 Wat als het toch niet bij jullie past?
 
 **A4**
-Je kunt je abonnement op elk moment opzeggen via je account op mijn.letsdog.nl, onder Profiel en dan Abonnement. Bij allebei de abonnementen schrijven we het eerste bedrag pas na 7 dagen af: zeg je binnen die 7 dagen op, dan gaat de afschrijving niet door en betaal je niets. Na je proefweek is het maandabonnement niet restitueerbaar, maar je kunt elke maand opzeggen.
-
-**Q5**
-Krijg ik mijn geld terug als ik snel opzeg?
-
-**A5**
-Bij allebei de abonnementen wordt het eerste bedrag pas na 7 dagen automatisch afgeschreven. Zeg je binnen die 7 dagen op via je account op mijn.letsdog.nl, onder Profiel en dan Abonnement? Dan gaat die afschrijving niet door: je betaalt dus niets en er valt ook niets terug te storten. Na je proefweek is bij het maandabonnement (Flexibel) geen restitutie mogelijk, je kunt wel elke maand opzeggen zodat er de volgende maand niets wordt afgeschreven.
+Je kunt je abonnement op elk moment opzeggen via je account op mijn.letsdog.nl, onder Profiel en dan Abonnement. Bij beide abonnementen wordt het volledige bedrag pas na 7 dagen afgeschreven. Zeg je binnen die 7 dagen op, dan gaat de afschrijving niet door en betaal je dus niets.
 
 ---
 
