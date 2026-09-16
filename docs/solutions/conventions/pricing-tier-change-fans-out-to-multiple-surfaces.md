@@ -19,10 +19,10 @@ tags: [pricing, structured-data, json-ld, llms-txt, content-sync, single-source,
 
 The plan data lives in **one** place — the `tiers` array in
 `components/sections/pricing-data.ts` (pure data, no `"use client"`). It's consumed by
-`pricing-toggle-card.tsx` (the monthly/yearly toggle card), which is rendered by **both**
+`pricing-plans.tsx` (Jaarlijks stacked above Maandelijks), which is rendered by **both**
 the homepage `<Pricing>` section and `/prijzen` — and every *derived* figure (per-year
 total, savings %, per-month equivalent, the struck-through list price) is computed from
-`priceValue` / `listPriceValue` in the toggle card, so the cards + the Product JSON-LD
+`priceValue` / `listPriceValue` in that module, so the cards + the Product JSON-LD
 `offers` update from a single edit. **But the same facts are also re-stated as prose in
 several other files**, and those do **not** derive from the array. Miss one and the site
 silently contradicts itself or ships stale structured data (Google penalises out-of-sync
@@ -31,8 +31,10 @@ JSON-LD).
 The current model is **two plans**: **Flexibel** (`key: "flex"`, €14,99/maand) and
 **Early Member** (`key: "early"`, €59 het eerste jaar, daarna €119/jaar), both with a
 7-day free trial since T-85. When the old
-multi-tier "Drie/Twee manieren" set was replaced by this toggle (2026-06), the array edit
-was one file; the copy + structured-data sweep was several more.
+multi-tier "Drie/Twee manieren" set was replaced by a monthly/yearly toggle card (2026-06),
+the array edit was one file; the copy + structured-data sweep was several more. That toggle
+itself was replaced by the stack on 2026-09-16 (T-85, Jur's call) — the fan-out below did
+not change with it, because it was never about the module.
 
 ## The fan-out — surfaces to update for any plan add/remove/rename/reprice
 
@@ -65,11 +67,12 @@ Why the built output and not a live DOM snapshot:
   `preview_snapshot`/`preview_eval` miss it. Either expand the item or grep `out/`.
 - JSON-LD (`productLd`, `faqPageLd`) and rendered markdown only appear in the built HTML —
   a source grep can miss the *rendered* shape.
-- **But the toggle card server-renders only its default view (Jaarlijks).** Everything that
-  exists only on the Maandelijks view — its CTA, footer note, nudge, `= €… per jaar` — is
-  absent from `out/**/*.html` and lives only in the JS chunk. Grep `out/_next/static` as well,
-  or a removed monthly string reads as "gone" when it was simply never in the HTML (measured
-  2026-09-15, T-85: "Start 7 dagen proef" gave 0 HTML files and 1 chunk).
+- **Grep `out/_next/static` too, not only the HTML.** This bit on 2026-09-15: the module was
+  still a toggle card then, it server-rendered only its default view (Jaarlijks), and
+  "Start 7 dagen proef" gave 0 HTML files and 1 JS chunk — a removed monthly string would have
+  read as "gone" while it had simply never been in the HTML. Since 2026-09-16 both plans are
+  server-rendered (the stack), so the HTML carries every string again; keep grepping the chunks
+  anyway, because any future state in this module lands there and nowhere else.
 
 ## Gotcha — the subscription plan vs the standalone consult service
 
@@ -85,6 +88,7 @@ list €119), not the bare word.
   Use a rem-based `max-w-*` consistent with the section's other centered rows and verify
   both sides of the **1440px root-font breakpoint** — see
   [`../developer-experience/rem-max-width-shrinks-under-fluid-root-font-size.md`](../developer-experience/rem-max-width-shrinks-under-fluid-root-font-size.md).
-- The pricing card's monthly/yearly toggle animates via a CSS transition that the headless
-  preview freezes — verify variant swaps via the `--_bg` custom property / `className`, see
+- The monthly/yearly toggle that lived here until 2026-09-16 animated via a CSS transition
+  that the headless preview freezes. The lesson outlives the toggle for any other state-driven
+  style swap: see
   [`../developer-experience/preview-throttles-css-transitions.md`](../developer-experience/preview-throttles-css-transitions.md).

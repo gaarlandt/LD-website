@@ -3,7 +3,7 @@ import { SectionWrapper } from "@/components/shared/section-wrapper";
 import { JsonLd } from "@/components/shared/json-ld";
 import { productLd } from "@/lib/structured-data";
 import { tiers } from "@/components/sections/pricing-data";
-import { PricingToggleCard } from "@/components/sections/pricing-toggle-card";
+import { PricingPlans } from "@/components/sections/pricing-plans";
 import {
   Badge,
   Accordion,
@@ -79,9 +79,9 @@ export default function Prijzen() {
             </div>
           </div>
 
-          {/* Pricing card column (replaces the former hero image) */}
+          {/* Plan column (replaces the former hero image) */}
           <div className="relative">
-            <PricingToggleCard />
+            <PricingPlans />
           </div>
         </div>
       </section>

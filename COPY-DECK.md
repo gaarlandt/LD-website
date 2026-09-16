@@ -592,48 +592,19 @@ Plan een consult
 
 ---
 
-# 5. Shared — Pricing card (appears on Homepage §1.6 **and** Prijzen §2.1)
-_· source: `components/sections/pricing-toggle-card.tsx` + `pricing-data.ts`_
+# 5. Shared — The two plan cards (appear on Homepage §1.6 **and** Prijzen §2.1)
+_· source: `components/sections/pricing-plans.tsx` + `pricing-data.ts`_
 
 > Editing anything here changes **both** the homepage and the Prijzen page.
+> Since 2026-09-16 the two plans sit under each other — Jaarlijks first, Maandelijks below —
+> instead of behind a Maandelijks/Jaarlijks switch.
 
-**Period toggle labels**
-Maandelijks
-Jaarlijks
-
-**Savings badge** _(auto-calculated from the prices)_
+**Savings badge** _(auto-calculated from the prices; beside the yearly price)_
 Bespaar 67%
 
-### Plan: Flexibel (monthly)
+### Plan: Early Member (yearly) — the card on top
 **Plan name**
-Flexibel
-
-**Corner badge**
-Flexibel
-
-**Description**
-Maandelijks opzegbaar, geen jaarcontract, geen verplichting.
-
-**Price** _(reference — see ⚠️ at top)_
-€14,99 /maand
-
-**Sub-line** _(auto-calculated)_
-= €179,88 per jaar
-
-**Features**
-- Volledige puppycursus
-- Alle video's & checklists
-- Weekplan op de leeftijd van je pup
-
-**Button**
-Start 7 dagen proef
-
-**Footer note**
-Pas na 7 dagen betalen · daarna €14,99 per maand
-
-### Plan: Early Member (yearly)
-**Plan name**
-Early Member
+Early Member — Jaarlijks
 
 **Corner badge**
 Best deal
@@ -661,6 +632,22 @@ Start 7 dagen gratis
 
 **Footer note**
 Pas na 7 dagen betalen · eerste jaar €59
+
+### Plan: Flexibel (monthly) — the smaller card below
+**Plan name**
+Flexibel — Maandelijks
+
+**Price** _(reference — see ⚠️ at top; sits beside the name, not under it)_
+€14,99 /maand
+
+**Description** _(no feature list on this card — it would repeat the one above)_
+Maandelijks opzegbaar, geen jaarcontract, geen verplichting. Dezelfde cursus, zonder de Early Member-status.
+
+**Button**
+Start 7 dagen proef
+
+**Footer note**
+Pas na 7 dagen betalen · daarna €14,99 per maand
 
 ---
 

@@ -1,9 +1,9 @@
 // Pricing tiers — the single source of truth for both the homepage pricing
 // section and the /prijzen hero. Display strings live here; every *derived*
 // figure (per-year total, savings %, per-month equivalent) is computed from
-// `priceValue` in pricing-toggle-card.tsx so the numbers can never drift out
+// `priceValue` in pricing-plans.tsx so the numbers can never drift out
 // of sync with the headline price. Pure data (no "use client") so it can be
-// imported by both the server section and the client toggle card.
+// imported by both the homepage section and the /prijzen hero.
 
 export type Tier = {
   key: "flex" | "early";
